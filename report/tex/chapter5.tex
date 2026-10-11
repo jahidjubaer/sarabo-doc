@@ -1,0 +1,143 @@
+\documentclass{standalone}
+\usepackage{standalone}
+
+\begin{document}
+\chapter{Implementation}
+
+\section{Technology Stack}
+\begin{table}[htbp]
+\centering
+\caption{Implemented technology stack}
+\label{tab:stack}
+\small
+\begin{tabularx}{\textwidth}{@{}p{2.6cm}p{4.4cm}X@{}}
+\toprule
+\textbf{Layer} & \textbf{Technology} & \textbf{Role in Sarabo} \\
+\midrule
+Frontend & React 19, Vite 7 & Component-based single-page app and build tooling \\
+Routing & React Router 7 & Public, authenticated and role-specific routes \\
+Server state & TanStack Query 5, TanStack Table & Caching, mutations, invalidation; admin data tables \\
+UI & Tailwind CSS 4, Radix UI, Motion, Recharts, Leaflet & Design system, accessible primitives, animation, charts, service-area map \\
+Forms & react-hook-form & Validated multi-step forms \\
+Backend & Node.js, Express 5 & REST API, middleware, controllers, services \\
+Database & MongoDB 7 driver, MongoDB Atlas & Persistence and multi-document transactions \\
+Identity & Firebase Authentication + Admin SDK & Sign-in (email, Google) and token verification \\
+Payments & Stripe 20 & Checkout, signed webhooks, refunds \\
+Storage & Supabase Storage & Private images with signed URLs \\
+AI & Google Gemini (\texttt{@google/genai}) & Support chat, request helper, offer note, report summary \\
+Email & Nodemailer (Gmail) & Request, reminder and job-offer emails \\
+Documents & pdfkit & PDF payment receipts \\
+Testing & Custom Node test harness, Playwright & Server integration tests; browser tests \\
+Delivery & GitHub Actions, Vercel, Firebase Hosting & CI, serverless API, cron, static hosting \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Development Process}
+Sarabo was developed iteratively in small, reviewable phases between 26 July and 4 October 2026, followed by a final improvement phase up to 11 October: 156 commits in the client repository and 107 in the server repository. Each phase followed the same loop: define the rule, implement it on the server with tests, build the interface, run lint, build and tests, then review the result before moving on. Larger features were developed on separate branches and merged through pull requests once continuous integration passed. Table~\ref{tab:phases} summarises the phases.
+
+\begin{longtable}{@{}p{3.2cm}p{2.2cm}p{8.8cm}@{}}
+\caption{Development phases (from the git history)}\label{tab:phases}\\
+\toprule
+\textbf{Phase} & \textbf{Dates} & \textbf{Main work} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Phase} & \textbf{Dates} & \textbf{Main work} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+1. Foundation and hardening & 26--28 Jul & Imported the base codebase; secured authentication and role routing; secure Stripe checkout and webhook; validated status transitions; public sanitized tracking; transactional assignment, approval and completion. \\
+2. Admin and notifications & 29 Jul -- 4 Aug & Admin request management; in-app notifications; production database isolation; health monitoring; double-booking prevention. \\
+3. Repair domain (V2) & 5--8 Aug & Service taxonomy and priced catalogue; technician expertise; V2 request schema; expertise-based matching; damage uploads; prices in BDT; inspection, quote, payment and repair workflows; safe deletion; verified email. \\
+4. Rename to Sarabo & 10--12 Aug & Migrated database, collections, fields, modules, API routes and UI from parcel to repair vocabulary; assignment accept/reject; receipt confirmation. \\
+5. Money and UI redesign & 13--19 Aug & 90/10 settlement; wallet and withdrawals; storage moved to Supabase; complete ``service spine'' redesign; accessibility pass. \textit{(Earlier report submitted 20 Aug.)} \\
+6. AI support and feedback & 18--24 Sep & Gemini support chat; reviews and private reports with moderation; product tour; second redesign; admin catalogue editor; CI on GitHub Actions. \\
+7. Operations & 24--25 Sep & Pickup scheduling; region rule; email updates; Playwright tests; admin reports and attention list; in-app reminders; refusing unmatchable requests. \\
+8. Job portal and inspection fee & 25 Sep -- 2 Oct & Technician offers and customer choice; inspection-fee payment, credit, refunds and split; reject-and-repost; public jobs board; job notifications; PDF receipts; one-step approve-and-pay. \\
+9. AI helpers and payouts & 2--4 Oct & AI request helper (text and photo); price guide and AI offer note; AI report summary; bKash withdrawals; hosting configuration. \\
+10. Final improvements & from 11 Oct & Fixes and improvements for the final submission, recorded step by step in Section~\ref{sec:finalphase}. \\
+\end{longtable}
+
+\section{Frontend Implementation}
+\subsection{Role-Aware Routing}
+The dashboard is wrapped by an authenticated route and subdivided by role guards. Customers get Overview, Create Request, My Requests and Payment History; Technicians get Overview, Find jobs, Assigned jobs, Completed jobs and Wallet; Admins get Overview, Repair requests, Assign technicians, Technicians, Withdrawals, Users, Services \& prices, Reports, Technician reports and Technician reviews. Every role also has Notifications and Profile, and a bottom tab bar replaces the sidebar on phones. Deep links (for example \texttt{?category=smartphone}) survive the sign-in redirect. Routing is a convenience only; every protected endpoint re-checks authentication and authorization.
+
+\subsection{Server-State Hooks}
+Each feature has a query-key factory (for example \texttt{quoteKeys}, \texttt{repairKeys}, \texttt{walletKeys}) and hooks for reading and mutating. A mutation invalidates exactly the queries that become stale: approving a quote refreshes the quote, the request detail, the customer's request list and the payment eligibility. This keeps the three roles' views consistent without reloading the page.
+
+\subsection{Action-First Workspace}
+Each request page shows the service spine at the top, then a ``next step'' panel that tells the signed-in role exactly what to do (for example ``Choose a technician: 2 offers waiting'' or ``Approve and pay BDT 2,300''), followed by supporting context. Reusable empty, loading, error, confirmation and form components keep behaviour consistent. A guided product tour introduces each dashboard on first visit, and a command menu allows keyboard navigation.
+
+\section{Backend Implementation}
+\subsection{Controllers, Services and Adapters}
+Workflow endpoints live in domain controllers (for example \texttt{jobPortalController}, \texttt{quoteController}, \texttt{paymentController}). Logic used in more than one place lives in services such as \texttt{jobBooking}, \texttt{inspectionFeeRefunds}, \texttt{paymentEligibility}, \texttt{technicianMatchGate}, \texttt{notificationService} and \texttt{emailService}. External providers are reached through adapters (\texttt{supabaseBucketAdapter}, Gemini providers, Stripe client), which tests replace with fakes.
+
+\subsection{Database Transactions}
+Operations that update several dependent records use MongoDB transactions. Booking a technician after an inspection-fee payment, for instance, records the payment, sets the request to \texttt{driver\_assigned}, marks the technician busy, accepts the chosen offer and marks every other offer \texttt{not\_chosen}, all in one transaction (\texttt{services/jobBooking.js}). If any step fails, nothing changes.
+
+\subsection{Notifications, Email and Scheduled Jobs}
+Important events create in-app notifications through one service, each with a de-duplication key so that a retried request never notifies twice. Emails (request received, pickup reminder, new job offer) are sent through Gmail after the main action succeeds; a failed email is logged in \texttt{email\_log} and never fails the request. A daily Vercel Cron job, protected by a secret, posts ``pickup tomorrow'' reminders to customers and technicians and automatically closes requests whose declined quote has had no response for three days.
+
+\section{Service Catalogue and Matching}
+Admins edit services and prices from the dashboard. A price change increments \texttt{pricingRule.version}; existing requests keep their own price snapshot. When a customer creates a request, \texttt{technicianMatchGate} checks that at least one approved technician in the same region has the required device, repair and expertise level. If not, the API answers \texttt{409 NO\_TECHNICIAN\_AVAILABLE}, the form explains why, and the refused demand is counted once per customer, service, region and day (with the customer identity hashed) so admins can see where to recruit.
+
+\section{Pickup Scheduling}
+Customers pick one of four two-hour windows (10:00--18:00 Bangladesh time), Saturday to Thursday, at least one hour and at most seven days ahead. Each region accepts a configurable number of pickups per slot (default three); a full slot returns \texttt{409 PICKUP\_SLOT\_FULL}. The window can be changed until the device is collected, and a moved pickup is reminded again.
+
+\section{Quotation Model}
+A quote has whole-taka labour, parts and additional-charge amounts, a total, currency, version and status. If the customer rejects it, the rejected quote is moved to \texttt{quoteHistory} before the live quote is cleared, so the old decision stays auditable and can never be paid by mistake.
+
+\begin{lstlisting}[caption={Quote total and amount still to pay},label={lst:quote}]
+repairSubtotal   = laborAmount + partsAmount + additionalCharges
+quote.totalAmount = repairSubtotal            (currency "BDT")
+amountDue        = max(quote.totalAmount - inspectionFeePaid, 0)
+\end{lstlisting}
+
+\section{Payment Implementation}
+The server creates every Stripe Checkout session from stored data (the approved quote or the chosen offer's fee), never from an amount sent by the browser. Each session carries metadata saying what it pays for (\texttt{repair} or \texttt{inspection\_fee}). The signed webhook, and the success page as a fallback, both call the same idempotent processor, so a payment is recorded exactly once whichever arrives first. One shared server function decides whether a request is paid, and the same rule is used for payment eligibility, admin filters and list badges, so they can never disagree. Every payment row produces a PDF receipt (Stripe payment ID, date in Dhaka time, device, repair, technician, amount and refund status).
+
+\section{Technician Settlement and Wallet}
+When a repair is paid, a settlement snapshot is frozen from the approved quote:
+
+\begin{lstlisting}[caption={Settlement rule (whole taka)},label={lst:settlement}]
+commission  = round(repairSubtotal * 10 / 100)    # Sarabo
+receivable  = repairSubtotal - commission          # Technician
+# invariant: commission + receivable == repairSubtotal
+\end{lstlisting}
+
+The settlement stays \emph{pending} until the customer confirms receipt, then becomes \emph{available}. Wallet balances are never stored as a running number; they are recomputed from settlement snapshots and withdrawal records, so they cannot drift. A technician requests a withdrawal up to the available balance, giving a bKash number; an admin sends the money with bKash ``Send Money'' and records the transaction ID (TrxID) when marking it paid. A unique partial index allows only one open withdrawal per technician.
+
+\section{Damage and Evidence Images}
+Images go directly from the browser to a private Supabase bucket through a signed upload URL (JPEG, PNG or WebP, up to 8\,MB, at most three per request). The server then reads the stored object's real type and size before attaching it, and returns fresh five-minute signed read URLs only to the owner, an admin or the currently assigned technician. When a request is deleted, storage clean-up is retried in the background until it succeeds.
+
+\section{Public Tracking and Jobs Board}
+New requests get a tracking code \texttt{SRB-<random>} with 128 bits of randomness. \texttt{GET /public/trackings/:code} returns only the status timeline and timestamps, is rate limited and accepts only exact codes. The public jobs board (\texttt{GET /jobs}, 60 requests per minute per address) lists open requests with device, repair, area, pickup day, usual price and number of offers, but never the problem text, photos, tracking code or any personal detail.
+
+\section{Deployment and Continuous Integration}
+The API is deployed as a Vercel serverless function (Node.js 24) and the client on Firebase Hosting at \url{https://sarabo-jahid.web.app}. Production uses its own database name, and the server refuses to start in production without the required secrets and an \texttt{https} client origin. GitHub Actions runs on every push: for the server, the full test suites against a throwaway MongoDB replica set started inside the job (CI is never given the real database credentials); for the client, ESLint and a production build. Deployment is a deliberate manual step.
+
+\section{Final Improvement Phase}
+\label{sec:finalphase}
+After the system was feature-complete on 4 October 2026, a final phase of fixes and improvements began on 11 October 2026 to prepare the project for submission. It started with a full review of both codebases and their documentation and a fresh verification run of every automated check (Chapter~\ref{ch:testing}). Each later change is recorded with its problem, change, files and verification in the project work log and summarised in Table~\ref{tab:finalphase}.
+
+\begin{table}[htbp]
+\centering
+\caption{Final improvement phase log}
+\label{tab:finalphase}
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.6cm}p{2cm}X@{}}
+\toprule
+\textbf{\#} & \textbf{Date} & \textbf{Change and verification} \\
+\midrule
+0 & 11 Oct 2026 & Codebase and documentation review; re-ran server suites against an isolated in-memory MongoDB replica set, client lint, production build and Playwright browser tests. \\
+1 & 11 Oct 2026 & Service-area map: OpenStreetMap coordinates for 226 of the 236 covered sub-areas, each kept only if it lies inside its own district. Searching a sub-area (e.g.\ Ambarkhana) now zooms to that spot instead of the district centre. Verified with two new browser tests on desktop and mobile. \\
+2 & 11 Oct 2026 & Final payout on technician removal: removing a technician queues their whole available balance as a bKash withdrawal in the same transaction (Section~\ref{sec:removalpayout}). Verified with 15 new server checks. \\
+3 & 11 Oct 2026 & Homepage hero: the photo moved to the right side (top band on phones) so the headline no longer sits over it. Checked with screenshots at three screen widths. \\
+4 & 11 Oct 2026 & Final verification of the committed code and CI on both repositories (Section~\ref{sec:results}). \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\end{document}

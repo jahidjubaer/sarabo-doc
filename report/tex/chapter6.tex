@@ -1,0 +1,157 @@
+\documentclass{standalone}
+\usepackage{standalone}
+
+\begin{document}
+\chapter{Core Workflows and Business Rules}
+
+\section{End-to-End Repair Workflow}
+Figure~\ref{fig:e2e} shows the main path of a repair, from request to settlement.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=5mm and 8mm,font=\small]
+  \node[box] (a) {Customer creates request\\(region gate, pickup slot)};
+  \node[box,below=of a] (b) {Open on jobs board;\\matching technicians notified};
+  \node[box,below=of b] (c) {Technicians send offers};
+  \node[dec,below=of c] (d) {Customer\\chooses?};
+  \node[box,right=14mm of d] (rj) {Reject offer\\$\rightarrow$ repost};
+  \node[box,below=of d] (e) {Pay inspection fee\\$\rightarrow$ technician booked};
+  \node[box,below=of e] (f) {Collect device \& inspect};
+  \node[box,below=of f] (g) {Submit itemised quote};
+  \node[dec,below=of g] (h) {Customer\\approves?};
+  \node[box,left=14mm of h] (rv) {Revise quote\\or close request};
+  \node[box,below=of h] (i) {Pay rest\\(quote $-$ fee paid)};
+  \node[box,below=of i] (j) {Repair \& complete};
+  \node[box,below=of j] (k) {Customer confirms receipt;\\settlement available; review};
+  \draw[arr] (a)--(b); \draw[arr] (b)--(c); \draw[arr] (c)--(d);
+  \draw[arr] (d)--node[lbl,right]{yes}(e); \draw[arr] (d)--node[lbl,above]{no}(rj);
+  \draw[arr] (rj) |- (b);
+  \draw[arr] (e)--(f); \draw[arr] (f)--(g); \draw[arr] (g)--(h);
+  \draw[arr] (h)--node[lbl,above]{no}(rv); \draw[arr] (rv) |- (g);
+  \draw[arr] (h)--node[lbl,right]{yes}(i); \draw[arr] (i)--(j); \draw[arr] (j)--(k);
+\end{tikzpicture}
+\caption{End-to-end repair workflow}
+\label{fig:e2e}
+\end{figure}
+
+\section{Request Creation}
+The customer chooses a device category and a repair service from the live catalogue (or lets the AI helper propose them), adds brand, model and a description, optionally adds up to three photos, and picks a pickup window. The estimate card shows the catalogue's price range. Before submitting, the form calls \texttt{GET /service-availability}; the server repeats the check on submission and refuses the request with a clear explanation if no approved technician in that region can do this repair at the required level. Accepted requests receive a tracking code and a confirmation email.
+
+\section{Job Portal and Offers}
+A request is \emph{open} while it is waiting for a technician. It appears on the public jobs board as a safe summary, and every approved technician who matches it receives a \texttt{job\_posted} notification (at most once per request). A technician who starts matching later, after being approved or adding a skill, is told about the open jobs they can now take. Approved technicians see the details they need (district, pickup time, problem description and photos) but never the customer's name, email or street address.
+
+A technician sends an \emph{offer}: an estimate range, an inspection fee (capped by the catalogue fee for that service) and a note. The customer compares offers side by side and either chooses one or rejects one with a reason (price, inspection fee or other). A rejected offer causes the job to be \emph{reposted} to the top of the board; the rejected technician may send one revised offer, and other matching technicians are notified. If no offer is waiting 24 hours after the job was last posted, it appears on the admin attention list. Admins can also invite a specific technician to apply, or assign one directly as an override.
+
+\section{Inspection Fee and Booking}
+Choosing an offer with a fee opens a Stripe Checkout for exactly that fee; nothing is booked yet. When Stripe confirms the payment, one transaction records it and books the technician. If the technician can no longer be booked at that moment (busy, request cancelled, someone else chosen), the payment is recorded and refunded automatically and the customer is asked to choose again. The fee is stored separately from the repair payment and is later credited toward the final price. Table~\ref{tab:feeoutcomes} shows what happens to the fee when the repair does not go ahead.
+
+\begin{table}[htbp]
+\centering
+\caption{Inspection fee outcomes}
+\label{tab:feeoutcomes}
+\small
+\begin{tabularx}{\textwidth}{@{}Xp{5.8cm}@{}}
+\toprule
+\textbf{Situation} & \textbf{Fee} \\
+\midrule
+Repair approved and paid & Credited toward the final price \\
+Technician does not come (admin records a missed pickup) & Full refund; other offers can be chosen \\
+Customer cancels 2 hours or more before the pickup window & Full refund \\
+Customer cancels less than 2 hours before & Kept: 90\% technician, 10\% Sarabo \\
+Customer declines the final price and the request ends & Kept: 90\% technician, 10\% Sarabo \\
+Booking fails after payment & Automatic full refund \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Refunds happen in two steps. Inside the transaction that causes the refund, the fee and its payment row are marked \emph{refund pending}. After the transaction commits, Stripe is asked to refund with the idempotency key \texttt{inspection-refund-<session id>}, which guarantees at most one refund. If Stripe fails, the refund stays pending, appears on the admin home page, and can be retried with one click; it is never silently lost.
+
+\section{Inspection, Quotation and Revision}
+After collecting the device, only the booked technician can submit the inspection, which records findings and detected issues. The quote can be submitted only from \texttt{inspection\_completed}. The customer sees the quote together with the fee already paid and the amount still due, and the approve button reads ``Approve and pay BDT \textit{X}'', so approval leads straight to payment.
+
+If the customer rejects the quote, the technician may revise or close the request (Figure~\ref{fig:revise}). Revising archives the old quote and reuses the normal submit-and-decide cycle. If the technician neither revises nor closes within three days, the daily job closes the request automatically; the request records who closed it (\texttt{technician}, \texttt{customer} or \texttt{auto}), and the inspection fee is kept and split.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[font=\small]
+  \node[box] (r) at (0,0) {\texttt{quote\_rejected}};
+  \node[dec] (d) at (0,-1.5) {Who acts?};
+  \node[box,text width=3.2cm] (rv) at (-4.6,-3.2) {Technician revises};
+  \node[box,text width=3.2cm] (tc) at (0,-3.2) {Technician or\\customer closes};
+  \node[box,text width=3.2cm] (au) at (4.6,-3.2) {No action in 3 days\\$\rightarrow$ daily job closes};
+  \node[box,text width=3.2cm] (ar) at (-4.6,-4.8) {Old quote to\\\texttt{quoteHistory}};
+  \node[box,text width=3.9cm] (ic) at (-4.6,-6.4) {\texttt{inspection\_completed}\\$\rightarrow$ new quote};
+  \node[box,text width=3.2cm] (cl) at (0,-5.6) {\texttt{cancelled}\\fee kept 90/10};
+  \draw[arr] (r)--(d); \draw[arr] (d)-|(rv); \draw[arr] (d)--(tc); \draw[arr] (d)-|(au);
+  \draw[arr] (rv)--(ar); \draw[arr] (ar)--(ic); \draw[arr] (tc)--(cl); \draw[arr] (au)|-(cl);
+\end{tikzpicture}
+\caption{Rejected-quote recovery}
+\label{fig:revise}
+\end{figure}
+
+Each quote round has its own notification identity, derived on the server as \texttt{quoteHistory.length + 1}. A retried submission of the same round is therefore harmless, while a genuine revision produces a new notification (see Appendix~\ref{app:incident}).
+
+\section{Payment, Repair and Receipt}
+Payment is possible only for an approved quote that is not yet paid. After payment the technician starts the repair, adds progress updates and completes it, optionally with evidence photos. Completion releases the technician for other work and shows the customer a ``Confirm receipt'' action. Only that confirmation moves the request to its terminal state and makes the technician's earning available, so a technician cannot withdraw money for a device the customer has not received.
+
+\section{Settlement and Withdrawal Lifecycle}
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=7mm,font=\small]
+  \node[box] (a) {Payment\\successful};
+  \node[box,right=of a] (b) {Settlement\\pending};
+  \node[box,right=of b] (c) {Available\\after receipt};
+  \node[box,right=of c] (d) {Reserved\\(withdrawal)};
+  \node[box,right=of d] (e) {Withdrawn\\(bKash TrxID)};
+  \draw[arr] (a)--(b); \draw[arr] (b)--(c); \draw[arr] (c)--(d); \draw[arr] (d)--(e);
+  \draw[arr] (d.south) to[bend left=35] node[lbl,below]{admin rejects} (c.south);
+\end{tikzpicture}
+\caption{Technician settlement and withdrawal lifecycle}
+\label{fig:settlement}
+\end{figure}
+
+The wallet is computed, not stored:
+\begin{align}
+\text{Pending} &= \textstyle\sum \text{paid settlements not yet receipt-confirmed}\\
+\text{Gross available} &= \textstyle\sum \text{receipt-confirmed settlements} + \textstyle\sum \text{kept inspection-fee shares}\\
+\text{Reserved} &= \textstyle\sum \text{open withdrawal requests}\\
+\text{Withdrawn} &= \textstyle\sum \text{paid withdrawals}\\
+\text{Available} &= \text{Gross available} - \text{Reserved} - \text{Withdrawn}
+\end{align}
+Because rejection simply removes a reservation, no compensating balance write is ever needed.
+
+\paragraph*{Final payout when a technician is removed.}
+\label{sec:removalpayout}
+When an admin removes an approved technician, their whole available balance is queued as a withdrawal to their bKash number in the same database transaction as the removal, so either both happen or neither does. The number is taken, in order, from the admin's entry in the removal dialog, an already-open request (which is topped up rather than duplicated), the technician's last withdrawal, or their application phone. If money is owed and no valid number exists, the removal is refused until the admin enters one. Pending money is not yet available, so it is not included. The payout is tagged as a final payout in the admin queue and is sent and recorded with a bKash TrxID like any other withdrawal. Sarabo has no bKash API, so the transfer itself remains a manual bKash Send Money.
+
+\section{Cancellation Rules}
+Before a technician is booked, a customer can cancel a request freely; a cancelled request can be requested again with its details pre-filled. After booking with a paid fee, \texttt{GET /repair-requests/:id/booking-cancellation} tells the customer in advance which outcome cancelling now would have (refund or kept fee), and the cancellation itself is allowed only until the device is collected.
+
+\section{Service-Area Map}
+The public Service Areas page draws every listed district on an OpenStreetMap map (Leaflet) from the same \texttt{serviceAreas.json} file that drives the request form. Each district also stores the coordinates of its covered sub-areas. These were looked up once, offline, from OpenStreetMap and kept only if they lie inside that district (226 of 236). A search lists matching sub-areas before districts, so ``Ambarkhana'' opens Ambarkhana in Sylhet at street level instead of the city centre. A sub-area without a stored point falls back to its district's pin, and nothing is geocoded in the browser.
+
+\section{Feedback and Moderation}
+After a completed and receipt-confirmed repair, the customer may leave one review: a rating from 1 to 5 and an optional comment (up to 1,000 characters, plain text). Reviews are visible by default and admins can hide or restore them with a reason; every change is versioned and kept in a moderation history. Separately, a customer can file a private report about a technician (for example unprofessional behaviour, device damage or a payment issue). Reports go only to admins, move through \emph{open}, \emph{under review}, \emph{resolved} or \emph{dismissed}, and are never deleted with the request. Technicians see their average rating and visible reviews, but never reports or the reviewer's identity.
+
+\section{Notifications and Reminders}
+Forty-one notification types, all defined in one module (\texttt{utils/notificationEvents.js}), cover offers, booking, refunds, inspection, quotes, payment, repair milestones, reviews, withdrawals and a removed technician's final payout. Each has a de-duplication key. The daily job sends ``pickup tomorrow'' reminders in the app (and by email when enabled), once per pickup slot.
+
+\section{Damage Image Upload}
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[font=\small]
+  \node[box,minimum width=3cm] (c) at (0,0) {Customer browser};
+  \node[box,minimum width=3cm] (s) at (5.2,0) {Sarabo API};
+  \node[box,minimum width=3cm] (st) at (10.4,0) {Private storage};
+  \foreach \n in {c,s,st} \draw[dashed,gray] (\n.south) -- ++(0,-5.2);
+  \draw[arr] (0,-0.9) -- node[lbl,above]{1. request upload session} (5.2,-0.9);
+  \draw[arr] (5.2,-1.8) -- node[lbl,above]{2. signed upload URL} (0,-1.8);
+  \draw[arr] (0,-2.7) -- node[lbl,above]{3. PUT image bytes directly} (10.4,-2.7);
+  \draw[arr] (5.2,-3.6) -- node[lbl,above]{4. verify real type and size} (10.4,-3.6);
+  \draw[arr] (5.2,-4.5) -- node[lbl,above]{5. attach (max 3, transaction)} (0,-4.5);
+\end{tikzpicture}
+\caption{Damage-image upload workflow}
+\label{fig:upload}
+\end{figure}
+
+\end{document}

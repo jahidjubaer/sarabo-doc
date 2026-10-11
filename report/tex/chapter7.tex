@@ -1,0 +1,68 @@
+\documentclass{standalone}
+\usepackage{standalone}
+
+\begin{document}
+\chapter{AI-Assisted Features}
+\label{ch:ai}
+
+Sarabo uses Google Gemini (model \texttt{gemini-3.1-flash-lite}) in four places where it saves users real effort. In every case the AI \emph{suggests} and a person \emph{decides}: nothing the model returns changes a price, a payment or a request state without a human reviewing it first. All four features are switched off by default and need both an explicit setting and an API key; the client asks \texttt{GET /ai/status} and hides a feature that is not available.
+
+\section{AI Customer Support Chat}
+A chat widget on every page answers visitor and customer questions about how Sarabo works, which services exist and what they usually cost. The prompt is built from the \emph{live} service catalogue (\texttt{supportKnowledgeService}), so answers about prices always reflect the current catalogue. Conversation history, message length and answer length are capped, and suggested follow-up buttons (View services, Track a request, Log in, Create an account) are chosen from a fixed list rather than generated as free links.
+
+\section{AI Request Helper}
+On the create-request form a customer can describe the problem in their own words (Bangla, English or the common mixed ``Banglish'') and/or add a photo of the damage. The AI returns a draft: device category, catalogue service, brand, model, a clear English description, a confidence level, an optional follow-up question and, when a photo was sent, whether it actually shows a device and what is visible. The form fills itself, the customer edits anything, and \emph{Undo} restores what was there before. If the photo shows a device, it is uploaded to the new request automatically after creation, so the customer does not have to pick it twice.
+
+\section{Technician Price Guide and AI Offer Note}
+When a technician writes an offer, a price guide (computed without AI) shows the usual range from real offers for the same service in the last 180 days: the 25th percentile of ``from'' prices to the 75th percentile of ``to'' prices, and the same for inspection fees. With fewer than three past offers it falls back to the catalogue range. The form gives advisory warnings if an offer is far outside the usual range.
+
+The technician can also ask AI to write the offer note in English or Bangla. The model sees only what the technician already sees (device, brand, model, repair, the customer's problem text and whether photos exist), writes in the technician's voice, describes the likely issue only as a possibility, says the final price comes after inspection, and contains no numbers. Phone numbers (including Bangla digits), emails, links and social handles are stripped from the answer so that contact stays on the platform.
+
+\section{AI Summary of Admin Reports}
+The admin Reports page (7, 30 or 90 days) can show a short AI summary: a headline, two to four highlights and one to three suggested actions. The model receives only aggregate figures (requests made, finished and cancelled, success rate, average days, refused demand by region, top devices and repairs, technician workload, inspection-fee money and current attention counts), never names, emails or IDs. The last summary per period is stored, so opening the page costs nothing.
+
+\section{Safeguards}
+Table~\ref{tab:aisafety} summarises how the main risks of LLM features~\cite{owaspllm} are handled.
+
+\begin{table}[htbp]
+\centering
+\caption{AI risks and safeguards}
+\label{tab:aisafety}
+\small
+\begin{tabularx}{\textwidth}{@{}p{3.4cm}X@{}}
+\toprule
+\textbf{Risk} & \textbf{Safeguard in Sarabo} \\
+\midrule
+Invented catalogue items & The request helper must answer with IDs from an enum built from the live catalogue (JSON schema); the server re-checks them and drops unknown or inactive IDs, or a repair belonging to another device. \\
+Invented prices & No AI feature ever sets a price. Estimates come from the catalogue; the offer note contains no numbers. \\
+Invented statistics & Every sentence of the report summary is checked: each number must appear in the facts, be a difference or rounded percentage between periods, a small count up to 10, or a fixed context number. Failing sentences are dropped; if nothing remains, the request fails with 502. \\
+Prompt injection & Customer text is marked as untrusted data in the prompt, and output is forced into a schema. \\
+Personal data leakage & Text containing a card number, password, token or tracking code is refused before any AI call. Models receive no names, emails or addresses. Contact details are stripped from generated notes. \\
+Unbounded cost & Per-user 10-minute and daily limits plus a site-wide daily budget per feature, stored in MongoDB so all serverless instances share them. If the database is unreachable, the feature fails closed. \\
+Bad photos & JPEG/PNG/WebP only, at most 1.5\,MB, first bytes must match the type; the client shrinks photos to 1024\,px first. The helper's photo is not stored by the AI endpoint. \\
+Provider failure & Timeouts and controlled errors (503 unavailable, 504 timeout, 502 invalid answer); the rest of the form keeps working. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Default AI usage limits}
+\label{tab:ailimits}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Feature} & \textbf{Per user / 10 min} & \textbf{Per user / day} & \textbf{Site / day} \\
+\midrule
+Support chat (signed in) & 20 & 100 & 300 \\
+Support chat (anonymous) & 8 & 30 & (shared) \\
+Request helper & 10 & 30 & 200 \\
+Offer note & 10 & 40 & 200 \\
+Report summary & 5 & 20 & 50 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All AI tests use fake providers, so the automated suites never call Gemini or spend money.
+
+\end{document}

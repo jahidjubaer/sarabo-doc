@@ -1,0 +1,13 @@
+\documentclass{standalone}
+\usepackage{standalone}
+
+\begin{document}
+\chapter*{Abstract}
+Electronics repair in Bangladesh is still largely informal: customers hand over a phone, laptop or appliance without knowing the final price, cannot see where it is, and have little recourse if something goes wrong, while technicians have no structured way to find nearby work or get paid reliably. This project presents \textbf{Sarabo}, a web-based electronics repair service management platform that turns this process into a tracked, priced and auditable service.
+
+Sarabo connects three roles. A \emph{Customer} describes the problem (optionally letting AI fill the form from Bangla, English or Banglish text and a damage photo), books a pickup window, compares offers from qualified technicians in the same region, pays an inspection fee that counts toward the final price, approves or rejects the itemised quote, pays, tracks progress and reviews the technician. A \emph{Technician} finds work on an open jobs board, sends offers guided by a data-driven price guide, inspects, quotes, repairs and withdraws earnings through bKash. An \emph{Admin} approves technicians, maintains a versioned catalogue of 45 services, handles missed pickups and refunds, moderates reviews and reads reports with an AI-written summary.
+
+The client uses React 19 and Vite; the server uses Node.js, Express 5 and MongoDB, with Firebase Authentication, Stripe payments and refunds, private Supabase storage and Google Gemini. Every money- or assignment-changing step runs in a database transaction, Stripe's signed webhook is the single source of payment truth, and a 90/10 technician/platform settlement is frozen at payment time. The system is deployed on Vercel and Firebase Hosting and was verified with \servertestcount{} passing automated server checks, \clienttestcount{} passing browser tests, lint and build checks, and continuous integration.
+
+\paragraph*{Keywords:} Electronics repair, service marketplace, workflow management, React, Express, MongoDB, Stripe, role-based access control, generative AI.
+\end{document}

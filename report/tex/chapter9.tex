@@ -1,0 +1,128 @@
+\documentclass{standalone}
+\usepackage{standalone}
+
+\begin{document}
+\chapter{Testing and Evaluation}
+\label{ch:testing}
+
+\section{Testing Strategy}
+Testing focused on \emph{domain correctness}: whether the right person can do the right thing at the right time, exactly once. Four layers were used (Figure~\ref{fig:testlayers}).
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[font=\small]
+  \node[box,trapezium,trapezium angle=78,minimum width=6cm] (a) at (0,2.4) {Manual end-to-end QA across three roles};
+  \node[box,trapezium,trapezium angle=80,minimum width=8cm] (b) at (0,1.2) {Playwright browser tests (desktop + mobile)};
+  \node[box,trapezium,trapezium angle=82,minimum width=10cm] (c) at (0,0) {Server integration tests over real HTTP and a real MongoDB replica set};
+  \node[box,trapezium,trapezium angle=84,minimum width=12cm] (d) at (0,-1.2) {Static checks: ESLint, production build, CI on every push};
+\end{tikzpicture}
+\caption{Testing layers used in Sarabo}
+\label{fig:testlayers}
+\end{figure}
+
+\paragraph*{Server integration tests.} A custom harness (\texttt{test-all.js}) starts its own API server on a random port against an isolated test database, seeds a baseline (role accounts, an approved technician, the catalogue) and exercises endpoints over real HTTP, plus direct service-level checks. Stripe, Supabase, Gemini and email are replaced by injected fakes, so the suite never touches external services or money. Concurrency is tested by firing competing requests at once, for example two admins assigning different technicians to the same request, a cancellation racing a payment, or the same Stripe webhook delivered several times in parallel; each must produce exactly one winner and a consistent final state.
+
+\paragraph*{Browser tests.} Playwright runs against a real production build of the client with a faked API, on a desktop and a mobile (Pixel~7) viewport. The tests cover public pages, the jobs board (listing, filtering, sorting, empty and error states), tracking (valid, unknown, invalid codes and server errors), authentication forms and route protection.
+
+\paragraph*{Continuous integration.} GitHub Actions runs the server suites against a throwaway MongoDB~8 replica set and runs client lint and build on every push and pull request. The latest runs on the main branch of both repositories (11 October 2026, on the final commits) passed.
+
+\section{Verification Results}
+\label{sec:results}
+For this report every check was run again on 11 October 2026 against the final code (client commit \texttt{428ee11}, server commit \texttt{0d1e758}). The server suites were run exactly as in CI, using a clean copy of the repository with no local secrets and a temporary in-memory MongoDB replica set. Table~\ref{tab:results} shows the results.
+
+\begin{table}[htbp]
+\centering
+\caption{Verification results (11 October 2026)}
+\label{tab:results}
+\small
+\begin{tabularx}{\textwidth}{@{}Xrr@{}}
+\toprule
+\textbf{Check} & \textbf{Passed} & \textbf{Failed} \\
+\midrule
+Server full suite (\texttt{npm test}) & 2,595 & 0 \\
+\quad of which re-run on their own: support and AI suite & 160 & 0 \\
+\quad of which re-run on their own: data-migration suite & 63 & 0 \\
+\quad of which re-run on their own: feedback suite & 177 & 0 \\
+Client browser tests (Playwright, 29 scenarios $\times$ 2 viewports) & 58 & 0 \\
+Client ESLint & \multicolumn{2}{r}{no errors} \\
+Client production build & \multicolumn{2}{r}{success} \\
+GitHub Actions, latest \texttt{main} run, both repositories & \multicolumn{2}{r}{success} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The server suite has grown from 1,890 checks at the time of the earlier report (August 2026) to 2,595, mainly through coverage of the job portal, inspection-fee outcomes, pickup scheduling, email, reports and the AI features. The last 15 of these cover the final payout on technician removal.
+
+\section{Representative Test Scenarios}
+\begin{longtable}{@{}p{1.1cm}p{6.1cm}p{6.9cm}@{}}
+\caption{Representative test scenarios}\label{tab:scenarios}\\
+\toprule
+\textbf{ID} & \textbf{Scenario} & \textbf{Expected and verified result} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Scenario} & \textbf{Expected and verified result} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+T-01 & Request without a token to a protected endpoint & 401; no data returned \\
+T-02 & Customer calls an admin endpoint & 403; nothing changes \\
+T-03 & Request in a region with no matching technician & 409 \texttt{NO\_TECHNICIAN\_AVAILABLE}; refusal counted once per day \\
+T-04 & Customer picks a pickup slot that is already full & 409 \texttt{PICKUP\_SLOT\_FULL}; request not saved \\
+T-05 & Unapproved or non-matching technician sends an offer & Refused; offer not stored \\
+T-06 & Inspection fee above the catalogue cap & Refused by the server \\
+T-07 & Fee payment arrives after another technician was booked & Payment recorded and refunded automatically \\
+T-08 & Same Stripe event delivered twice, or webhook and success page both fire & Exactly one payment row and one booking \\
+T-09 & Customer rejects an offer & Job reposted; technician may send one revised offer only \\
+T-10 & Cancel 3 hours vs 1 hour before pickup & Full refund vs fee kept and split 90/10 \\
+T-11 & Stripe refund call fails & Refund stays pending, shows on admin home, retry succeeds once \\
+T-12 & Quote submitted before inspection & Controlled conflict; state unchanged \\
+T-13 & Quote rejected, revised and resubmitted & Old quote archived; new round gets its own notification; no transaction hang \\
+T-14 & Approved quote with fee already paid & Amount due = quote total minus fee; settlement on the full quote \\
+T-15 & Paid request moves on to repair states & Still reported as paid; no second Pay button \\
+T-16 & Repair completed but not yet received & Settlement pending; cannot be withdrawn \\
+T-17 & Withdrawal above available balance, or two open withdrawals & Refused; database allows only one open request \\
+T-18 & Withdrawal marked paid, then technician asks again & Nothing left to withdraw; balance can never go negative \\
+T-19 & Duplicate review, or review before receipt & Refused; one review per repair \\
+T-20 & AI draft names an unknown or inactive service & ID dropped by the server \\
+T-21 & AI summary sentence with a number not in the facts & Sentence removed before saving \\
+T-22 & Problem text containing a card number & Refused before any AI call \\
+T-23 & Public tracking and jobs board responses & No names, emails, addresses or payment data \\
+T-24 & Seed or migration script pointed at production & Refused without explicit operator override \\
+T-25 & Admin removes a technician with 3,000 BDT available & Removal and a 3,000 BDT final bKash withdrawal commit together; with no bKash number on record, removal is refused and nothing changes \\
+T-26 & Visitor searches ``Ambarkhana'' on the Service Areas page & Map zooms to Ambarkhana in Sylhet, not the district centre; ``Sylhet'' still opens the district \\
+\end{longtable}
+
+\section{Manual End-to-End Acceptance}
+In August 2026 the core lifecycle was accepted by hand in the development environment with three accounts and Stripe test cards: request, assign, accept, inspect, quote, reject, revise, re-quote, approve, pay, repair, complete and confirm receipt, checking at each step that all three roles saw the same state and that the settlement became available only after receipt. For the final submission the same walkthrough is extended to the marketplace flow (AI-assisted request, offers, offer rejection and repost, inspection-fee payment, approve-and-pay, bKash withdrawal and review) as part of the final improvement phase (Section~\ref{sec:finalphase}).
+
+\section{Evaluation Against Objectives}
+\begin{table}[htbp]
+\centering
+\caption{Evaluation against objectives}
+\label{tab:evaluation}
+\small
+\begin{tabularx}{\textwidth}{@{}p{1cm}p{1.8cm}X@{}}
+\toprule
+\textbf{Obj.} & \textbf{Status} & \textbf{Evidence} \\
+\midrule
+O1 & Achieved & Firebase identity, server role and state checks (T-01, T-02) \\
+O2 & Achieved & Structured V2 form, catalogue, photos, pickup slots, AI helper (T-04, T-20) \\
+O3 & Achieved & Region and expertise gate, jobs board, offers and reposting (T-03, T-05, T-09) \\
+O4 & Achieved & Fee booking, credit, refunds and split (T-06, T-07, T-10, T-11, T-14) \\
+O5 & Achieved & Inspection, quote, rejection and revision (T-12, T-13) \\
+O6 & Achieved & Single payment truth, idempotent processing, PDF receipts (T-08, T-15) \\
+O7 & Achieved & Progress, evidence, receipt confirmation, reviews and reports (T-16, T-19) \\
+O8 & Achieved & 41 notification types, email, daily reminders, sanitized tracking (T-23) \\
+O9 & Achieved & 90/10 settlement, computed wallet, bKash withdrawals, final payout on removal (T-16 -- T-18, T-25) \\
+O10 & Achieved & Attention list, reports with checked AI summary, catalogue editor, moderation (T-21) \\
+O11 & Achieved & 2,595 server checks, 58 browser tests, lint, build, CI, live deployment \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Validation Boundary}
+The automated results above refer to an isolated test environment with fake external providers. Payments run in Stripe test mode, so no real money has moved through the platform, and the system has not yet been used by real customers. Load and performance testing under heavy traffic, and a formal security audit, were outside the scope of this project.
+
+\end{document}

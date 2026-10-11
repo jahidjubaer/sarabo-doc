@@ -1,0 +1,200 @@
+\documentclass{standalone}
+\usepackage{standalone}
+
+\begin{document}
+
+\chapter{API Surface}
+\label{app:api}
+All routes except the public ones require a Firebase ID token. ``Role'' shows who may call the route (C = Customer, T = Technician, A = Admin, P = public).
+
+{\footnotesize
+\begin{longtable}{@{}p{1.5cm}p{7.4cm}p{0.9cm}p{3.6cm}@{}}
+\caption{Sarabo API endpoints (main families)}\label{tab:apifull}\\
+\toprule
+\textbf{Method} & \textbf{Route} & \textbf{Role} & \textbf{Purpose} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Method} & \textbf{Route} & \textbf{Role} & \textbf{Purpose} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\multicolumn{4}{@{}l}{\textit{Public}} \\
+GET & \nolinkurl{/service-definitions}, \nolinkurl{/service-definitions/:id} & P & Active catalogue \\
+GET & \nolinkurl{/service-availability} & P & Can a request be served here? \\
+GET & \nolinkurl{/pickup-slots} & P & Available pickup windows \\
+GET & \nolinkurl{/jobs} & P & Open jobs board \\
+GET & \nolinkurl{/public/trackings/:trackingCode} & P & Sanitized tracking \\
+GET & \nolinkurl{/ai/status} & P & Which AI features are on \\
+POST & \nolinkurl{/stripe-webhook} & Stripe & Signed payment events \\
+GET & \nolinkurl{/health} & P & Health check \\
+\multicolumn{4}{@{}l}{\textit{Repair requests}} \\
+GET/POST & \nolinkurl{/repair-requests} & C & List own / create \\
+GET & \nolinkurl{/repair-requests/:id} & C,T,A & Authorized detail \\
+PATCH & \nolinkurl{/repair-requests/:id/pickup-slot} & C & Reschedule pickup \\
+PATCH & \nolinkurl{/repair-requests/:id/cancel} & C & Cancel before booking \\
+GET/POST & \nolinkurl{/repair-requests/:id/booking-cancellation}, \nolinkurl{/cancel-booking} & C & Preview / cancel a booked visit \\
+POST & \nolinkurl{/ai/request-draft} & C & AI request helper \\
+\multicolumn{4}{@{}l}{\textit{Job portal}} \\
+GET & \nolinkurl{/technician/job-portal} & T & Matching open jobs with details \\
+POST & \nolinkurl{/repair-requests/:id/applications} & T & Send an offer \\
+GET & \nolinkurl{/repair-requests/:id/applications/price-guide} & T & Price guide \\
+POST & \nolinkurl{/repair-requests/:id/applications/ai-note} & T & AI offer note \\
+POST & \nolinkurl{/repair-requests/:id/applications/mine/withdraw} & T & Withdraw own offer \\
+POST & \nolinkurl{/repair-requests/:id/applications/:applicationId/accept} & C & Choose an offer \\
+POST & \nolinkurl{/repair-requests/:id/applications/:applicationId/decline} & C & Reject an offer (repost) \\
+\multicolumn{4}{@{}l}{\textit{Inspection, quote, payment, repair}} \\
+POST & \nolinkurl{/repair-requests/:id/inspection} & T & Submit inspection \\
+POST & \nolinkurl{/repair-requests/:id/quote} & T & Submit quote \\
+POST & \nolinkurl{/repair-requests/:id/quote/decision} & C & Approve / reject \\
+POST & \nolinkurl{/repair-requests/:id/quote/revise} & T & Revise rejected quote \\
+POST & \nolinkurl{/repair-requests/:id/quote/cancel-request}, \nolinkurl{/quote/close} & T, C & End after a declined quote \\
+GET & \nolinkurl{/repair-requests/:id/payment-eligibility} & C & Can this be paid now? \\
+POST & \nolinkurl{/repair-requests/:id/checkout-session} & C & Start repair payment \\
+GET & \nolinkurl{/payments}, \nolinkurl{/payments/:transactionId/receipt.pdf} & C,A & History and PDF receipt \\
+POST & \nolinkurl{/repair-requests/:id/repair/start}, \nolinkurl{/progress}, \nolinkurl{/evidence}, \nolinkurl{/complete} & T & Repair workflow \\
+POST & \nolinkurl{/repair-requests/:id/confirm-receipt} & C & Confirm hand-over \\
+\multicolumn{4}{@{}l}{\textit{Technicians, wallet and feedback}} \\
+GET & \nolinkurl{/technicians/me}, \nolinkurl{/technicians/me/reviews} & T & Own profile and reviews \\
+PATCH & \nolinkurl{/technicians/:id/expertise} & T,A & Edit expertise \\
+GET & \nolinkurl{/technician/wallet} & T & Wallet balances \\
+POST & \nolinkurl{/technician/withdrawals} & T & Request bKash withdrawal \\
+GET & \nolinkurl{/repair-requests/:id/feedback} & C & Review eligibility and own feedback \\
+POST & \nolinkurl{/repair-requests/:id/review}, \nolinkurl{/technician-reports} & C & Review / private report \\
+GET & \nolinkurl{/notifications}, \nolinkurl{/notifications/unread-count} & C,T,A & In-app notifications \\
+\multicolumn{4}{@{}l}{\textit{Administration}} \\
+GET & \nolinkurl{/admin/repair-requests} & A & Paginated, filterable requests \\
+POST & \nolinkurl{/admin/repair-requests/:id/invite} & A & Invite a technician to apply \\
+POST & \nolinkurl{/admin/repair-requests/:id/missed-pickup/withdraw} & A & Technician no-show \\
+POST & \nolinkurl{/admin/repair-requests/:id/inspection-fee/retry-refund} & A & Retry a pending refund \\
+GET & \nolinkurl{/admin/attention}, \nolinkurl{/admin/reports} & A & Attention list and reports \\
+GET/POST & \nolinkurl{/admin/reports/ai-summary} & A & AI summary \\
+GET/PATCH & \nolinkurl{/admin/service-definitions}, \nolinkurl{/:id} & A & Catalogue editor \\
+PATCH & \nolinkurl{/technicians/:id} & A & Approve / reject technician \\
+GET/POST & \nolinkurl{/admin/withdrawals}, \nolinkurl{/:id/mark-paid}, \nolinkurl{/:id/reject} & A & Withdrawals \\
+GET/PATCH & \nolinkurl{/admin/technician-reviews}, \nolinkurl{/admin/technician-reports} & A & Moderation \\
+PATCH & \nolinkurl{/users/:id/role} & A & Change a user's role \\
+GET & \nolinkurl{/cron/pickup-reminders} & Cron & Daily reminders and auto-close \\
+\end{longtable}
+}
+
+\chapter{Data Model Summary}
+\label{app:data}
+\begin{table}[htbp]
+\centering
+\caption{Selected fields of a repair request}
+\label{tab:fields}
+\small
+\begin{tabularx}{\textwidth}{@{}p{4.4cm}X@{}}
+\toprule
+\textbf{Field} & \textbf{Meaning} \\
+\midrule
+\texttt{schemaVersion} & 2 for modern requests \\
+\texttt{product} & Device category, brand and model snapshot \\
+\texttt{service} & Chosen service with its price rule snapshot \\
+\texttt{trackingId} & Public tracking code (\texttt{SRB-...}) \\
+\texttt{deliveryStatus} & Lifecycle state (frozen legacy name) \\
+\texttt{pickupSlot} & Chosen two-hour window and region \\
+\texttt{damage.images} & Up to three private image identifiers \\
+\texttt{repostedAt}, \texttt{repostCount} & Job-board reposting after a rejected offer \\
+\texttt{technicianId}, \texttt{technicianEmail} & Booked technician \\
+\texttt{assignmentHistory} & Append-only assignment audit trail \\
+\texttt{inspectionPayment} & Inspection fee payment and refund state \\
+\texttt{inspectionFeeSettlement} & 90/10 split of a kept fee \\
+\texttt{inspection} & Findings and detected issues \\
+\texttt{quote}, \texttt{quoteHistory} & Live quote and archived rejected quotes \\
+\texttt{payment} & Repair payment state \\
+\texttt{repair} & Progress, completion and evidence \\
+\texttt{technicianSettlement} & Frozen commission and receivable \\
+\texttt{closedBy} & Who ended a declined request \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\chapter{Financial Rules}
+\label{app:money}
+\begin{align*}
+\text{Repair subtotal} &= \text{Labour} + \text{Parts} + \text{Additional charges}\\
+\text{Amount due} &= \max(\text{Quote total} - \text{Inspection fee paid},\ 0)\\
+\text{Sarabo commission} &= \operatorname{round}(10\% \times \text{Repair subtotal})\\
+\text{Technician receivable} &= \text{Repair subtotal} - \text{Sarabo commission}\\
+\text{Kept inspection fee} &: \text{same 90/10 rule, whole taka}
+\end{align*}
+All amounts are whole Bangladeshi taka (BDT). The settlement is calculated on the full quote, even when part of it was covered by the inspection fee. A settlement becomes withdrawable only after the customer confirms receipt; a kept inspection-fee share is available immediately.
+
+\begin{table}[htbp]
+\centering
+\caption{Worked example}
+\label{tab:moneyexample}
+\small
+\begin{tabular}{@{}lr@{}}
+\toprule
+Inspection fee paid at booking & BDT 300 \\
+Approved quote (labour 1,200 + parts 1,500 + other 0) & BDT 2,700 \\
+Customer pays after approval & BDT 2,400 \\
+Sarabo commission (10\% of 2,700) & BDT 270 \\
+Technician receivable & BDT 2,430 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\chapter{Source and Build Notes}
+\label{app:build}
+\paragraph*{Repositories.} Client: \url{https://github.com/jahidjubaer/sarabo-client}; server: \url{https://github.com/jahidjubaer/sarabo-server}.
+
+\paragraph*{Deployment.} Client: \url{https://sarabo-jahid.web.app}; API: \url{https://sarabo-server.vercel.app}.
+
+\begin{table}[htbp]
+\centering
+\caption{Verified code baseline}
+\label{tab:baseline}
+\small
+\begin{tabularx}{\textwidth}{@{}p{4.2cm}X@{}}
+\toprule
+\textbf{Item} & \textbf{State} \\
+\midrule
+Client branch / commit & \texttt{main} / \texttt{428ee11ccb71078c0ee1d693035611afe3914878} \\
+Server branch / commit & \texttt{main} / \texttt{0d1e758b4763b162d410b916b5c796fb07ee7e2b} \\
+Commits & 156 (client), 107 (server), 26 Jul -- 11 Oct 2026 \\
+Size & about 337 client source files ($\approx$29,000 lines); about 191 server files ($\approx$45,600 lines, including tests) \\
+Server tests & 2,595 / 2,595 passed \\
+Browser tests & 58 / 58 passed \\
+Lint and build & Passed \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{lstlisting}[caption={Development commands},label={lst:commands}]
+# client (sarabo-client)
+npm install
+npm run dev          # http://localhost:5173
+npm run lint
+npm run build
+npm run test:e2e     # Playwright browser tests
+
+# server (sarabo-server)
+npm install
+npm run dev          # http://localhost:3000
+npm test             # full suite, isolated test database
+npm run seed:service-definitions -- --confirm-seed
+\end{lstlisting}
+
+\paragraph*{Configuration.} No secret values appear in this report. Database, Firebase, Stripe, Supabase, Gemini, Gmail and cron credentials are supplied through environment variables, documented by name in each repository's \texttt{.env.example}, \texttt{README.md} and \texttt{SETUP.md}.
+
+\chapter{Incident Record: Revised Quote Hang}
+\label{app:incident}
+\paragraph*{Observed failure.} During manual testing in August 2026, submitting a \emph{revised} quote (after the customer had rejected the first one) left the technician's screen on ``Working...'' indefinitely.
+
+\paragraph*{Cause.} The ``quote submitted'' notification used a de-duplication key that was the same for the whole life of a request. The second round therefore hit a duplicate-key error inside the database transaction. The code treated that error as a harmless duplicate and carried on, but MongoDB had already aborted the transaction. The commit then failed, the driver retried the same callback, and the cycle repeated until it timed out, with nothing ever saved.
+
+\paragraph*{Fix.} The key now includes the quote round, derived on the server:
+\begin{lstlisting}[caption={Round-aware quote notification key},label={lst:roundkey}]
+round = quoteHistory.length + 1
+key   = "repair:" + requestId + ":quote_submitted:" + round
+\end{lstlisting}
+In addition, notification creation inside a transaction first checks for an existing key in the same session, and if a race still causes a duplicate-key error, the error is passed on so that the driver restarts the whole transaction cleanly instead of continuing an aborted one. Regression tests cover first and revised submissions, same-round replays and transactional races.
+
+\paragraph*{Lesson.} Inside a database transaction, an error may already have invalidated the transaction by the time application code sees it. Such errors must be propagated, not swallowed.
+
+\end{document}

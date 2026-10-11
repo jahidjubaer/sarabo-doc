@@ -1,0 +1,15 @@
+\documentclass{standalone}
+\usepackage{standalone}
+
+\begin{document}
+\chapter{Conclusion}
+
+This project developed Sarabo, an electronics repair service management platform that turns an informal, trust-based process into a tracked, priced and auditable service. Customers can describe a problem in their own language, see an estimate, compare offers from qualified technicians in their area, pay a small inspection fee that counts toward the final price, approve an itemised quote, pay securely and follow every step. Technicians get a steady source of matching jobs, tools that help them price and describe their offers, and a transparent wallet. Admins get a single view of what needs attention and how the service is performing.
+
+The most important engineering outcome is the server-authoritative workflow. An action succeeds only if the caller has the right role, the request is in the right state, and every amount involved is derived from stored data. Combined with MongoDB transactions, idempotent payment processing, idempotent refunds and computed (never stored) balances, this keeps money and state consistent even when requests are retried, delivered twice or raced against each other. The project also shows how generative AI can be added responsibly: constrained output, server-side validation against live data, no AI-set prices, number-checked summaries, privacy filtering and strict usage budgets.
+
+Compared with the version described in the earlier report, Sarabo grew from an admin-assigned repair workflow into a two-sided marketplace with a job portal, inspection fees and refunds, pickup scheduling, reviews, email, reports, four AI features and a production deployment, while its automated server checks grew from 1,890 to 2,595, all passing, alongside 58 browser tests and continuous integration for both repositories.
+
+As a solo final year project, Sarabo provided practical experience in requirements analysis, API and database design, state-machine thinking, role-based security, payment and refund handling, financial accounting rules, integration of external services, applied AI, interface and accessibility design, automated testing, continuous integration and deployment. The limitations identified in Chapter~\ref{ch:limitations} (chiefly a local payment gateway, automated payouts and real-world use) form a clear path for taking Sarabo from a validated academic system to a live service.
+
+\end{document}

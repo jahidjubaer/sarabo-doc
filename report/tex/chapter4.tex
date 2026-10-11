@@ -1,0 +1,185 @@
+\documentclass{standalone}
+\usepackage{standalone}
+
+\begin{document}
+\chapter{System Design and Architecture}
+
+\section{High-Level Architecture}
+Sarabo follows a browser-client / API-server architecture with external services for identity, payment, storage, email and AI (Figure~\ref{fig:arch}). The React client is hosted on Firebase Hosting; the Express API runs as a serverless function on Vercel, which also triggers a daily scheduled job. MongoDB Atlas holds all application data.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[font=\small]
+  \node[hl,minimum width=3.2cm] (client) {React 19 + Vite\\Web client\\{\scriptsize Firebase Hosting}};
+  \node[hl,minimum width=3.2cm,right=2.4cm of client] (api) {Express 5 REST API\\{\scriptsize Vercel serverless}};
+  \node[db,right=1.6cm of api] (db) {MongoDB\\Atlas};
+  \node[box,below=1.9cm of client,xshift=-1.2cm] (fb) {Firebase\\Authentication};
+  \node[box,right=4mm of fb] (stripe) {Stripe\\Checkout, webhook,\\refunds};
+  \node[box,right=4mm of stripe] (supa) {Supabase Storage\\private bucket};
+  \node[box,right=4mm of supa] (gem) {Google\\Gemini};
+  \node[box,right=4mm of gem] (mail) {Gmail\\SMTP};
+  \node[box,above=1.1cm of api] (cron) {Vercel Cron\\{\scriptsize daily 18:00 Dhaka}};
+  \draw[arr,<->] (client) -- node[lbl,above]{HTTPS / JSON} node[lbl,below]{ID token} (api);
+  \draw[arr,<->] (api) -- (db);
+  \draw[arr] (client) -- node[lbl,left]{sign in} (fb);
+  \draw[arr] (api) -- (fb.north east);
+  \draw[arr,<->] (api) -- (stripe.north);
+  \draw[arr,<->] (api) -- (supa.north);
+  \draw[arr] (api) -- (gem.north);
+  \draw[arr] (api) -- (mail.north);
+  \draw[arr] (cron) -- (api);
+  \draw[arr,dashed] (client.south east) -- node[lbl,pos=0.55]{signed PUT} (supa.north west);
+\end{tikzpicture}
+\caption{Sarabo high-level architecture}
+\label{fig:arch}
+\end{figure}
+
+\section{Client Architecture}
+The client (about 337 source files) is organised around five concerns:
+\begin{enumerate}
+  \item \textbf{Routing and guards}: public pages (home, services, service areas, jobs board, tracking, about, become a technician), authentication pages, and a dashboard subdivided by \texttt{CustomerRoute}, \texttt{TechnicianRoute} and \texttt{AdminRoute}. Guards improve usability only; the server enforces every rule again.
+  \item \textbf{Feature components}: request creation and the AI helper, damage images, pickup slots, job offers, inspection, quotation, payment, repair, feedback, wallet, notifications, support chat and administration.
+  \item \textbf{Server-state hooks}: TanStack Query hooks with central query-key factories provide caching, loading and error states, mutations and targeted invalidation.
+  \item \textbf{Presentation utilities}: status-to-stage mapping (the ``service spine''), currency formatting, eligibility helpers and per-action error messages.
+  \item \textbf{Design system}: shared tokens (colours, type scale, radii), light and dark themes, and reusable primitives built on Radix UI.
+\end{enumerate}
+
+\section{Server Architecture}
+The server (about 191 JavaScript files including tests) is layered as \emph{routes} $\rightarrow$ \emph{middleware} $\rightarrow$ \emph{controllers} $\rightarrow$ \emph{services} / \emph{utilities} $\rightarrow$ \emph{database}. Middleware attaches a request ID, logs safely, verifies the Firebase token and waits for the database connection. Controllers own the state rules of one domain; services hold logic shared by several endpoints (payment eligibility, job booking, refunds, settlement, notifications, matching, AI calls, email). External providers (Stripe, Supabase, Gemini, Gmail) sit behind small adapters, so automated tests can inject fakes and never contact the real services.
+
+The Stripe webhook route is registered before the global JSON parser because signature verification needs the exact raw request body. Routes stay registered even if the database is briefly unavailable; database-backed requests then fail with a controlled 503 instead of a misleading 404.
+
+\section{Data Collections}
+Table~\ref{tab:collections} lists the 19 MongoDB collections.
+
+\begin{table}[htbp]
+\centering
+\caption{MongoDB collections}
+\label{tab:collections}
+\small
+\begin{tabularx}{\textwidth}{@{}p{4.6cm}X@{}}
+\toprule
+\textbf{Collection} & \textbf{Purpose} \\
+\midrule
+\texttt{users} & Accounts and the authoritative role. \\
+\texttt{technicians} & Application, approval status, expertise, region/district, work status, bKash details. \\
+\texttt{repair\_requests} & The repair case with all lifecycle sub-documents. \\
+\texttt{job\_applications} & Technician offers on open requests and their states. \\
+\texttt{service\_definitions} & Versioned catalogue of services and prices. \\
+\texttt{payments} & Stripe payment rows for inspection fees and repairs, including refund state. \\
+\texttt{checkout\_sessions} & Checkout idempotency and expiry. \\
+\texttt{technician\_withdrawals} & Withdrawal requests and admin processing. \\
+\texttt{technician\_reviews} & Customer ratings with moderation history. \\
+\texttt{technician\_reports} & Private customer reports with status and admin notes. \\
+\texttt{notifications} & In-app notifications with de-duplication keys. \\
+\texttt{tracking\_events} & Sanitized public timeline. \\
+\texttt{damage\_upload\_sessions} & Customer photo upload sessions. \\
+\texttt{repair\_evidence\_sessions} & Technician completion-evidence sessions. \\
+\texttt{deletion\_cleanups} & Retry records for storage clean-up after deletion. \\
+\texttt{turned\_away\_requests} & Hashed count of refused demand (180-day expiry). \\
+\texttt{email\_log} & Sent/failed email record (90-day expiry). \\
+\texttt{support\_rate\_limits} & Shared AI rate-limit counters (auto-expiring). \\
+\texttt{ai\_report\_summaries} & Last AI summary per report period. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Repair Request Document}
+Modern requests carry \texttt{schemaVersion: 2}. Device identity is a structured \texttt{product} snapshot (category, brand, model) and the chosen service is copied together with its price rule, so later catalogue edits never change an existing request. Figure~\ref{fig:requestdoc} shows the main parts.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[font=\small]
+  \node[db,minimum width=2.8cm] (r) {repair\_requests};
+  \node[box,above left=10mm and 18mm of r] (p) {product\\brand, model};
+  \node[box,above=10mm of r] (s) {service +\\price snapshot};
+  \node[box,above right=10mm and 18mm of r] (d) {damage\\images (max 3)};
+  \node[box,left=12mm of r] (pk) {pickup slot};
+  \node[box,right=12mm of r] (ip) {inspection fee\\payment / refund};
+  \node[box,below left=10mm and 18mm of r] (i) {inspection};
+  \node[box,below=10mm of r] (q) {quote +\\quoteHistory};
+  \node[box,below right=10mm and 18mm of r] (rp) {payment, repair,\\evidence, settlement};
+  \foreach \n in {p,s,d,pk,ip,i,q,rp} \draw[arr] (r) -- (\n);
+\end{tikzpicture}
+\caption{Conceptual structure of a V2 repair request}
+\label{fig:requestdoc}
+\end{figure}
+
+\section{State Model}
+The stored status field \texttt{deliveryStatus} and several of its values were inherited from the original parcel-delivery codebase. They are kept as a frozen internal contract, while all user-facing labels use repair terminology (Table~\ref{tab:states}).
+
+\begin{table}[htbp]
+\centering
+\caption{Repair lifecycle states}
+\label{tab:states}
+\small
+\begin{tabularx}{\textwidth}{@{}p{4.4cm}X@{}}
+\toprule
+\textbf{Stored state} & \textbf{Meaning shown to users} \\
+\midrule
+\texttt{pending-pickup} & Waiting for a technician; open on the jobs board. \\
+\texttt{assignment\_pending} & Offered directly by an admin; technician to accept or reject. \\
+\texttt{driver\_assigned} & Technician booked. \\
+\texttt{rider\_arriving} & Technician on the way. \\
+\texttt{parcel\_picked\_up} & Device collected. \\
+\texttt{inspection\_completed} & Inspection submitted. \\
+\texttt{quote\_submitted} & Final price waiting for the customer. \\
+\texttt{quote\_approved} & Customer accepted the price. \\
+\texttt{quote\_rejected} & Customer declined the price. \\
+\texttt{payment\_completed} & Customer paid. \\
+\texttt{repair\_in\_progress} & Repair underway. \\
+\texttt{repair\_completed} & Repair finished; waiting for hand-over. \\
+\texttt{parcel\_delivered} & Customer confirmed receipt (terminal). \\
+\texttt{cancelled} & Ended through an allowed path. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+A job application (offer) has its own states: \texttt{pending}, \texttt{accepted}, \texttt{not\_chosen}, \texttt{withdrawn}, \texttt{no\_show} and \texttt{declined}. A settlement moves from \emph{pending} to \emph{available}, and a withdrawal from \emph{requested} to \emph{paid} or \emph{rejected}.
+
+\section{The Service Spine}
+The interface compresses the detailed states into four stages that customers understand (Figure~\ref{fig:spine}). The same component appears horizontally on the home page and vertically on the tracking page and in the dashboards. Receipt confirmation is shown as a hand-over action after ``Repaired'' rather than as a fifth stage.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=10mm]
+  \node[hl,minimum width=2.4cm] (a) {Request};
+  \node[hl,minimum width=2.4cm,right=of a] (b) {Inspect};
+  \node[hl,minimum width=2.4cm,right=of b] (c) {Approve};
+  \node[hl,minimum width=2.4cm,right=of c] (d) {Repaired};
+  \draw[arr] (a)--(b); \draw[arr] (b)--(c); \draw[arr] (c)--(d);
+\end{tikzpicture}
+\caption{The four-stage service spine shown to users}
+\label{fig:spine}
+\end{figure}
+
+\section{API Design}
+The API exposes around 100 endpoints grouped into resource families. Table~\ref{tab:api} lists representative ones; Appendix~\ref{app:api} gives a fuller list.
+
+\begin{table}[htbp]
+\centering
+\caption{Representative API endpoints}
+\label{tab:api}
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}p{1.2cm}p{8cm}X@{}}
+\toprule
+\textbf{Method} & \textbf{Route} & \textbf{Purpose} \\
+\midrule
+POST & \nolinkurl{/repair-requests} & Create a request \\
+GET & \nolinkurl{/jobs} & Public open-jobs board \\
+POST & \nolinkurl{/repair-requests/:id/applications} & Technician sends an offer \\
+POST & \nolinkurl{/repair-requests/:id/applications/:aid/accept} & Customer chooses an offer \\
+POST & \nolinkurl{/repair-requests/:id/inspection} & Submit inspection \\
+POST & \nolinkurl{/repair-requests/:id/quote/decision} & Approve or reject quote \\
+POST & \nolinkurl{/repair-requests/:id/checkout-session} & Start repair payment \\
+POST & \nolinkurl{/stripe-webhook} & Signed payment events \\
+POST & \nolinkurl{/repair-requests/:id/repair/complete} & Complete repair \\
+POST & \nolinkurl{/repair-requests/:id/review} & Rate the technician \\
+POST & \nolinkurl{/ai/request-draft} & AI request helper \\
+GET & \nolinkurl{/admin/attention} & Items needing admin action \\
+GET & \nolinkurl{/public/trackings/:code} & Sanitized tracking \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\end{document}

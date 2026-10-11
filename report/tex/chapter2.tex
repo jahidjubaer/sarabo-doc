@@ -1,0 +1,68 @@
+\documentclass{standalone}
+\usepackage{standalone}
+
+\begin{document}
+\chapter{Background and Related Work}
+
+\section{Web-Based Service Management}
+A service management platform differs from a static information system because each request evolves through a sequence of operational decisions made by different people. Sarabo follows a resource-oriented HTTP API design influenced by the REST architectural style~\cite{fielding2000}. The browser presents the workflow, but the server remains the only authority on whether a transition is legal.
+
+\section{Single-Page Application Architecture}
+The client is a React single-page application. React provides a component model for composing stateful interfaces~\cite{react}, React Router maps public pages and role-specific dashboard routes, and TanStack Query manages asynchronous server state, caching and invalidation~\cite{tanstack}. This separation matters in Sarabo because server data such as request status, offers, quotations, wallet balances and notifications can change independently of the form a user is filling in. Vite~\cite{vite} provides the development server and production bundling, and Tailwind CSS~\cite{tailwind} the styling system.
+
+\section{RESTful API and Express}
+The server uses Express~5~\cite{express} as its HTTP framework. Routes are grouped by domain (users, technicians, repair requests, job applications, inspections, quotations, payments, repairs, wallet, feedback, notifications, tracking, service definitions, damage uploads, support and administration). Sensitive routes apply authentication middleware and role checks before any database operation.
+
+\section{Document Database and Transactions}
+MongoDB is the primary database~\cite{mongodb}. A document model suits a repair request: it has a stable identity but accumulates nested workflow information (product snapshot, service and price snapshot, damage images, inspection, quote and quote history, payments, repair evidence, assignment history and settlement). Separate collections are used where an independent lifecycle, index or audit trail is needed, such as job applications, payments, notifications, tracking events, withdrawals and reviews. MongoDB multi-document transactions, available on replica sets, let several of these collections change together or not at all.
+
+\section{Authentication and Authorization}
+Firebase Authentication supplies user identity and signed ID tokens~\cite{firebaseauth}. The client attaches the token to every protected API request, and the server verifies it with the Firebase Admin SDK before trusting the caller's email. Authorization is then role-based (Customer, Technician, Admin) and state-based (the request must be in the right stage). For backward compatibility the stored role value for Technician remains \texttt{rider}, inherited from the original codebase, while every user-facing label says ``Technician''.
+
+\section{Online Payment Processing}
+Sarabo uses Stripe Checkout for card payments~\cite{stripe}. The design treats the server-side record of payment as authoritative: Stripe calls a webhook whose signature is verified against a shared secret~\cite{stripewebhooks}, so the payment is recorded even if the customer closes the browser before returning to the success page. Refunds are requested through Stripe's API with idempotency keys so they cannot be issued twice. All payments currently run in Stripe test mode.
+
+\section{Private Object Storage}
+Damage and repair-evidence images are stored in a private Supabase Storage bucket~\cite{supabase}. The server issues short-lived signed URLs: the browser uploads bytes directly to storage, the server then verifies the stored object's real type and size, and every later view uses a fresh signed read URL. Large files never pass through the API server, and the privileged storage key never reaches the browser.
+
+\section{Large Language Models in Applications}
+Large language models (LLMs) such as Google Gemini~\cite{gemini} can turn free text into structured data, summarise information and draft natural-language messages. They can also produce confident but wrong output (``hallucination''), be manipulated by instructions hidden in user text (prompt injection), and generate unpredictable cost. OWASP lists prompt injection and overreliance among the main risks of LLM applications~\cite{owaspllm}. Sarabo therefore uses AI only as an \emph{assistant}: the model's answer is constrained to a JSON schema, validated against live data on the server, never allowed to set a price, and always reviewed by a human before it takes effect (Chapter~\ref{ch:ai}).
+
+\section{Usability and Accessibility}
+The interface follows an action-first approach: the current stage of a repair and the next action for the signed-in role get more visual weight than secondary data. A recurring ``service spine'' (Request, Inspect, Approve, Repaired) appears on the home page, the public tracking page and every dashboard. Labels, focus order, keyboard access, colour contrast, reduced motion and responsive layouts from 320\,px upward follow the WCAG~2.2 guidance~\cite{wcag22}.
+
+\section{Related Systems}
+Repair and home-service needs in Bangladesh are served today in three broad ways:
+\begin{itemize}
+  \item \textbf{Local repair shops and freelance technicians}, found through word of mouth or social media. Prices are negotiated in person, there is no tracking and little recourse.
+  \item \textbf{Brand service centres}, which offer reliable repair for their own products but cover only one brand and are concentrated in large cities.
+  \item \textbf{General on-demand service marketplaces} such as Sheba.xyz in Bangladesh~\cite{sheba} and Urban Company in South Asia~\cite{urbancompany}, which let customers book many kinds of household services from listed providers.
+\end{itemize}
+
+International platforms such as Thumbtack~\cite{thumbtack} popularised the model in which customers describe a job and several professionals respond with quotes. Sarabo adopts this offer model but specialises it for electronics repair, where the true price is usually unknown until the device has been opened. Table~\ref{tab:related} compares the approaches on the features most relevant to this project.
+
+\begin{table}[htbp]
+\centering
+\caption{Comparison of approaches to electronics repair}
+\label{tab:related}
+\small
+\begin{tabularx}{\textwidth}{@{}Xccc@{}}
+\toprule
+\textbf{Capability} & \textbf{Local shop} & \textbf{General marketplace} & \textbf{Sarabo} \\
+\midrule
+Online request with device and problem details & -- & \checkmark & \checkmark \\
+Price estimate before hand-over & -- & Partial & \checkmark \\
+Several competing offers per job & -- & Varies & \checkmark \\
+Separate inspection fee credited to final price & -- & -- & \checkmark \\
+Formal inspection and itemised quote & -- & Varies & \checkmark \\
+Online payment with receipt & -- & \checkmark & \checkmark \\
+Step-by-step public tracking & -- & Partial & \checkmark \\
+Technician matched by repair-specific expertise & -- & Partial & \checkmark \\
+Bangla/Banglish AI request assistance & -- & -- & \checkmark \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Sarabo's contribution is not a new algorithm. Its engineering value lies in combining patterns from ticketing systems (a trackable case with an identifier and history), field-service systems (assignment, inspection, completion), marketplaces (offers, payment, commission, payouts) and evidence-driven workflows (private photos and completion records) into one coherent repair workflow with explicit state, money and authorization rules.
+
+\end{document}

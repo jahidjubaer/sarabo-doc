@@ -1,0 +1,146 @@
+\documentclass{standalone}
+\usepackage{standalone}
+
+\begin{document}
+\chapter{Requirements Analysis}
+
+\section{Stakeholders and Roles}
+The system has three signed-in roles and one anonymous audience. Their goals are summarised in Table~\ref{tab:roles}.
+
+\begin{table}[htbp]
+\centering
+\caption{User roles}
+\label{tab:roles}
+\small
+\begin{tabularx}{\textwidth}{@{}p{2.2cm}p{3.6cm}X@{}}
+\toprule
+\textbf{Role} & \textbf{Primary goal} & \textbf{Representative actions} \\
+\midrule
+Customer & Get a device repaired at a fair, known price & Create request (optionally with AI help), add photos, pick a pickup slot, compare offers, pay inspection fee, approve or reject quote, pay, track, confirm receipt, review or report the technician \\
+Technician & Find suitable work and get paid & Apply with expertise and region, browse the jobs board, send offers, inspect, quote, revise, repair, complete, view wallet, withdraw via bKash \\
+Admin & Keep the service healthy & Approve technicians, edit catalogue and prices, handle missed pickups and refunds, process withdrawals, moderate reviews and reports, read reports \\
+Visitor & Learn about the service & Browse services, service areas and open jobs, track a repair with a tracking code, ask the AI support chat \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Functional Requirements}
+Table~\ref{tab:fr} lists the functional requirements. Requirements FR-21 to FR-32 were added in the second development stage.
+
+\begin{longtable}{@{}p{1.4cm}p{13cm}@{}}
+\caption{Functional requirements}\label{tab:fr}\\
+\toprule
+\textbf{ID} & \textbf{Requirement} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Requirement} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+FR-01 & The system shall authenticate users (email/password and Google) and protect private routes. \\
+FR-02 & The system shall distinguish Customer, Technician and Admin capabilities on the server. \\
+FR-03 & A verified Customer shall be able to create a structured repair request for a catalogue service. \\
+FR-04 & The service catalogue shall provide active device and repair categories with BDT estimate ranges, inspection fee caps and required expertise level. \\
+FR-05 & Customers shall be able to attach up to three damage photos through a controlled private-storage workflow. \\
+FR-06 & Users shall be able to apply as Technicians with region, district and structured expertise; Admin shall approve or reject applications. \\
+FR-07 & The assigned Technician shall submit an inspection before a quote can be submitted. \\
+FR-08 & The Technician shall submit an itemised quote (labour, parts, additional charges). \\
+FR-09 & The Customer shall approve or reject the quote; after rejection the Technician may revise once more or close the request. \\
+FR-10 & Payment shall be possible only for an approved quote and never twice. \\
+FR-11 & The Technician shall record repair progress and completion with optional evidence photos. \\
+FR-12 & The Customer shall confirm receipt of the repaired device. \\
+FR-13 & The system shall send role-appropriate in-app notifications for workflow events. \\
+FR-14 & A public tracking page shall show a sanitized timeline by tracking code, without personal or payment data. \\
+FR-15 & A 90/10 Technician/platform settlement shall be frozen when the repair is paid. \\
+FR-16 & Technicians shall request withdrawals up to their server-computed available balance; Admin shall mark each as paid (with bKash TrxID) or rejected exactly once. \\
+FR-17 & A customer shall be able to cancel a request before a technician is booked. \\
+FR-18 & Admin shall be able to edit the service catalogue; price changes shall create a new version without changing existing requests. \\
+FR-19 & Technicians shall be able to edit their expertise; Admin shall see technician availability. \\
+FR-20 & Customers shall be able to download a PDF receipt for every payment. \\
+FR-21 & A request shall be accepted only if at least one approved Technician in the customer's region can perform it; refused demand shall be counted. \\
+FR-22 & Customers shall choose a two-hour pickup slot (Saturday--Thursday, up to 7 days ahead) subject to per-region capacity, and may reschedule before pickup. \\
+FR-23 & Open requests shall appear on a public jobs board; matching Technicians shall be notified and may send offers (estimate range, inspection fee, note). \\
+FR-24 & The Customer shall compare offers and choose one, or reject one (the job is reposted and the Technician may send one revised offer). \\
+FR-25 & Choosing an offer with a fee shall open a Stripe payment; the confirmed payment shall book the Technician atomically. \\
+FR-26 & The inspection fee shall be credited toward the final quote, refunded when the visit fails or is cancelled in time, and split 90/10 when kept. \\
+FR-27 & Customers shall rate a completed repair (1--5 with optional comment) or file a private report; Admin shall moderate both. \\
+FR-28 & The system shall email request confirmations, pickup reminders and new-job alerts, and post in-app pickup reminders daily. \\
+FR-29 & Admin shall see an attention list (overdue and missed pickups, unmatchable requests, no offers in 24 hours, refunds waiting) and period reports. \\
+FR-30 & An AI helper shall turn a free-text description and/or damage photo into a draft request that the customer reviews. \\
+FR-31 & Technicians shall see a price guide from past offers and may ask AI to draft their offer note. \\
+FR-32 & An AI support chat shall answer visitor questions from live catalogue data, and Admin reports shall include an AI summary checked against the real figures. \\
+\end{longtable}
+
+\section{Non-Functional Requirements}
+\begin{table}[htbp]
+\centering
+\caption{Non-functional requirements}
+\label{tab:nfr}
+\small
+\begin{tabularx}{\textwidth}{@{}p{2.6cm}X@{}}
+\toprule
+\textbf{Category} & \textbf{Requirement} \\
+\midrule
+Security & Identity, role, prices, fees, balances and refund decisions are derived or validated on the server. Private images are reachable only through short-lived signed URLs. Secrets never reach the browser. \\
+Consistency & Steps that change several records (booking, approval, completion, settlement, refunds) run as database transactions. \\
+Reliability & Repeated or concurrent actions return controlled conflicts instead of repeating money or state changes. Failed refunds stay pending and can be retried. Email or notification failures never fail the main action. \\
+Privacy & Public pages (tracking, jobs board) expose no names, emails, addresses or payment data. AI providers receive no personal identifiers. \\
+Cost control & Every AI feature has per-user and site-wide daily limits stored in the database, and is off unless explicitly enabled. \\
+Usability & Each screen shows the current stage and the next action for that role; empty, loading and error states are truthful. \\
+Accessibility & Keyboard access, visible focus, sufficient contrast, labelled controls, reduced-motion support, layouts from 320\,px. \\
+Performance & Cached server state on the client, code-split routes, direct-to-storage uploads, paginated lists. \\
+Maintainability & Workflow rules, status presentation and query keys are centralised; CI runs lint, build and tests on every push. \\
+Auditability & Tracking events, assignment history, quote history, payment rows, refund state, withdrawal processing and moderation history are kept. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Service Catalogue}
+The catalogue contains \textbf{45 services} across eight device categories (Table~\ref{tab:catalogue}). Each service pairs a device category with a repair category and carries a BDT estimate range, an inspection-fee cap, a required expertise level (beginner, intermediate, advanced, expert) and an estimated duration. Prices are shown as estimates; the final amount is always the technician's written quote after inspection.
+
+\begin{table}[htbp]
+\centering
+\caption{Service catalogue summary with sample services}
+\label{tab:catalogue}
+\small
+\begin{tabularx}{\textwidth}{@{}p{2.8cm}cXr@{}}
+\toprule
+\textbf{Device} & \textbf{Services} & \textbf{Sample service} & \textbf{Estimate (BDT)} \\
+\midrule
+Smartphone & 8 & Screen Replacement & 1,500--6,000 \\
+Laptop / Computer & 8 & Motherboard Repair & 2,500--12,000 \\
+Television & 5 & Screen / Panel Repair & 4,000--18,000 \\
+Refrigerator & 6 & Compressor / Refrigerant Service & 3,500--15,000 \\
+Washing Machine & 6 & Control Board Repair & 2,000--7,000 \\
+Air Conditioner & 6 & Gas Refill / Compressor Repair & 3,000--20,000 \\
+Microwave Oven & 4 & Electrical / Power Repair & 1,500--5,000 \\
+Other Electronics & 2 & General Repair & 1,000--5,000 \\
+\midrule
+\textbf{Total} & \textbf{45} & & \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Use-Case View}
+Figure~\ref{fig:usecase} shows the main interactions of each role with the platform.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=4mm]
+  \node[hl,minimum width=2.4cm] (c) {Customer};
+  \node[box,right=12mm of c,text width=9.6cm,align=left] (ca) {Create request (AI helper) \textbullet{} add photos \textbullet{} book pickup slot \textbullet{} compare / reject offers \textbullet{} pay inspection fee \textbullet{} approve quote \& pay \textbullet{} track \textbullet{} confirm receipt \textbullet{} review / report};
+  \node[hl,minimum width=2.4cm,below=14mm of c] (t) {Technician};
+  \node[box,right=12mm of t,text width=9.6cm,align=left] (ta) {Apply with expertise \textbullet{} jobs board \textbullet{} send offer (price guide, AI note) \textbullet{} collect \& inspect \textbullet{} quote / revise \textbullet{} repair \& complete \textbullet{} wallet \& bKash withdrawal};
+  \node[hl,minimum width=2.4cm,below=14mm of t] (a) {Admin};
+  \node[box,right=12mm of a,text width=9.6cm,align=left] (aa) {Approve technicians \textbullet{} catalogue \& prices \textbullet{} attention list \textbullet{} missed pickups \& refunds \textbullet{} withdrawals \textbullet{} moderation \textbullet{} reports with AI summary};
+  \node[hl,minimum width=2.4cm,below=14mm of a] (v) {Visitor};
+  \node[box,right=12mm of v,text width=9.6cm,align=left] (va) {Browse services \& areas \textbullet{} open jobs board \textbullet{} public tracking \textbullet{} AI support chat};
+  \foreach \x/\y in {c/ca,t/ta,a/aa,v/va} \draw[arr] (\x) -- (\y);
+\end{tikzpicture}
+\caption{Role-oriented use-case view}
+\label{fig:usecase}
+\end{figure}
+
+\end{document}

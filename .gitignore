@@ -1,0 +1,16 @@
+# LaTeX build output (the final PDF is Sarabo_Final_Report.pdf at the top level)
+report/*.log
+report/*.blg
+report/*.aux
+report/*.bbl
+report/*.toc
+report/*.lof
+report/*.lot
+report/*.out
+report/myThesis.pdf
+
+# Python
+__pycache__/
+
+# Office lock files
+~$*

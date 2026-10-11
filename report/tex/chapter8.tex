@@ -1,0 +1,54 @@
+\documentclass{standalone}
+\usepackage{standalone}
+
+\begin{document}
+\chapter{Security, Reliability and Data Integrity}
+
+\section{Security Principles}
+Sarabo is \emph{server-authoritative}. The client decides what to display; the server decides what is allowed. This follows the common REST security guidance that authorization must be enforced at each resource operation~\cite{owasprest}. Secrets (database, Stripe, Supabase, Gemini, Gmail, cron) exist only in server environment variables and are never committed or sent to the browser.
+
+\section{Authentication}
+Firebase issues ID tokens to signed-in users. Each protected request sends the token, the server verifies it with Firebase Admin, and the caller's email is taken from the verified token only. Endpoints such as \texttt{/technicians/me}, \texttt{/users/me/role} and the wallet never accept another user's email as input. Customer actions that create requests or payments require a verified email address.
+
+\section{Role- and State-Based Authorization}
+Every write endpoint checks both who the caller is and what state the request is in:
+\begin{itemize}
+  \item only Admins approve technicians, edit the catalogue, retry refunds, process withdrawals and moderate feedback;
+  \item only an approved, matching Technician can see job details or send an offer, and only the booked Technician can inspect, quote, revise and repair;
+  \item only the owning Customer can choose or reject offers, decide on a quote, pay, cancel, confirm receipt and review;
+  \item a quote can be submitted only after inspection, payment only after approval, revision only from \texttt{quote\_rejected}, and a paid repair can never re-enter the rejected-quote path.
+\end{itemize}
+Requests that do not belong to the caller return the same ``not found'' answer as missing ones, so their existence is not revealed.
+
+\section{Financial Integrity}
+Prices, fees, credits, commissions, balances and withdrawal limits are always derived on the server from stored data. Money is handled in whole taka. Stripe sessions are created from stored amounts; the webhook signature is verified on the raw body~\cite{stripewebhooks}; payment processing is idempotent; refunds carry idempotency keys; settlements are frozen once; and withdrawals move from \emph{requested} to \emph{paid} or \emph{rejected} through a single-winner update, so the same withdrawal can never be paid twice.
+
+\section{Privacy}
+Public endpoints (tracking, jobs board, service availability) return purpose-built projections without names, emails, addresses, phone numbers, payment data or database IDs. Technicians see a customer's district and problem, but not identity or street address, until booked. Refused-demand counts store a hash instead of the customer's email. Reports about technicians are visible only to admins.
+
+\section{Private Image Security}
+The storage bucket is private. Signed upload and read URLs are short-lived and specific to one object. The server checks the real stored type and size rather than trusting the browser, and the permanent object identifier is never returned by the API.
+
+\section{Input Validation and Safe Errors}
+The server validates IDs, state transitions, amounts, text lengths, file types and every mutation's allowed fields; unexpected fields are rejected. User text is stored as plain text and rendered as text. Errors use stable codes (for example \texttt{PICKUP\_SLOT\_FULL}, \texttt{NO\_TECHNICIAN\_AVAILABLE}) instead of raw provider messages, and logs record only the request ID, route, status and a broad category, never request bodies, comments or secrets.
+
+\section{CORS, Rate Limiting and Abuse Control}
+The API accepts browser calls only from the configured client origin, which must be \texttt{https} in production. Public tracking, the jobs board and every AI feature are rate limited; AI and support limits are stored in MongoDB so they hold across serverless instances. The scheduled job endpoint requires a secret and refuses to run without one.
+
+\section{Transaction Safety}
+MongoDB transactions protect the invariants that matter most:
+\begin{itemize}
+  \item a request's state and its technician's availability always agree, so a technician cannot be double-booked;
+  \item a payment, the booking it causes and the offers it closes change together;
+  \item a quote transition, its tracking event and its notification apply together or not at all;
+  \item a fee refund is marked pending in the same transaction as the event that causes it.
+\end{itemize}
+A late defect (Appendix~\ref{app:incident}) showed a subtle rule: if an insert inside a transaction fails with a duplicate key, MongoDB has already aborted the transaction, so that error must be passed on to let the driver retry the whole transaction, never swallowed.
+
+\section{Environment Isolation}
+Development, automated tests and production use different database names, and the code refuses to run tests against the development or production database. Seed and migration scripts default to dry runs and refuse production unless an operator passes explicit one-time flags. Continuous integration runs on a throwaway database and is never given real credentials.
+
+\section{Legacy Compatibility Boundary}
+Some stored values come from the original parcel-delivery codebase: the role value \texttt{rider} and status values such as \texttt{driver\_assigned} or \texttt{parcel\_delivered}. They are treated as frozen contract values behind a presentation layer; everything users see uses repair terminology. Renaming them would require a coordinated data migration and is listed as future work.
+
+\end{document}

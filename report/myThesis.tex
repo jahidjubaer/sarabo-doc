@@ -1,0 +1,90 @@
+\documentclass[a4paper,oneside,11pt]{report}
+\usepackage{myStyle}
+
+% --- Additions for this report (the template's myStyle.sty is unchanged) ---
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{amsmath}
+\usetikzlibrary{positioning,shapes.geometric,arrows.meta,fit,calc}
+\captionsetup{labelfont=bf,font=small}
+\lstset{basicstyle=\ttfamily\small,backgroundcolor=\color{gray!8},frame=single,
+        rulecolor=\color{gray!40},columns=fullflexible,breaklines=true,
+        aboveskip=8pt,belowskip=4pt,showstringspaces=false}
+\renewcommand{\lstlistlistingname}{Listings}
+\usepackage[hidelinks]{hyperref}
+\setlength{\emergencystretch}{3em} % lets lines with long code names wrap instead of overflowing
+
+% Edit these in one place
+\newcommand{\projecttitle}{Sarabo: An Electronics Repair Service Management Platform}
+\newcommand{\studentname}{Jahid Hasan}
+\newcommand{\studentid}{222-115-116}
+\newcommand{\studentbatch}{57 (C)}
+\newcommand{\supervisorname}{Shrabanti Chowdhury}
+\newcommand{\supervisordesig}{Senior Lecturer}
+\newcommand{\reviewerone}{Nabila Zannat Rifa}
+\newcommand{\reviewertwo}{Md. Fahmidur Rahman Sakib}
+\newcommand{\submissiondate}{26 October 2026}
+% Verified test results (see Chapter 9)
+\newcommand{\servertestcount}{2,595}
+\newcommand{\clienttestcount}{58}
+
+% TikZ styles shared by every diagram
+\tikzset{
+  box/.style={draw,rounded corners=2pt,fill=gray!6,align=center,font=\small,minimum height=8mm,inner sep=4pt},
+  hl/.style={box,fill=blue!6},
+  dec/.style={draw,diamond,aspect=2.2,fill=yellow!10,align=center,font=\small,inner sep=1pt},
+  db/.style={draw,cylinder,shape border rotate=90,aspect=0.25,fill=green!6,align=center,font=\small,minimum height=10mm},
+  arr/.style={-{Stealth[length=2mm]},thick},
+  lbl/.style={font=\scriptsize,fill=white,inner sep=1pt}
+}
+
+\begin{document}
+\pagenumbering{Alph}
+\pagestyle{empty}
+\input{./tex/frontPages}
+\pagestyle{plain}
+\clearpage\pagenumbering{Roman}
+\addcontentsline{toc}{section}{Abstract}
+\input{./tex/abstract}
+\clearpage
+\addcontentsline{toc}{section}{Acknowledgements}
+\input{./tex/acknowledgements}
+\clearpage
+\addcontentsline{toc}{section}{Table of Contents}
+\tableofcontents
+\clearpage
+\addcontentsline{toc}{section}{\listtablename}
+\listoftables
+\clearpage
+\addcontentsline{toc}{section}{\listfigurename}
+\listoffigures
+\clearpage
+\addcontentsline{toc}{section}{Listings}
+\lstlistoflistings
+\clearpage\pagenumbering{arabic}
+
+\input{./tex/introduction}  % Chapter 1 Introduction
+\input{./tex/chapter2}      % Chapter 2 Background and Related Work
+\input{./tex/chapter3}      % Chapter 3 Requirements Analysis
+\input{./tex/chapter4}      % Chapter 4 System Design and Architecture
+\input{./tex/chapter5}      % Chapter 5 Implementation
+\input{./tex/chapter6}      % Chapter 6 Core Workflows and Business Rules
+\input{./tex/chapter7}      % Chapter 7 AI-Assisted Features
+\input{./tex/chapter8}      % Chapter 8 Security, Reliability and Data Integrity
+\input{./tex/chapter9}      % Chapter 9 Testing and Evaluation
+\input{./tex/chapter10}     % Chapter 10 Limitations and Future Work
+\input{./tex/conclusion}    % Chapter 11 Conclusion
+
+\addcontentsline{toc}{chapter}{References}
+\clearpage
+
+\renewcommand\bibname{References}
+\bibliographystyle{IEEEtran}
+\bibliography{IEEEabrv, ref_file}
+\begin{appendices}
+	\input{./tex/appendix}
+\end{appendices}
+
+\end{document}
