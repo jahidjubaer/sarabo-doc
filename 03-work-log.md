@@ -266,8 +266,12 @@ Nothing in entries 3–4 was committed, pushed or deployed.
 - Result on the live site after the deploy: 6 of 6 questions answered, in 3.0–9.6 s.
   These times match the slow model still being tried first: the Vercel variable
   `AI_SUPPORT_MODEL` was still `gemini-3.1-flash-lite` at the time of the test.
-- Still to do: set `AI_SUPPORT_MODEL=gemini-3.5-flash-lite` in Vercel (or delete the
-  variable) and redeploy; update the same line in `.env.example` and the local `.env`.
+- Follow-up, same day: `AI_SUPPORT_MODEL` was changed to `gemini-3.5-flash-lite` in Vercel
+  and the server redeployed. Live check: 8 of 8 questions answered. The first one after the
+  redeploy took 4.9 s (cold start); the other seven took 1.4–1.9 s. During the check the
+  per-visitor limit (8 anonymous questions per 10 minutes) correctly refused five extra
+  test questions with `429 SUPPORT_RATE_LIMITED`.
+- Still to do: update the model line in `.env.example` and the local `.env`.
 - Known limit: the Gemini free tier has per-minute and daily quotas. If both models are
   refused at the same moment the user still sees "temporarily unavailable".
 - Commit: server `5c6aab5` fix: faster AI model with a fallback model for slow or
