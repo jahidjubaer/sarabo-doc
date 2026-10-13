@@ -182,3 +182,94 @@ Nothing in entries 3–4 was committed, pushed or deployed.
 - Pushed to `github.com/jahidjubaer/sarabo-client` and `sarabo-server` (`main`), signed in
   as jahidjubaer. GitHub Actions CI passed on both new commits.
 - This folder was pushed to `github.com/jahidjubaer/sarabo-doc`.
+
+### 7. Site does not load on mobile data: investigation — 2026-10-14
+- Type: investigation (no code change)
+- Problem: After deploying the website and the API to Vercel, the site loaded on Wi-Fi but
+  not on Robi mobile data ("This site can't be reached").
+- What was checked, on the phone with Robi data:
+  - `sarabo-client-six.vercel.app` (website) and `sarabo-server.vercel.app/health` (API): both failed.
+  - A test Cloudflare Worker (`*.workers.dev`) set up as a proxy to the API: worked on Wi-Fi,
+    failed on Robi data.
+  - `sarabo-jahid.web.app` (the old Firebase address, confirmed up from the PC): also failed.
+  - `cloudflare.com` and `vercel.com`: loaded normally.
+  - After setting the phone's Private DNS to `dns.google`: the website and the API both loaded,
+    and `/health` answered `status: ok`, `database: connected`.
+- Finding: the failure is in DNS lookup on that phone/network, not in the Sarabo code or in
+  Vercel. Three unrelated hosts failed, all on `.app` / `.dev` addresses, while `.com` sites
+  loaded. The phone also had another DNS configured earlier, so it may be a fault of that
+  phone only. This was not confirmed on a second phone or operator.
+- Decision: no change for now. If other Robi users report the same problem, the next test is
+  `sarabo-jahid.firebaseapp.com` (a free `.com` address for the same Firebase site) with the
+  phone's DNS on Automatic; the lasting fix would be an own domain name.
+
+### 8. Slow loading: API moved next to the database — 2026-10-14
+- Type: fix (performance)
+- Problem: The site felt slow and sometimes looked broken. Measured on the live API: the
+  first request after the server had been idle took 4.2 s for `/health` and 10.7 s for
+  `/service-definitions`; later requests took 0.6–0.75 s.
+- Cause: The MongoDB Atlas cluster is in Mumbai, but the Vercel function ran in
+  Washington, US (`iad1`). Every database call crossed the world and back (about 0.2 s).
+  On a cold start the server also runs about 45 `createIndex` calls one after another
+  (`config/database.js`) before the first query, which made up most of the 10 seconds.
+- What was changed: one line in `vercel.json`, `"regions": ["bom1"]`, so the function runs
+  in Mumbai, next to the database.
+- Files (server): `vercel.json`
+- How it was tested: config only, so no test run. After the deploy the live API was timed
+  again from the same PC (single measurements).
+- Result: the response header now shows `bom1::bom1`.
+
+  | Request | Before | After |
+  |---|---|---|
+  | `/service-definitions`, first request after wake-up | 10.7 s | 2.9 s |
+  | `/service-definitions`, normal request | 0.75 s | about 0.2 s |
+  | `/health`, normal request | 0.6 s | about 0.2 s |
+
+- Not done: CDN caching of the public services list. The API sends the CORS header only
+  when the request has an `Origin` header, so a wrongly shared cached copy could block the
+  list in browsers. A free uptime monitor on `/health` would reduce cold starts further.
+- Commit: server `7889296` perf: run the API in Mumbai, next to the database. Pushed to
+  `main`; Vercel deployed it.
+
+### 9. AI support sometimes failed: faster model and a fallback model — 2026-10-14
+- Type: fix
+- Problem: AI support sometimes answered "took too long" or "temporarily unavailable".
+- How the cause was found:
+  - Six test questions on the live site: five were answered in 4.7–8.4 s and one failed
+    with `504 SUPPORT_TIMEOUT` at the server's 12-second limit.
+  - Timing Gemini directly with the real support prompt (about 2,700 input tokens):
+    `gemini-3.1-flash-lite` took 6–16 s per answer on the free tier and sometimes returned
+    `503` (high demand). `gemini-3.5-flash-lite` answered the same questions in 1.2–2.6 s.
+  - After a burst of about 30–40 calls in a few minutes the free tier returned `429`
+    (rate limit), and the retry went to the same model, so it failed again.
+  - With the old "LOW" thinking setting, `gemini-3.5-flash-lite` returned cut-off JSON in
+    3 of 4 tries; with "MINIMAL" every answer was valid.
+- What was changed:
+  - Default model is now `gemini-3.5-flash-lite`. `AI_SUPPORT_MODEL` may name either
+    `gemini-3.5-flash-lite` or `gemini-3.1-flash-lite`; the other one becomes the fallback.
+  - The second attempt goes to the fallback model, with no waiting, when the first model
+    fails, is overloaded or is rate-limited.
+  - AI support gives up on the first model after 5 seconds
+    (`AI_SUPPORT_FIRST_ATTEMPT_TIMEOUT_MS`), so the fallback still fits inside the
+    12-second limit.
+  - The request helper, offer-note helper and weekly summary share the model, so they get
+    the same fallback (`callGeminiJson`) and the "MINIMAL" thinking setting.
+- Files (server): `config/aiSupport.js`, `services/aiProviders/geminiSupportProvider.js`,
+  `geminiJsonCall.js`, `geminiRequestDraftProvider.js`, `geminiOfferNoteProvider.js`,
+  `geminiReportSummaryProvider.js`, `tests/geminiSupportProviderTests.js`,
+  `tests/aiRequestDraftTests.js`
+- How it was tested: four new tests (fallback after a failure, fallback after a slow first
+  model, either supported model accepted, helper fallback after a rate limit). Support
+  suite **164 / 164**; full server suite **2,599 / 2,599**. Against real Gemini with the
+  local database: 8 support questions (English, Bangla, Banglish) answered in 1.2–2.6 s,
+  and the three helpers returned valid results in 1.4–2.4 s.
+- Result on the live site after the deploy: 6 of 6 questions answered, in 3.0–9.6 s.
+  These times match the slow model still being tried first: the Vercel variable
+  `AI_SUPPORT_MODEL` was still `gemini-3.1-flash-lite` at the time of the test.
+- Still to do: set `AI_SUPPORT_MODEL=gemini-3.5-flash-lite` in Vercel (or delete the
+  variable) and redeploy; update the same line in `.env.example` and the local `.env`.
+- Known limit: the Gemini free tier has per-minute and daily quotas. If both models are
+  refused at the same moment the user still sees "temporarily unavailable".
+- Commit: server `5c6aab5` fix: faster AI model with a fallback model for slow or
+  rate-limited answers (author Jahid Hasan, no co-author). Pushed to `main`; Vercel
+  deployed it.
