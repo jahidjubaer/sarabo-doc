@@ -320,3 +320,69 @@ Nothing in entries 3–4 was committed, pushed or deployed.
   only, not pushed or deployed: server `f932acb` feat: rank technician offers by rating,
   reliability, price, district and reply time; client `2b86891` feat: best match badge,
   reasons and sorting on technician offers.
+
+### 11. Repair warranty and returns — 2026-10-14
+- Type: feature
+- Goal: Give customers a warranty on finished repairs: they can report a problem, the
+  technician re-inspects it, and a fault that cannot be fixed again is refunded.
+- Policy (chosen by the user before work started):
+  - 30 days, counted from when the customer confirms they received the device.
+  - Covers the same fault coming back, or a part the technician fitted failing. Not new
+    damage, water damage or a drop.
+  - The same technician re-inspects for free.
+  - Covered: free re-repair. If the technician cannot fix it, or the customer says it is
+    still broken, an admin refunds the repair amount.
+  - Not covered: the customer can ask an admin to review the decision within 7 days.
+  - Limits: one open claim at a time, and at most 2 claims per repair.
+- Money decision (proposed and stated to the user): the refund is the whole quote total
+  (the repair payment plus the inspection fee credited toward it), through Stripe test mode
+  like the existing inspection-fee refunds. The technician's settlement for that repair is
+  reversed in the same transaction. If it had already been withdrawn, the wallet shows the
+  amount as owed, and it is netted from future earnings.
+- What was changed:
+  - Server: claim lifecycle (submitted → re-inspection booked → covered / not covered →
+    admin review → re-repair → customer confirmation → resolved or refunded). Every step is
+    a guarded update, so no step can be skipped and two people acting at once cannot both
+    win.
+  - Optional photos (up to 4) use signed uploads in their own `warranty/` storage folder.
+    Unused uploads expire after 20 minutes.
+  - Refunds use idempotency keys per claim and part, so a retry never refunds twice; a
+    failed refund stays pending for the admin to retry.
+  - New settlement status `reversed` and wallet figure `owedBalance`.
+  - Three notification types (customer, technician, admin), each with a `step`.
+  - 12 endpoints and two new collections (`warranty_claims`, `warranty_photo_uploads`)
+    with indexes.
+  - Client: a "Warranty" section on the customer's repair page (cover end date, "Report a
+    problem" form with photos, "It works now" / "Still not working", "Ask an admin to
+    review"). A "Warranty claims" page for technicians (book the visit, record the
+    decision, report the re-repair) and admins (review queue and refunds), linked in both
+    sidebars. Wallet note when money is owed, and a "Refunded under warranty" settlement
+    label.
+- Files (server): `utils/warranty.js`, `controllers/warrantyController.js`,
+  `routes/warranty.js`, `services/warrantyRefunds.js` (all new), `utils/settlement.js`,
+  `utils/notificationEvents.js`, `config/database.js`, `controllers/index.js`, `index.js`,
+  `tests/warrantyTests.js` (new), `test-all.js`, `docs/warranty.md` (new)
+- Files (client): `src/api/warranty.js`, `src/utils/warranty.js`,
+  `src/components/warranty/WarrantyClaimCard.jsx`,
+  `src/components/warranty/CustomerWarrantySection.jsx`,
+  `src/pages/Dashboard/WarrantyClaims/WarrantyClaims.jsx` (all new),
+  `CustomerRequestDetailsView.jsx`, `router.jsx`, `dashboardNavigation.js`,
+  `config/status/index.js`, `Wallet.jsx`
+- How it was tested: 45 new server tests: 16 on the policy rules and wallet effect, and 29
+  through the controller with fake photo storage and a fake Stripe refunder. They cover the
+  whole flow, the failed-then-retried refund, the settlement reversal, who may act at each
+  step, and route roles. Two existing tests were updated on purpose: the notification type
+  count (41 → 44) and the list of events that may go to more than one role. Temporary
+  in-memory MongoDB 7 replica set (copy without `.env`, fake keys): main suite
+  **2,666 / 2,666**, support **164 / 164**, migrations **63 / 63**, feedback **177 / 177**.
+  Client: lint clean, production build OK, Playwright browser tests **58 / 58**.
+- Not yet checked: the new screens have not been clicked through in a browser while signed
+  in (the browser tests only cover public pages). Photo upload depends on Supabase storage,
+  which is currently unreachable locally (see the earlier note). Claims can be sent without
+  photos.
+- Known limits: account deletion rules do not yet look at open warranty claims. Real
+  (non-test) refunds would need a live Stripe account, which Sarabo does not use.
+- Commits (author Jahid Hasan only, no co-author), branch `feat/warranty` (built on
+  `feat/smarter-matching`), local only, not pushed or deployed: server `c5ef6a5` feat:
+  repair warranty claims with free re-inspection, admin review and refunds; client
+  `cab2fa6` feat: warranty claims for customers, technicians and admins.
