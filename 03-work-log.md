@@ -413,3 +413,61 @@ Nothing in entries 3–4 was committed, pushed or deployed.
      always refunds as a technician no-show), cash payment (Stripe test mode only).
 - Result: reported to the user with suggested fixes and an order; waiting for their
   decision before any change.
+
+### 13. Fixes for repairs that could get stuck, and warranty deadlines — 2026-10-14
+- Type: fix
+- Goal: Fix review findings 1–4 from entry 12, and add deadlines to the warranty.
+- What was changed:
+  1. **Approved quote never paid.** The daily job closes an approved quote unpaid for 3
+     days (reason `payment_not_made`). A request whose payment page is open right now is
+     skipped and tried again the next day, so no one is charged for a closed request; any
+     leftover checkout is expired. The customer can also cancel an approved quote before
+     paying ("I don't want the repair"). In both cases a paid inspection fee is kept 90/10
+     (the device was inspected), the technician is freed unless they have other work, and
+     both sides are told. The request page shows the "pay by" date.
+  2. **Not repairable.** When the inspection says `not_repairable` or `not_economical`, the
+     technician or the customer can close the request. Same outcome as 1.
+  3. **Paid repair that cannot be finished.** The technician reports "can't finish this
+     repair" with a reason, and admins are alerted (new item on the admin overview). An
+     admin can cancel and refund: the whole quote total is refunded through Stripe test mode
+     (one idempotency key per part, so a retry never refunds twice), the technician's
+     settlement is reversed, and the technician is freed. Payment history now shows refunds
+     (warranty refunds too).
+  4. **Receipt never confirmed.** The technician marks the device returned. The customer
+     confirms, or presses "I haven't received it". Without either, receipt is confirmed
+     automatically after 3 days, which releases the technician's money and starts the
+     warranty. A dispute stops the automatic confirmation, alerts admins, and an admin
+     settles it with an explanation. All three ways use one shared update, so the money is
+     released exactly once.
+  - **Warranty deadlines.** The technician must book the re-inspection within 3 days,
+    decide within 3 days of the visit, and repair a covered claim within 7 days. Late claims
+    appear in the admin queue marked overdue, admins get one alert per late step, and they
+    can take over (decide, or move a covered claim to a refund). A technician with open
+    claims cannot be removed.
+  - Admin report: kept inspection fees are now counted per reason. Before, every fee not
+    from a declined quote was counted as a late cancellation.
+- Files (server): `services/requestClosure.js`, `services/receiptConfirmation.js`,
+  `services/refundParts.js`, `controllers/workflowController.js`, `routes/workflow.js`,
+  `tests/workflowFixesTests.js` (all new); `controllers/pickupReminderController.js` (daily
+  job), `repairRequestController.js`, `adminAttentionController.js`,
+  `adminReportController.js`, `technicianController.js`, `warrantyController.js`,
+  `routes/warranty.js`, `services/warrantyRefunds.js`, `utils/warranty.js`,
+  `utils/inspectionFee.js`, `utils/notificationEvents.js` (3 new types, 47 total),
+  `controllers/index.js`, `index.js`, `test-all.js`
+- Files (client): `src/components/workflow/RequestWorkflowActions.jsx` (new; one panel used
+  in the customer, technician and admin request views), `AdminOverview.jsx`,
+  `WarrantyClaims.jsx`, `src/api/warranty.js`, and the three request views
+- How it was tested: 42 new server tests covering each fix, the "payment page open" skip,
+  the failed-then-retried refund, the dispute blocking auto-confirm, the warranty
+  deadlines and take-over, the daily job, and route roles. One test checks that a
+  technician with other active work stays busy when one job closes. Temporary in-memory
+  MongoDB 7 replica set (copy without `.env`, fake keys): main suite **2,708 / 2,708**;
+  support **164 / 164**, migrations **63 / 63** and feedback **177 / 177** passed on the same
+  code before a final test-only edit. Client: lint clean, build OK, browser tests
+  **58 / 58**.
+- Not yet checked: the new buttons have not been clicked through while signed in.
+- Still open from entry 12: device return after a cancellation is not tracked (5);
+  stalled-work alerts after pickup beyond the ones above (6); pickup condition, customer
+  not home, and cash payment (8).
+- Commits (author Jahid Hasan only), branch `fix/workflow-gaps` (on `feat/warranty`), local
+  only: server `a2004a4`, client `c067261`.
