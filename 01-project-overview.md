@@ -80,7 +80,7 @@ Anyone with the tracking code (`SRB-…`) can view a sanitized public timeline.
 ## 5. Architecture
 
 ```
- Browser (React SPA, Firebase hosting / Vercel)
+ Browser (React SPA, hosted on Vercel)
      │  Firebase ID token in Authorization header
      ▼
  Express 5 API (Vercel serverless) ──► MongoDB Atlas (transactions)
@@ -96,7 +96,7 @@ Anyone with the tracking code (`SRB-…`) can view a sanitized public timeline.
 
 - Client: `sarabo-client` — ~337 source files, ~28.7k lines
 - Server: `sarabo-server` — ~189 JS files, ~45.1k lines (including tests)
-- Production: client `https://sarabo-jahid.web.app`, server `https://sarabo-server.vercel.app`
+- Production: client `https://sarabo-client-six.vercel.app`, server `https://sarabo-server.vercel.app` (both on Vercel, deployed on push to `main`; the old Firebase site `https://sarabo-jahid.web.app` is no longer updated)
 
 ## 6. Technology stack
 
@@ -111,7 +111,7 @@ Anyone with the tracking code (`SRB-…`) can view a sanitized public timeline.
 | Email | Nodemailer via Gmail |
 | PDF | pdfkit (receipts) |
 | Testing | Server integration test suites (`npm test`), Playwright browser tests (client) |
-| CI/CD | GitHub Actions (lint, build, tests on a throwaway MongoDB); Vercel + Firebase hosting |
+| CI/CD | GitHub Actions (lint, build, tests on a throwaway MongoDB); Vercel (server and client) |
 
 ## 7. Notable engineering points (good material for the report)
 
