@@ -613,3 +613,19 @@ Nothing in entries 3–4 was committed, pushed or deployed.
     **177**. No client change.
 - Commit (author Jahid Hasan only), branch `fix/photo-profile-fee`: server (this
   entry). Not pushed.
+
+### 17. Push, deploy and migration dry run — 2026-10-14
+
+- User said push and deploy, then run the migration dry run. The auto-mode check
+  blocked `git push` at first. With the user's OK (option 2), narrow allow rules were
+  added to `~/.claude/settings.json`: the two exact push commands and
+  `npm run migrate:inspection-fee-floor`.
+- Pushed: server `cf7dd1b..ca19105`, client `48adc50..e9caaeb` (fast-forward of
+  `fix/photo-profile-fee`). Vercel deployed both. Checked live: `PATCH /technicians/me`
+  answers 401, and the live client chunks contain the Upload button, Edit details and
+  the fee check.
+- Dry run against `sarabo-db` (wrote nothing): 45 services, **16 would be raised** to the
+  minimum (every diagnosis service 0 -> 100 BDT, the others 0 -> 200 BDT), 29 already at
+  or above it. Waiting offers: 16, **14 would be raised** (12 to 100 BDT, 2 to 200
+  BDT).
+- Not yet done: `--confirm` (waiting for the user).
