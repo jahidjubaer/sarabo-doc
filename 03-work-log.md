@@ -526,3 +526,58 @@ Nothing in entries 3–4 was committed, pushed or deployed.
 - Not checked: the new screens have not been clicked through while signed in.
 - Commits (author Jahid Hasan only), branch `fix/remaining-gaps`: server `8a1bc1b`,
   `304e574`; client (this entry's commit).
+
+### 15. Photo upload button, technician profile editing, minimum inspection fee — 2026-10-14
+
+- Asked for: (1) damage photos uploaded the moment they were picked - add an Upload
+  button; (2) let technicians edit their profile (location and other details); (3) many
+  repairs had no inspection fee - every repair needs one, at least 100/200 BDT.
+- Decisions (user's answers): 100 BDT minimum when the service's estimate tops out at
+  1,000 BDT or less, 200 BDT for bigger repairs; every offer must charge at least the
+  minimum (no free inspection); add a one-time migration for the live catalogue.
+- What changed:
+  - **A. Photo upload button.** Chosen photos now wait with a preview and a remove
+    button. Nothing is sent until the customer presses "Upload N photos". The photo
+    given to the AI helper also waits there instead of uploading on its own. Same checks
+    as before (type, size, 3-photo limit, duplicates).
+  - **B. Technician profile editing.** New `PATCH /technicians/me` (technician only,
+    identity from the sign-in token). Name, phone, region + district (always together)
+    and address can change. Email, NID, status and availability cannot. The service
+    area is locked while a repair is active (the pickup was booked in the old area).
+    After an area change the technician is told about open jobs in the new area. The
+    profile page has an "Edit details" panel with the same region/district list as
+    the application form.
+  - **C. Minimum inspection fee.** One rule (`utils/inspectionFee.js`
+    `minimumInspectionFee`) applies everywhere:
+    - new requests store at least the minimum;
+    - the public service list shows it;
+    - the job portal raises the fee limit to it, and older open requests follow it too;
+    - offers below it are refused (`INSPECTION_FEE_TOO_LOW`);
+    - admins can't price a service below it. The check runs only when prices change,
+      so an old service can still be renamed;
+    - seed data raised.
+
+    Offers already sent before the change keep the fee they were sent with.
+  - **Migration:** `npm run migrate:inspection-fee-floor` (dry run by default,
+    `--confirm` to write; production needs `ALLOW_PROD_FEE_FLOOR_MIGRATION=true` and
+    `--expect-db=<name>`). It raises only fees below the floor, bumps the pricing
+    version, and running it again changes nothing. **Not run on production yet.**
+- Files (server): `controllers/technicianController.js`, `routes/technicians.js`,
+  `utils/inspectionFee.js`, `utils/jobPortal.js`, `services/pricingService.js`,
+  `controllers/jobPortalController.js`, `serviceDefinitionController.js`,
+  `adminServiceDefinitionController.js`, `data/serviceDefinitionSeed*.js`,
+  `scripts/migrate-inspection-fee-floor.js` (new), `package.json`; tests
+  `technicianSelfEditTests.js`, `inspectionFeeFloorTests.js` (new), and
+  `jobPortalTests.js`, `inspectionFeeTests.js`, `serviceCatalogTests.js` and
+  `test-all.js` updated for the new fee rule
+- Files (client): `DamageImagePicker.jsx`, `DamageImageManager.jsx`,
+  `PostCreationDamageStep.jsx`, `TechnicianDetailsEditor.jsx` (new),
+  `TechnicianProfileCard.jsx`, `JobApplicationSheet.jsx`, `JobCard.jsx`,
+  `ServiceEditor.jsx`, `utils/inspectionFee.js`, `jobBoard.js`, `serviceCatalogueForm.js`
+- How it was tested: 18 new server tests (7 profile edit, 11 fee floor incl. the
+  migration). In-memory MongoDB replica set: main suite **2,756 / 2,756**; support
+  **164**, migrations **63**, feedback **177**. Client: lint clean, build OK, browser
+  tests **58 / 58**.
+- Not checked: the new screens have not been clicked through while signed in.
+- Commits (author Jahid Hasan only), branch `fix/photo-profile-fee`: server `e0554b0`,
+  `4d0d584`; client `9792490`, `6350f49`, `e9caaeb`. Not pushed.
