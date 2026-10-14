@@ -629,3 +629,11 @@ Nothing in entries 3–4 was committed, pushed or deployed.
   or above it. Waiting offers: 16, **14 would be raised** (12 to 100 BDT, 2 to 200
   BDT).
 - Not yet done: `--confirm` (waiting for the user).
+- **Correction (same day):** the run above was against the local development database
+  `sarabo-db`, not production. The live database is `sarabo_production` (underscore),
+  on the same cluster. Found by listing the cluster's databases (only it and
+  `sarabo-db` hold 45 services; `sarabo-production` with a hyphen does not exist).
+  Production dry run (`MONGO_DB_NAME=sarabo_production`, override and `--expect-db`,
+  wrote nothing): **16 of 45 services** would be raised, the same list as locally.
+  1 waiting offer, already at or above the minimum, so **0 offers** to raise.
+  `--confirm` not run yet.
