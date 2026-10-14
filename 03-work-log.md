@@ -471,3 +471,58 @@ Nothing in entries 3–4 was committed, pushed or deployed.
   not home, and cash payment (8).
 - Commits (author Jahid Hasan only), branch `fix/workflow-gaps` (on `feat/warranty`), local
   only: server `a2004a4`, client `c067261`.
+
+### 14. Remaining workflow gaps — 2026-10-14
+- Type: fix
+- Goal: Close the gaps still open after entry 13. The user chose to leave cash payment for
+  later (future work; Sarabo stays on Stripe test mode).
+- What was changed:
+  - **A. Payment after cancellation.** Before, a repair payment arriving after the request
+    was cancelled was refused and its record deleted, so the customer could be charged with
+    no record. Now it is recorded, refunded at once (idempotent per session), and a failed
+    refund stays on the admin refund list for a retry. The cancelled check also runs first:
+    after a close the fee is "kept", so the amount check would otherwise have refused the
+    payment for the wrong reason.
+  - **B. Device return after cancellation.** Every cancellation after pickup (declined
+    quote, unpaid quote, not repairable, admin cancel of a paid repair) records that the
+    device must go back. The technician marks it returned; the customer confirms ("I have
+    my device back") or says it has not arrived. Without a reply it is confirmed after 3
+    days, and an admin settles a dispute. The job stays in the technician's active list
+    until the return is confirmed.
+  - **C. Stalled work.** One rule set (`services/stalledWork.js`) finds work that has not
+    moved on:
+    - customer has not chosen a new pickup time (3 days);
+    - not inspected 3 days after pickup;
+    - no quote 3 days after inspection;
+    - quote unanswered for 3 days;
+    - repair not started 3 days after payment;
+    - repair running over 14 days;
+    - device not returned 3 days after repair or after cancellation.
+    Admins see these on the overview, with one alert per request and stage from the daily
+    job.
+  - **D. Pickup condition.** The technician records the device's condition and accessories
+    when collecting it (the app always asks; the API keeps working without it). The
+    customer sees it and can say it is wrong; an admin reviews it. The pickup time is now
+    stored, which the stall rules need.
+  - **E. Customer not home.** The technician reports it with a note. The booking stays, the
+    customer is asked for a new pickup time, and it is not treated as a technician no-show.
+    If the customer does not choose a time in 3 days, it shows as stalled.
+  - Admin identities (who settled a dispute or reviewed a condition) are hidden from
+    customers and technicians.
+- Files (server): `services/stalledWork.js`, `tests/remainingGapsTests.js` (new);
+  `services/paymentProcessor.js`, `services/requestClosure.js`,
+  `services/declinedQuoteClose.js`, `controllers/workflowController.js`,
+  `repairRequestController.js`, `adminAttentionController.js`,
+  `inspectionFeeController.js` (retry covers any pending refund),
+  `pickupReminderController.js`, `routes/workflow.js`, `utils/notificationEvents.js`,
+  `test-all.js`
+- Files (client): `PickupConditionDialog.jsx` (new), `RequestWorkflowActions.jsx`,
+  `RequestDetails.jsx`, `AdminOverview.jsx`, `paymentErrorMessage.js`
+- How it was tested: 30 new server tests, one per behaviour above, including the late
+  payment through the real payment processor with a fake Stripe session. Temporary
+  in-memory MongoDB 7 replica set: main suite **2,738 / 2,738**; support **164**,
+  migrations **63**, feedback **177**. Client: lint clean, build OK, browser tests
+  **58 / 58**.
+- Not checked: the new screens have not been clicked through while signed in.
+- Commits (author Jahid Hasan only), branch `fix/remaining-gaps`: server `8a1bc1b`,
+  `304e574`; client (this entry's commit).
