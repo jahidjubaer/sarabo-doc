@@ -277,3 +277,46 @@ Nothing in entries 3–4 was committed, pushed or deployed.
 - Commit: server `5c6aab5` fix: faster AI model with a fallback model for slow or
   rate-limited answers (author Jahid Hasan, no co-author). Pushed to `main`; Vercel
   deployed it.
+
+### 10. Smarter matching: ranking technicians' offers — 2026-10-14
+- Type: feature
+- Goal: Help the customer choose between technicians' offers. Before this, offers were
+  listed in the order they arrived, with no guidance.
+- Plan agreed with the user: smarter matching first, warranty and returns next (the
+  warranty policy is to be confirmed with the user before that work starts). Live
+  technician location and a full Bangla interface were skipped.
+- What was changed:
+  - New pure scoring module that ranks the waiting offers on a request using five factors,
+    all from data Sarabo already stores (no paid service, no maps API, no AI):
+    rating 30% (reviews smoothed toward 3★, so one 5★ review does not beat forty 4.8★
+    ones), reliability 25% (repairs completed vs. missed pickups), price 20% (estimate
+    against the other offers), district 15% (same district as the customer; there are no
+    map coordinates, so nothing finer), reply time 10% (median minutes from a job being
+    posted or reposted to the technician's offer, over their last 20 offers, at least 3).
+  - A technician with no history gets a neutral score for that factor, neither a penalty
+    nor a bonus.
+  - Each waiting offer now carries `match: { score, rank, recommended, reasons }`.
+    "Recommended" is only given when there are two or more offers. Reasons are shown only
+    when true: rated ≥ 4.5★ from ≥ 3 reviews, ≥ 5 repairs with no missed pickup, lowest
+    estimate, in your district, usually replies within an hour.
+  - Customer offers page: offers sorted "Best match" first with a "Best match" badge and
+    reason tags; sort switch (Best match / Lowest price / Newest); a short "How offers are
+    ranked" explanation. The customer still chooses; nothing is booked automatically.
+- Files (server): `services/offerRanking.js` (new), `controllers/jobPortalController.js`
+  (`listForRequest`, new `matchHistory`), `tests/offerRankingTests.js` (new),
+  `test-all.js`, `docs/smarter-matching.md` (new)
+- Files (client): `src/utils/offerMatch.js` (new),
+  `src/components/customer/TechnicianApplications.jsx`
+- How it was tested: 22 new tests: 16 on the scoring rules, and 6 through the real endpoint
+  with a database scenario (a nearby, quick, reliable technician is recommended over a
+  cheaper one with a missed pickup; reply time counted from a repost; rejected offers not
+  ranked; no private details in the response). Full server suite on a temporary in-memory
+  MongoDB 7 replica set (working-tree copy without `.env`, fake keys, as in entry 1):
+  **2,621 / 2,621 passed**. Client: `npm run lint` clean, production build OK (placeholder
+  https API URL, as in CI).
+- Not yet checked: the offers page has not been clicked through in a browser (it needs a
+  signed-in customer with at least two offers).
+- Commits (author Jahid Hasan only, no co-author), branch `feat/smarter-matching`, local
+  only, not pushed or deployed: server `f932acb` feat: rank technician offers by rating,
+  reliability, price, district and reply time; client `2b86891` feat: best match badge,
+  reasons and sorting on technician offers.
