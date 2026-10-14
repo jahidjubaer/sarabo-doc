@@ -637,3 +637,7 @@ Nothing in entries 3–4 was committed, pushed or deployed.
   wrote nothing): **16 of 45 services** would be raised, the same list as locally.
   1 waiting offer, already at or above the minimum, so **0 offers** to raise.
   `--confirm` not run yet.
+- **Applied (user said confirm, and tidy local too):** `--confirm` on `sarabo_production`
+  raised 16 services, 0 offers. On local `sarabo-db` it raised 16 services and 14
+  waiting test offers. A dry run afterwards finds nothing left on either database
+  (45 / 45 services at or above the minimum). The live API still serves 45 services.
