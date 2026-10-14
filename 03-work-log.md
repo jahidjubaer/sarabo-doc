@@ -641,3 +641,31 @@ Nothing in entries 3–4 was committed, pushed or deployed.
   raised 16 services, 0 offers. On local `sarabo-db` it raised 16 services and 14
   waiting test offers. A dry run afterwards finds nothing left on either database
   (45 / 45 services at or above the minimum). The live API still serves 45 services.
+
+### 18. Report updated with the final phase and a screenshot walkthrough — 2026-10-14
+
+- Asked for: update the report with everything since 11 Oct, shorter abstract and
+  conclusion, nothing important left out, and screenshots of the whole process.
+- Text: abstract and conclusion shortened; introduction (final phase, O12, scope),
+  requirements FR-33 to FR-38, architecture (Vercel hosting, Mumbai region, 21
+  collections, warranty states), implementation (fee floor, deployment, final-phase log
+  as a long table, 0-12), workflows (offer ranking, "no request can get stuck",
+  pickup condition, warranty, profile editing, 47 notification types), AI chapter
+  (model + fallback), testing (2,760 server checks, new scenarios T-27 to T-34),
+  limitations, appendix (new endpoints, fields, money rules, baseline commits).
+- Screenshots: new Chapter 7 "System Walkthrough" with 52 figures. One clean test
+  request (Samsung Galaxy A54) was walked through the whole flow on the local stack
+  with the user's own customer, technician and admin accounts (the user signed in
+  each role once in a browser window; saved sessions were reused): AI request helper,
+  offer with AI note, ranked offer, inspection fee via Stripe test checkout, pickup
+  condition, inspection, quote, approve-and-pay, progress, completion, hand-back,
+  receipt, review, warranty claim, re-inspection, re-repair, resolved; then wallet
+  withdrawal (3,600 BDT) marked paid with a made-up TrxID, and all admin pages.
+  This added that request, its payments (Stripe test mode), review, warranty claim
+  and the withdrawal to the local development database only.
+- Found while doing it: the repair-payment Stripe page says "Repair request:
+  undefined" (`paymentController.js` uses the legacy `deviceName`; v2 requests have
+  none). Not fixed yet. Client CI browser-test job failed on GitHub for `e9caaeb`
+  while the same 58 tests pass locally; the report says so.
+- Build: Tectonic 0.15.0, 114 pages, no undefined references; copied to
+  `Sarabo_Final_Report.pdf`.

@@ -15,6 +15,9 @@
 \renewcommand{\lstlistlistingname}{Listings}
 \usepackage[hidelinks]{hyperref}
 \setlength{\emergencystretch}{3em} % lets lines with long code names wrap instead of overflowing
+% Screenshots (Chapter 7): \screen{file}{caption} -> full-width figure kept in place
+\newcommand{\screen}[2]{\begin{figure}[H]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.84\textwidth]{img/screens/#1}}}\caption{#2}\label{fig:scr-#1}\end{figure}}
+\setlength{\fboxrule}{0.3pt}
 
 % Edit these in one place
 \newcommand{\projecttitle}{Sarabo: An Electronics Repair Service Management Platform}
@@ -27,7 +30,7 @@
 \newcommand{\reviewertwo}{Md. Fahmidur Rahman Sakib}
 \newcommand{\submissiondate}{26 October 2026}
 % Verified test results (see Chapter 9)
-\newcommand{\servertestcount}{2,595}
+\newcommand{\servertestcount}{2,760}
 \newcommand{\clienttestcount}{58}
 
 % TikZ styles shared by every diagram
@@ -71,11 +74,12 @@
 \input{./tex/chapter4}      % Chapter 4 System Design and Architecture
 \input{./tex/chapter5}      % Chapter 5 Implementation
 \input{./tex/chapter6}      % Chapter 6 Core Workflows and Business Rules
-\input{./tex/chapter7}      % Chapter 7 AI-Assisted Features
-\input{./tex/chapter8}      % Chapter 8 Security, Reliability and Data Integrity
-\input{./tex/chapter9}      % Chapter 9 Testing and Evaluation
-\input{./tex/chapter10}     % Chapter 10 Limitations and Future Work
-\input{./tex/conclusion}    % Chapter 11 Conclusion
+\input{./tex/walkthrough}   % Chapter 7 System Walkthrough (screenshots)
+\input{./tex/chapter7}      % Chapter 8 AI-Assisted Features
+\input{./tex/chapter8}      % Chapter 9 Security, Reliability and Data Integrity
+\input{./tex/chapter9}      % Chapter 10 Testing and Evaluation
+\input{./tex/chapter10}     % Chapter 11 Limitations and Future Work
+\input{./tex/conclusion}    % Chapter 12 Conclusion
 
 \addcontentsline{toc}{chapter}{References}
 \clearpage

@@ -35,15 +35,37 @@ Figure~\ref{fig:e2e} shows the main path of a repair, from request to settlement
 \end{figure}
 
 \section{Request Creation}
-The customer chooses a device category and a repair service from the live catalogue (or lets the AI helper propose them), adds brand, model and a description, optionally adds up to three photos, and picks a pickup window. The estimate card shows the catalogue's price range. Before submitting, the form calls \texttt{GET /service-availability}; the server repeats the check on submission and refuses the request with a clear explanation if no approved technician in that region can do this repair at the required level. Accepted requests receive a tracking code and a confirmation email.
+The customer chooses a device category and a repair service from the live catalogue (or lets the AI helper propose them), adds brand, model and a description, optionally adds up to three photos (shown as previews and sent only when the customer presses ``Upload''), and picks a pickup window. The estimate card shows the catalogue's price range. Before submitting, the form calls \texttt{GET /service-availability}; the server repeats the check on submission and refuses the request with a clear explanation if no approved technician in that region can do this repair at the required level. Accepted requests receive a tracking code and a confirmation email (Figures~\ref{fig:scr-c02-ai-helper}--\ref{fig:scr-c04-created}).
 
 \section{Job Portal and Offers}
 A request is \emph{open} while it is waiting for a technician. It appears on the public jobs board as a safe summary, and every approved technician who matches it receives a \texttt{job\_posted} notification (at most once per request). A technician who starts matching later, after being approved or adding a skill, is told about the open jobs they can now take. Approved technicians see the details they need (district, pickup time, problem description and photos) but never the customer's name, email or street address.
 
-A technician sends an \emph{offer}: an estimate range, an inspection fee (capped by the catalogue fee for that service) and a note. The customer compares offers side by side and either chooses one or rejects one with a reason (price, inspection fee or other). A rejected offer causes the job to be \emph{reposted} to the top of the board; the rejected technician may send one revised offer, and other matching technicians are notified. If no offer is waiting 24 hours after the job was last posted, it appears on the admin attention list. Admins can also invite a specific technician to apply, or assign one directly as an override.
+A technician sends an \emph{offer}: an estimate range, an inspection fee (at least the minimum fee and at most the catalogue fee for that service) and a note. The customer compares offers side by side and either chooses one or rejects one with a reason (price, inspection fee or other). A rejected offer causes the job to be \emph{reposted} to the top of the board; the rejected technician may send one revised offer, and other matching technicians are notified. If no offer is waiting 24 hours after the job was last posted, it appears on the admin attention list. Admins can also invite a specific technician to apply, or assign one directly as an override. Figures~\ref{fig:scr-t03-offer} and~\ref{fig:scr-c06-offers} show an offer being sent and compared.
+
+\section{Offer Ranking (Smarter Matching)}
+\label{sec:ranking}
+When several technicians send offers, the customer sees them ranked rather than in arrival order. A pure scoring module (\texttt{services/offerRanking.js}) combines five factors, all from data Sarabo already stores, so no paid service, map API or AI is needed (Table~\ref{tab:ranking}). A technician with no history gets a neutral score for that factor, neither a penalty nor a bonus. The top offer gets a ``Best match'' badge (only when there are at least two), and short reasons are shown only when they are true, for example ``Rated 4.8\,$\star$ from 12 reviews'' or ``In your district''. The customer can also sort by lowest price or newest, and always makes the final choice; nothing is booked automatically.
+
+\begin{table}[htbp]
+\centering
+\caption{Offer ranking factors}
+\label{tab:ranking}
+\small
+\begin{tabularx}{\textwidth}{@{}p{2.6cm}cX@{}}
+\toprule
+\textbf{Factor} & \textbf{Weight} & \textbf{How it is measured} \\
+\midrule
+Rating & 30\% & Average review, smoothed toward 3\,$\star$ so one 5\,$\star$ review does not beat forty 4.8\,$\star$ reviews \\
+Reliability & 25\% & Repairs completed compared with missed pickups \\
+Price & 20\% & The offer's estimate compared with the other offers on the same job \\
+District & 15\% & Same district as the customer \\
+Reply time & 10\% & Median minutes from the job being posted to the technician's offer (last 20 offers, at least 3) \\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 \section{Inspection Fee and Booking}
-Choosing an offer with a fee opens a Stripe Checkout for exactly that fee; nothing is booked yet. When Stripe confirms the payment, one transaction records it and books the technician. If the technician can no longer be booked at that moment (busy, request cancelled, someone else chosen), the payment is recorded and refunded automatically and the customer is asked to choose again. The fee is stored separately from the repair payment and is later credited toward the final price. Table~\ref{tab:feeoutcomes} shows what happens to the fee when the repair does not go ahead.
+Choosing an offer with a fee opens a Stripe Checkout for exactly that fee; nothing is booked yet. When Stripe confirms the payment, one transaction records it and books the technician. If the technician can no longer be booked at that moment (busy, request cancelled, someone else chosen), the payment is recorded and refunded automatically and the customer is asked to choose again. The fee is stored separately from the repair payment and is later credited toward the final price (Figures~\ref{fig:scr-c07-choose}--\ref{fig:scr-c09-booked} and~\ref{fig:scr-c10-quote}). Table~\ref{tab:feeoutcomes} shows what happens to the fee when the repair does not go ahead.
 
 \begin{table}[htbp]
 \centering
@@ -94,6 +116,60 @@ Each quote round has its own notification identity, derived on the server as \te
 \section{Payment, Repair and Receipt}
 Payment is possible only for an approved quote that is not yet paid. After payment the technician starts the repair, adds progress updates and completes it, optionally with evidence photos. Completion releases the technician for other work and shows the customer a ``Confirm receipt'' action. Only that confirmation moves the request to its terminal state and makes the technician's earning available, so a technician cannot withdraw money for a device the customer has not received.
 
+\section{No Request Can Get Stuck}
+\label{sec:nostuck}
+A review of the whole workflow before the final release looked for real-life situations in which a request could wait forever. Each one now has a way out, an automatic step after a deadline, or an admin alert (Table~\ref{tab:nostuck}). A daily scheduled job applies the deadlines, and a single rule set (\texttt{services/stalledWork.js}) shows any work that has not moved on in three days (fourteen for a running repair) on the admin overview.
+
+\begin{longtable}{@{}p{4.4cm}p{9.8cm}@{}}
+\caption{Situations that used to block a request, and how they end now}\label{tab:nostuck}\\
+\toprule
+\textbf{Situation} & \textbf{What happens now} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Situation} & \textbf{What happens now} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Approved quote never paid & Customer can cancel (``I don't want the repair''); otherwise closed automatically after 3 days. The inspection fee is kept 90/10 and the technician is freed. \\
+Device not repairable or not worth it & Technician or customer closes the request; same fee outcome. \\
+Paid repair cannot be finished & Technician reports why; an admin cancels and refunds the whole amount, and the technician's settlement is reversed. \\
+Customer never confirms receipt & Technician marks the device returned; receipt is confirmed automatically after 3 days unless the customer says ``I haven't received it'', which goes to an admin. \\
+Device must go back after a cancellation & The return is recorded, confirmed by the customer or automatically after 3 days; disputes go to an admin. \\
+Customer not at home at pickup & Technician reports it; the customer is asked for a new time. It is not counted as a technician no-show. \\
+Payment arrives after cancellation & Recorded and refunded at once; a failed refund stays on the admin refund list. \\
+Work not moving (no inspection, quote, answer or repair) & Shown on the admin overview with one alert per request and stage. \\
+\end{longtable}
+
+\paragraph*{Pickup condition.} When collecting a device the technician records its condition and any accessories (charger, case, SIM). The customer sees this record and can say it is wrong, in which case an admin reviews it. This protects both sides if the device's condition is later disputed (Figure~\ref{fig:scr-t05-pickup-condition}).
+
+\section{Repair Warranty}
+\label{sec:warranty}
+Every finished repair is covered for 30 days from the moment the customer confirms receipt. The warranty covers the same fault coming back or a part the technician fitted failing, but not new damage, water damage or drops. Figure~\ref{fig:warranty} shows the claim lifecycle.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=5mm and 8mm,font=\small]
+  \node[box] (a) {Customer reports a problem\\(description, up to 4 photos)};
+  \node[box,below=of a] (b) {Same technician books a free\\re-inspection (within 3 days)};
+  \node[dec,below=of b] (c) {Covered?};
+  \node[box,below=of c] (d) {Free re-repair\\(within 7 days)};
+  \node[dec,below=of d] (e) {Works\\now?};
+  \node[box,below=of e] (f) {Resolved};
+  \node[box,right=16mm of c] (n) {Not covered: customer\\may ask an admin to review};
+  \node[box,right=16mm of e] (r) {Admin refunds the\\repair amount; settlement\\reversed};
+  \draw[arr] (a)--(b); \draw[arr] (b)--(c);
+  \draw[arr] (c)--node[lbl,right]{yes}(d); \draw[arr] (c)--node[lbl,above]{no}(n);
+  \draw[arr] (d)--(e); \draw[arr] (e)--node[lbl,right]{yes}(f); \draw[arr] (e)--node[lbl,above]{no}(r);
+  \draw[arr] (n.south) -- node[lbl,right]{admin overturns} (n.south |- d.east) -- (d.east);
+\end{tikzpicture}
+\caption{Warranty claim lifecycle}
+\label{fig:warranty}
+\end{figure}
+
+A customer may have one open claim at a time and at most two per repair. Every step is a guarded database update, so no step can be skipped and two people acting at once cannot both succeed. If the technician misses a deadline, the claim is marked overdue, admins are alerted and can take it over, and a technician with open claims cannot be removed. A refund covers the whole quote (repair payment plus the credited inspection fee) through Stripe with one idempotency key per part, so a retry never refunds twice. The technician's settlement for that repair becomes \emph{reversed}; if it had already been withdrawn, the wallet shows the amount as owed and it is deducted from future earnings. Figures~\ref{fig:scr-c16-warranty-claim}--\ref{fig:scr-c17-warranty-resolved} show a complete claim.
+
 \section{Settlement and Withdrawal Lifecycle}
 \begin{figure}[htbp]
 \centering
@@ -127,14 +203,18 @@ When an admin removes an approved technician, their whole available balance is q
 \section{Cancellation Rules}
 Before a technician is booked, a customer can cancel a request freely; a cancelled request can be requested again with its details pre-filled. After booking with a paid fee, \texttt{GET /repair-requests/:id/booking-cancellation} tells the customer in advance which outcome cancelling now would have (refund or kept fee), and the cancellation itself is allowed only until the device is collected.
 
+\section{Technician Profile Editing}
+A technician can change their own name, phone, address and service area (region and district together) from the profile page; email, national ID, approval status and availability cannot be changed this way. The service area is locked while a repair is active, because the pickup was booked in the old area, and after a change the technician is told about open jobs in the new area.
+
 \section{Service-Area Map}
+\label{sec:areamap}
 The public Service Areas page draws every listed district on an OpenStreetMap map (Leaflet) from the same \texttt{serviceAreas.json} file that drives the request form. Each district also stores the coordinates of its covered sub-areas. These were looked up once, offline, from OpenStreetMap and kept only if they lie inside that district (226 of 236). A search lists matching sub-areas before districts, so ``Ambarkhana'' opens Ambarkhana in Sylhet at street level instead of the city centre. A sub-area without a stored point falls back to its district's pin, and nothing is geocoded in the browser.
 
 \section{Feedback and Moderation}
 After a completed and receipt-confirmed repair, the customer may leave one review: a rating from 1 to 5 and an optional comment (up to 1,000 characters, plain text). Reviews are visible by default and admins can hide or restore them with a reason; every change is versioned and kept in a moderation history. Separately, a customer can file a private report about a technician (for example unprofessional behaviour, device damage or a payment issue). Reports go only to admins, move through \emph{open}, \emph{under review}, \emph{resolved} or \emph{dismissed}, and are never deleted with the request. Technicians see their average rating and visible reviews, but never reports or the reviewer's identity.
 
 \section{Notifications and Reminders}
-Forty-one notification types, all defined in one module (\texttt{utils/notificationEvents.js}), cover offers, booking, refunds, inspection, quotes, payment, repair milestones, reviews, withdrawals and a removed technician's final payout. Each has a de-duplication key. The daily job sends ``pickup tomorrow'' reminders in the app (and by email when enabled), once per pickup slot.
+Forty-seven notification types, all defined in one module (\texttt{utils/notificationEvents.js}), cover offers, booking, refunds, inspection, quotes, payment, repair milestones, returns and disputes, warranty, reviews, withdrawals and a removed technician's final payout. Each has a de-duplication key. The daily job sends ``pickup tomorrow'' reminders in the app (and by email when enabled), once per pickup slot.
 
 \section{Damage Image Upload}
 \begin{figure}[htbp]

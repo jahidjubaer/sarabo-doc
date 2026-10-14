@@ -24,34 +24,36 @@ Testing focused on \emph{domain correctness}: whether the right person can do th
 
 \paragraph*{Browser tests.} Playwright runs against a real production build of the client with a faked API, on a desktop and a mobile (Pixel~7) viewport. The tests cover public pages, the jobs board (listing, filtering, sorting, empty and error states), tracking (valid, unknown, invalid codes and server errors), authentication forms and route protection.
 
-\paragraph*{Continuous integration.} GitHub Actions runs the server suites against a throwaway MongoDB~8 replica set and runs client lint and build on every push and pull request. The latest runs on the main branch of both repositories (11 October 2026, on the final commits) passed.
+\paragraph*{Continuous integration.} GitHub Actions runs the server suites against a throwaway MongoDB~8 replica set and runs client lint and build on every push and pull request. On the final commits (14 October 2026) the server workflow passed and the client lint-and-build job passed; the client browser-test job failed once on GitHub while the same 58 tests pass locally on that commit (Table~\ref{tab:results}).
 
 \section{Verification Results}
 \label{sec:results}
-For this report every check was run again on 11 October 2026 against the final code (client commit \texttt{428ee11}, server commit \texttt{0d1e758}). The server suites were run exactly as in CI, using a clean copy of the repository with no local secrets and a temporary in-memory MongoDB replica set. Table~\ref{tab:results} shows the results.
+For this report every check was run on 14 October 2026 against the final code (client commit \texttt{e9caaeb}, server code commit \texttt{ca19105}; the later server commit \texttt{68800b6} changes only documentation and an example settings file). The server suites were run exactly as in CI, using a clean copy of the repository with no local secrets and a temporary in-memory MongoDB replica set. Table~\ref{tab:results} shows the results.
 
 \begin{table}[htbp]
 \centering
-\caption{Verification results (11 October 2026)}
+\caption{Verification results (14 October 2026)}
 \label{tab:results}
 \small
 \begin{tabularx}{\textwidth}{@{}Xrr@{}}
 \toprule
 \textbf{Check} & \textbf{Passed} & \textbf{Failed} \\
 \midrule
-Server full suite (\texttt{npm test}) & 2,595 & 0 \\
-\quad of which re-run on their own: support and AI suite & 160 & 0 \\
+Server full suite (\texttt{npm test}) & 2,760 & 0 \\
+\quad of which re-run on their own: support and AI suite & 164 & 0 \\
 \quad of which re-run on their own: data-migration suite & 63 & 0 \\
 \quad of which re-run on their own: feedback suite & 177 & 0 \\
 Client browser tests (Playwright, 29 scenarios $\times$ 2 viewports) & 58 & 0 \\
 Client ESLint & \multicolumn{2}{r}{no errors} \\
 Client production build & \multicolumn{2}{r}{success} \\
-GitHub Actions, latest \texttt{main} run, both repositories & \multicolumn{2}{r}{success} \\
+GitHub Actions, server, latest \texttt{main} run & \multicolumn{2}{r}{success} \\
+GitHub Actions, client lint and build & \multicolumn{2}{r}{success} \\
+GitHub Actions, client browser tests (same tests pass locally) & \multicolumn{2}{r}{failed once} \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-The server suite has grown from 1,890 checks at the time of the earlier report (August 2026) to 2,595, mainly through coverage of the job portal, inspection-fee outcomes, pickup scheduling, email, reports and the AI features. The last 15 of these cover the final payout on technician removal.
+The server suite has grown from 1,890 checks at the time of the earlier report (August 2026) to 2,760. The final phase added 180 of them: 15 for the final payout on removal, 4 for the AI fallback, 22 for offer ranking, 45 for the warranty, 72 for the no-stuck workflow fixes and 22 for profile editing and the minimum inspection fee.
 
 \section{Representative Test Scenarios}
 \begin{longtable}{@{}p{1.1cm}p{6.1cm}p{6.9cm}@{}}
@@ -92,10 +94,18 @@ T-23 & Public tracking and jobs board responses & No names, emails, addresses or
 T-24 & Seed or migration script pointed at production & Refused without explicit operator override \\
 T-25 & Admin removes a technician with 3,000 BDT available & Removal and a 3,000 BDT final bKash withdrawal commit together; with no bKash number on record, removal is refused and nothing changes \\
 T-26 & Visitor searches ``Ambarkhana'' on the Service Areas page & Map zooms to Ambarkhana in Sylhet, not the district centre; ``Sylhet'' still opens the district \\
+T-27 & Two offers: nearby, quick, reliable technician vs.\ a cheaper one with a missed pickup & The first is ranked ``Best match''; no private details in the response \\
+T-28 & Warranty claim covered, re-repair fails & Admin refunds the whole quote once; settlement reversed; already-withdrawn money shown as owed \\
+T-29 & Warranty claim after 30 days, or a third claim & Refused \\
+T-30 & Approved quote unpaid for 3 days, with the payment page open & Skipped that day (no one charged for a closed request); closed the next day, fee kept 90/10 \\
+T-31 & Customer neither confirms nor disputes receipt & Confirmed automatically after 3 days; money released exactly once \\
+T-32 & Repair payment arrives after the request was cancelled & Payment recorded and refunded automatically \\
+T-33 & Offer with an inspection fee below the minimum & Refused (\texttt{INSPECTION\_FEE\_TOO\_LOW}); an older low offer is charged at the minimum \\
+T-34 & Technician changes service area during an active repair & Refused; allowed once the repair is finished \\
 \end{longtable}
 
 \section{Manual End-to-End Acceptance}
-In August 2026 the core lifecycle was accepted by hand in the development environment with three accounts and Stripe test cards: request, assign, accept, inspect, quote, reject, revise, re-quote, approve, pay, repair, complete and confirm receipt, checking at each step that all three roles saw the same state and that the settlement became available only after receipt. For the final submission the same walkthrough is extended to the marketplace flow (AI-assisted request, offers, offer rejection and repost, inspection-fee payment, approve-and-pay, bKash withdrawal and review) as part of the final improvement phase (Section~\ref{sec:finalphase}).
+In August 2026 the core lifecycle was accepted by hand in the development environment with three accounts and Stripe test cards: request, assign, accept, inspect, quote, reject, revise, re-quote, approve, pay, repair, complete and confirm receipt, checking at each step that all three roles saw the same state and that the settlement became available only after receipt. For the final submission the same walkthrough is extended to the marketplace flow (AI-assisted request, offers, offer rejection and repost, inspection-fee payment, approve-and-pay, bKash withdrawal and review) as part of the final improvement phase (Section~\ref{sec:finalphase}). The screenshots in Chapter~\ref{ch:walkthrough} were taken from the running system with real customer, technician and admin accounts and serve as a visual record of this walkthrough.
 
 \section{Evaluation Against Objectives}
 \begin{table}[htbp]
@@ -109,15 +119,16 @@ In August 2026 the core lifecycle was accepted by hand in the development enviro
 \midrule
 O1 & Achieved & Firebase identity, server role and state checks (T-01, T-02) \\
 O2 & Achieved & Structured V2 form, catalogue, photos, pickup slots, AI helper (T-04, T-20) \\
-O3 & Achieved & Region and expertise gate, jobs board, offers and reposting (T-03, T-05, T-09) \\
+O3 & Achieved & Region and expertise gate, jobs board, offers, reposting and ranking (T-03, T-05, T-09, T-27) \\
 O4 & Achieved & Fee booking, credit, refunds and split (T-06, T-07, T-10, T-11, T-14) \\
 O5 & Achieved & Inspection, quote, rejection and revision (T-12, T-13) \\
 O6 & Achieved & Single payment truth, idempotent processing, PDF receipts (T-08, T-15) \\
 O7 & Achieved & Progress, evidence, receipt confirmation, reviews and reports (T-16, T-19) \\
-O8 & Achieved & 41 notification types, email, daily reminders, sanitized tracking (T-23) \\
+O8 & Achieved & 47 notification types, email, daily reminders, sanitized tracking (T-23) \\
 O9 & Achieved & 90/10 settlement, computed wallet, bKash withdrawals, final payout on removal (T-16 -- T-18, T-25) \\
 O10 & Achieved & Attention list, reports with checked AI summary, catalogue editor, moderation (T-21) \\
-O11 & Achieved & 2,595 server checks, 58 browser tests, lint, build, CI, live deployment \\
+O11 & Achieved & 2,760 server checks, 58 browser tests, lint, build, CI, live deployment \\
+O12 & Achieved & Warranty, deadlines and stalled-work alerts (T-28 -- T-32) \\
 \bottomrule
 \end{tabularx}
 \end{table}

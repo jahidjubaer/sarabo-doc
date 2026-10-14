@@ -5,13 +5,13 @@
 \chapter{System Design and Architecture}
 
 \section{High-Level Architecture}
-Sarabo follows a browser-client / API-server architecture with external services for identity, payment, storage, email and AI (Figure~\ref{fig:arch}). The React client is hosted on Firebase Hosting; the Express API runs as a serverless function on Vercel, which also triggers a daily scheduled job. MongoDB Atlas holds all application data.
+Sarabo follows a browser-client / API-server architecture with external services for identity, payment, storage, email and AI (Figure~\ref{fig:arch}). Both the React client and the Express API are hosted on Vercel; the API runs as a serverless function in the Mumbai region, next to the MongoDB Atlas cluster that holds all application data, and Vercel also triggers a daily scheduled job.
 
 \begin{figure}[htbp]
 \centering
 \begin{tikzpicture}[font=\small]
-  \node[hl,minimum width=3.2cm] (client) {React 19 + Vite\\Web client\\{\scriptsize Firebase Hosting}};
-  \node[hl,minimum width=3.2cm,right=2.4cm of client] (api) {Express 5 REST API\\{\scriptsize Vercel serverless}};
+  \node[hl,minimum width=3.2cm] (client) {React 19 + Vite\\Web client\\{\scriptsize Vercel (static)}};
+  \node[hl,minimum width=3.2cm,right=2.4cm of client] (api) {Express 5 REST API\\{\scriptsize Vercel serverless, Mumbai}};
   \node[db,right=1.6cm of api] (db) {MongoDB\\Atlas};
   \node[box,below=1.9cm of client,xshift=-1.2cm] (fb) {Firebase\\Authentication};
   \node[box,right=4mm of fb] (stripe) {Stripe\\Checkout, webhook,\\refunds};
@@ -50,7 +50,7 @@ The server (about 191 JavaScript files including tests) is layered as \emph{rout
 The Stripe webhook route is registered before the global JSON parser because signature verification needs the exact raw request body. Routes stay registered even if the database is briefly unavailable; database-backed requests then fail with a controlled 503 instead of a misleading 404.
 
 \section{Data Collections}
-Table~\ref{tab:collections} lists the 19 MongoDB collections.
+Table~\ref{tab:collections} lists the 21 MongoDB collections.
 
 \begin{table}[htbp]
 \centering
@@ -80,6 +80,8 @@ Table~\ref{tab:collections} lists the 19 MongoDB collections.
 \texttt{email\_log} & Sent/failed email record (90-day expiry). \\
 \texttt{support\_rate\_limits} & Shared AI rate-limit counters (auto-expiring). \\
 \texttt{ai\_report\_summaries} & Last AI summary per report period. \\
+\texttt{warranty\_claims} & Warranty claims with their full decision and refund history. \\
+\texttt{warranty\_photo\_uploads} & Short-lived upload sessions for warranty photos. \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -135,7 +137,7 @@ The stored status field \texttt{deliveryStatus} and several of its values were i
 \end{tabularx}
 \end{table}
 
-A job application (offer) has its own states: \texttt{pending}, \texttt{accepted}, \texttt{not\_chosen}, \texttt{withdrawn}, \texttt{no\_show} and \texttt{declined}. A settlement moves from \emph{pending} to \emph{available}, and a withdrawal from \emph{requested} to \emph{paid} or \emph{rejected}.
+A job application (offer) has its own states: \texttt{pending}, \texttt{accepted}, \texttt{not\_chosen}, \texttt{withdrawn}, \texttt{no\_show} and \texttt{declined}. A settlement moves from \emph{pending} to \emph{available} (or to \emph{reversed} after a refund), a warranty claim from \emph{submitted} through re-inspection and decision to \emph{resolved} or \emph{refunded}, and a withdrawal from \emph{requested} to \emph{paid} or \emph{rejected}.
 
 \section{The Service Spine}
 The interface compresses the detailed states into four stages that customers understand (Figure~\ref{fig:spine}). The same component appears horizontally on the home page and vertically on the tracking page and in the dashboards. Receipt confirmation is shown as a hand-over action after ``Repaired'' rather than as a fifth stage.

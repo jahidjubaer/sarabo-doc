@@ -1,0 +1,154 @@
+\documentclass{standalone}
+\usepackage{standalone}
+
+\begin{document}
+\chapter{System Walkthrough}
+\label{ch:walkthrough}
+
+This chapter shows the running system. All screenshots were taken on 14 October 2026 from the final code, running locally with the development database, real Firebase sign-in, real Gemini answers and Stripe in test mode. Sections~\ref{sec:wt-request} to \ref{sec:wt-warranty} follow \emph{one} repair from start to finish (a Samsung Galaxy A54 with a cracked screen), switching between the customer's and the technician's screens as the case moves on, so every state in Figure~\ref{fig:e2e} appears in order. Other requests, technicians and figures visible in the lists come from the seeded development data.
+
+\section{Public Website}
+Anyone can see the services, prices, service areas, open jobs and the public tracking page without an account, and the AI support chat is available on every page.
+
+\screen{p01-home}{Home page. The main actions are finding a repair service and tracking a repair; ``Ask Sarabo'' opens the AI support chat.}
+
+\screen{p02-services}{Services and prices: the live catalogue of 45 services with their estimate ranges and inspection fees.}
+
+\screen{p03-areas-search}{Service areas: searching ``Ambarkhana'' zooms the OpenStreetMap map to that sub-area of Sylhet and lists the other covered areas (Section~\ref{sec:areamap}).}
+
+\screen{p05-ai-chat}{AI support chat answering a real question. The price and the 200\,BDT inspection fee come from the live catalogue, and the suggested buttons come from a fixed list (Chapter~\ref{ch:ai}).}
+
+\screen{p04-jobs}{Public jobs board. Visitors see a safe summary of each open job (device, repair, area, pickup day, usual price, number of offers) but no customer details.}
+
+\screen{p06-tracking}{Public tracking page for the walkthrough repair. Only the stage and its time stamps are shown; personal and payment details stay hidden.}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.34\textwidth]{img/screens/p08-mob-home}\hspace{8mm}
+\includegraphics[width=0.34\textwidth]{img/screens/p09-mob-jobs}
+\caption{The same pages on a phone (393\,px wide): home page and jobs board.}
+\label{fig:scr-mobile}
+\end{figure}
+
+\section{Customer: Creating a Request}
+\label{sec:wt-request}
+
+\screen{c01-overview}{Customer overview: requests that need the customer first, then requests in progress.}
+
+\screen{c02-ai-helper}{AI request helper. The customer wrote in Banglish (``\textit{Amar Samsung Galaxy A54 phone hat theke pore giye screen fete geche\ldots}''); Gemini filled in the device, brand, model, the catalogue service ``Screen Replacement'' and a clear English description. The summary on the right shows the estimate, and \emph{Undo} restores the form.}
+
+\screen{c03-location-pickup}{Location and pickup window: region, district, address, then a two-hour slot (Saturday--Thursday, Friday closed).}
+
+\screen{c04-created}{Request created. The customer can add up to three damage photos now or later; photos are sent only when the customer presses ``Upload''.}
+
+\section{Technician: Finding the Job and Sending an Offer}
+
+\screen{t02-jobs}{Jobs board for a signed-in technician, with filters for region, device, repair, ``No offers yet'', ``Not applied'' and ``My offers''.}
+
+\screen{t03-offer}{Sending an offer. The price guide (top) shows what technicians usually offer for this repair. The fee field enforces the minimum inspection fee (200\,BDT here). The technician typed only ``likely display panel and touch, original screen available'', and \emph{Write it for me} turned it into the note.}
+
+\section{Customer: Choosing a Technician and Booking}
+
+\screen{c05-my-requests}{My repairs: the new request asks the customer to choose a technician because an offer is waiting.}
+
+\screen{c06-offers}{Offer from a technician, with the ranking reasons from Section~\ref{sec:ranking}: ``12 repairs, no missed pickups'', ``In your district'' and ``Usually replies in 2 min'', plus rating, level, experience, estimate, fee and the AI-written note.}
+
+\screen{c07-choose}{Choosing the offer: the customer pays the inspection fee to book the visit. The fee counts toward the final price and is refunded if the booking fails.}
+
+\screen{c08-stripe}{Stripe Checkout (test mode, sandbox badge) for the 200\,BDT inspection fee, paid with Stripe's published test card.}
+
+\screen{c09-booked}{After payment the technician is booked. The page confirms the fee and that it counts toward the final price; ``Cancel visit'' applies the cancellation rules in Table~\ref{tab:feeoutcomes}.}
+
+\section{Technician: Pickup, Inspection and Quote}
+
+\screen{t04-assigned}{Assigned jobs, with the next action (``Start pickup'') on each job.}
+
+\screen{t05-pickup-condition}{Recording the device's condition and accessories at pickup (Section~\ref{sec:nostuck}). The customer sees this record and can dispute it.}
+
+\screen{t06-inspection}{Inspection: findings, detected issues with severity, a repairability decision and a preliminary estimate. ``Not repairable'' or ``Not economical'' would let either side close the request.}
+
+\screen{t07-quote}{Itemised quote: labour 800 + parts 3,200 = 4,000\,BDT. The form shows the 10\% platform commission and what the technician receives.}
+
+\section{Customer: Approving the Quote and Paying}
+
+\screen{c10-quote}{The customer reviews the quote. The 200\,BDT fee already paid is subtracted, so 3,800\,BDT is left to pay, and the approve button says so.}
+
+\screen{c11-approve-pay}{``Approve and pay'' leads straight to the card payment.}
+
+\screen{c12-payment-success}{Payment successful, with the Stripe transaction ID, the tracking code and a PDF receipt download.}
+
+\screen{c13-payment-history}{Payment history: one row each for the 3,800\,BDT repair payment and the 200\,BDT inspection fee, each with a PDF receipt.}
+
+\section{Technician: Repair and Hand-Over}
+
+\screen{t08-progress}{Repair in progress: the technician posts progress updates that the customer sees.}
+
+\screen{t09-complete}{Completing the repair with a summary of the work (and up to three optional completion photos). ``Can't finish this repair'' sends the case to an admin for a refund instead.}
+
+\screen{t10-returned}{Marking the device returned. If the customer does not answer within three days, receipt is confirmed automatically.}
+
+\section{Customer: Receipt, Review and Warranty}
+\label{sec:wt-warranty}
+
+\screen{c14-confirm-receipt}{The customer confirms receipt, or reports ``I haven't received it'', which goes to an admin. Confirming makes the technician's earning available and starts the warranty.}
+
+\screen{c15-review}{Rating the technician (1--5 with an optional comment). A private report to admins is a separate action.}
+
+\screen{c16-warranty-claim}{Reporting a problem under the 30-day warranty: the customer says what happened (same fault, or a fitted part failed), describes it and can add photos.}
+
+\screen{t11-warranty-book}{The technician books the free re-inspection, which must happen within three days, otherwise an admin can take the claim over.}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{img/screens/t12-warranty-card}
+\caption{The technician's warranty claim after the visit: booked re-inspection, decision ``Covered'' and the re-repair, each with its note.}
+\label{fig:scr-t12-warranty-card}
+\end{figure}
+
+\screen{c17-warranty-resolved}{The customer's view at the end: the claim shows every step and the customer's answer ``Working now'', so the claim is resolved. Had the re-repair failed, an admin would have refunded the repair.}
+
+\screen{c18-notifications}{Customer notifications for every step of this repair.}
+
+\section{Technician: Wallet, Profile and History}
+
+\screen{t01-overview}{Technician overview: available balance, active jobs and rating.}
+
+\screen{t13-wallet}{Wallet after this repair: the 3,600\,BDT earning (4,000 minus 10\%) requested as a bKash withdrawal, shown as ``Withdrawal in progress''. Balances are computed from settlements and withdrawals, never stored.}
+
+\screen{t14-profile-edit}{Editing the technician's own details (name, phone, region, district, address). The area cannot change while a repair is active.}
+
+\screen{t15-completed-jobs}{Completed jobs, each with the amount the technician receives.}
+
+\section{Admin}
+
+\screen{a01-overview}{Admin overview. The ``Needs you'' panel counts missed and overdue pickups, requests with no offers in 24 hours, stalled repairs and requests no local technician can take; each count opens its filtered list. (The counts come from the seeded development data.)}
+
+\screen{a02-requests}{All repair requests, with search, status and payment filters and selectable columns.}
+
+\screen{a03-request-detail}{The walkthrough repair from the admin's side, with the full record including the pickup condition.}
+
+\screen{a04-assign}{Assign technicians: requests waiting for a technician, with flags such as ``Pickup time passed'' and ``No offers in 24h''. The admin can invite a technician to apply or assign one directly.}
+
+\screen{a05-technicians}{Technician applications and approved technicians with their expertise, approval status and availability.}
+
+\screen{a06-catalogue}{Services and prices: the catalogue editor, showing for each service its open requests.}
+
+\screen{a07-service-editor}{Editing a service. Price changes create a new pricing version and never change existing requests; the inspection fee cannot be set below the minimum.}
+
+\screen{a08-reports}{Reports with the AI summary. The model only sees aggregate figures, and any sentence with a number that is not in the facts is removed before saving.}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.48\textwidth]{img/screens/a09-reports-charts}\hfill
+\includegraphics[width=0.48\textwidth]{img/screens/a09b-reports-charts2}
+\caption{Report charts: requests over time and demand against technicians by region (left); top devices and repairs and a pickup heat map by day and time (right).}
+\label{fig:scr-reports-charts}
+\end{figure}
+
+\screen{a10-mark-paid}{Recording a bKash payout. The admin sends the money with bKash Send Money first, then records the TrxID; this test record used a made-up TrxID.}
+
+\screen{a11-reviews}{Technician reviews, including the walkthrough review. Admins can hide or restore a review with a reason, and every change is kept.}
+
+\screen{a12-users}{User management: roles can be changed only by an admin.}
+
+\end{document}

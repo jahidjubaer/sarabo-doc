@@ -16,16 +16,16 @@ The system has three signed-in roles and one anonymous audience. Their goals are
 \toprule
 \textbf{Role} & \textbf{Primary goal} & \textbf{Representative actions} \\
 \midrule
-Customer & Get a device repaired at a fair, known price & Create request (optionally with AI help), add photos, pick a pickup slot, compare offers, pay inspection fee, approve or reject quote, pay, track, confirm receipt, review or report the technician \\
+Customer & Get a device repaired at a fair, known price & Create request (optionally with AI help), add photos, pick a pickup slot, compare offers, pay inspection fee, approve or reject quote, pay, track, confirm receipt, review or report the technician, claim warranty \\
 Technician & Find suitable work and get paid & Apply with expertise and region, browse the jobs board, send offers, inspect, quote, revise, repair, complete, view wallet, withdraw via bKash \\
-Admin & Keep the service healthy & Approve technicians, edit catalogue and prices, handle missed pickups and refunds, process withdrawals, moderate reviews and reports, read reports \\
+Admin & Keep the service healthy & Approve technicians, edit catalogue and prices, handle missed pickups, refunds, disputes and warranty reviews, process withdrawals, moderate reviews and reports, read reports \\
 Visitor & Learn about the service & Browse services, service areas and open jobs, track a repair with a tracking code, ask the AI support chat \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \section{Functional Requirements}
-Table~\ref{tab:fr} lists the functional requirements. Requirements FR-21 to FR-32 were added in the second development stage.
+Table~\ref{tab:fr} lists the functional requirements. Requirements FR-21 to FR-32 were added in the second development stage, and FR-33 to FR-38 in the final phase.
 
 \begin{longtable}{@{}p{1.4cm}p{13cm}@{}}
 \caption{Functional requirements}\label{tab:fr}\\
@@ -42,7 +42,7 @@ Table~\ref{tab:fr} lists the functional requirements. Requirements FR-21 to FR-3
 FR-01 & The system shall authenticate users (email/password and Google) and protect private routes. \\
 FR-02 & The system shall distinguish Customer, Technician and Admin capabilities on the server. \\
 FR-03 & A verified Customer shall be able to create a structured repair request for a catalogue service. \\
-FR-04 & The service catalogue shall provide active device and repair categories with BDT estimate ranges, inspection fee caps and required expertise level. \\
+FR-04 & The service catalogue shall provide active device and repair categories with BDT estimate ranges, inspection fee caps (never below the minimum fee) and required expertise level. \\
 FR-05 & Customers shall be able to attach up to three damage photos through a controlled private-storage workflow. \\
 FR-06 & Users shall be able to apply as Technicians with region, district and structured expertise; Admin shall approve or reject applications. \\
 FR-07 & The assigned Technician shall submit an inspection before a quote can be submitted. \\
@@ -71,6 +71,12 @@ FR-29 & Admin shall see an attention list (overdue and missed pickups, unmatchab
 FR-30 & An AI helper shall turn a free-text description and/or damage photo into a draft request that the customer reviews. \\
 FR-31 & Technicians shall see a price guide from past offers and may ask AI to draft their offer note. \\
 FR-32 & An AI support chat shall answer visitor questions from live catalogue data, and Admin reports shall include an AI summary checked against the real figures. \\
+FR-33 & Offers shall be ranked by rating, reliability, price, district and reply time, with the best match and its reasons shown; the customer still chooses. \\
+FR-34 & A finished repair shall carry a 30-day warranty: free re-inspection by the same technician, free re-repair if covered, and an admin refund if it cannot be fixed. \\
+FR-35 & Every waiting state shall have a deadline, an automatic step or an admin alert (unpaid quote, not repairable, repair that cannot be finished, receipt not confirmed, device not returned, stalled work). \\
+FR-36 & The technician shall record the device's condition and accessories at pickup, and may report a customer who is not home without it counting as a no-show. \\
+FR-37 & Every repair shall have an inspection fee of at least 100 BDT (200 BDT when the estimate exceeds 1,000 BDT). \\
+FR-38 & Technicians shall edit their own name, phone, address and service area (the area only while no repair is active). \\
 \end{longtable}
 
 \section{Non-Functional Requirements}
@@ -130,11 +136,11 @@ Figure~\ref{fig:usecase} shows the main interactions of each role with the platf
 \centering
 \begin{tikzpicture}[node distance=4mm]
   \node[hl,minimum width=2.4cm] (c) {Customer};
-  \node[box,right=12mm of c,text width=9.6cm,align=left] (ca) {Create request (AI helper) \textbullet{} add photos \textbullet{} book pickup slot \textbullet{} compare / reject offers \textbullet{} pay inspection fee \textbullet{} approve quote \& pay \textbullet{} track \textbullet{} confirm receipt \textbullet{} review / report};
+  \node[box,right=12mm of c,text width=9.6cm,align=left] (ca) {Create request (AI helper) \textbullet{} add photos \textbullet{} book pickup slot \textbullet{} compare ranked offers \textbullet{} pay inspection fee \textbullet{} approve quote \& pay \textbullet{} track \textbullet{} confirm receipt \textbullet{} review / report \textbullet{} warranty claim};
   \node[hl,minimum width=2.4cm,below=14mm of c] (t) {Technician};
-  \node[box,right=12mm of t,text width=9.6cm,align=left] (ta) {Apply with expertise \textbullet{} jobs board \textbullet{} send offer (price guide, AI note) \textbullet{} collect \& inspect \textbullet{} quote / revise \textbullet{} repair \& complete \textbullet{} wallet \& bKash withdrawal};
+  \node[box,right=12mm of t,text width=9.6cm,align=left] (ta) {Apply with expertise \textbullet{} jobs board \textbullet{} send offer (price guide, AI note) \textbullet{} collect \& inspect \textbullet{} quote / revise \textbullet{} repair \& complete \textbullet{} warranty re-inspection \textbullet{} edit profile \textbullet{} wallet \& bKash withdrawal};
   \node[hl,minimum width=2.4cm,below=14mm of t] (a) {Admin};
-  \node[box,right=12mm of a,text width=9.6cm,align=left] (aa) {Approve technicians \textbullet{} catalogue \& prices \textbullet{} attention list \textbullet{} missed pickups \& refunds \textbullet{} withdrawals \textbullet{} moderation \textbullet{} reports with AI summary};
+  \node[box,right=12mm of a,text width=9.6cm,align=left] (aa) {Approve technicians \textbullet{} catalogue \& prices \textbullet{} attention list \textbullet{} missed pickups \& refunds \textbullet{} withdrawals \textbullet{} disputes, stalled work \& warranty review \textbullet{} moderation \textbullet{} reports with AI summary};
   \node[hl,minimum width=2.4cm,below=14mm of a] (v) {Visitor};
   \node[box,right=12mm of v,text width=9.6cm,align=left] (va) {Browse services \& areas \textbullet{} open jobs board \textbullet{} public tracking \textbullet{} AI support chat};
   \foreach \x/\y in {c/ca,t/ta,a/aa,v/va} \draw[arr] (\x) -- (\y);

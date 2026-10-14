@@ -5,7 +5,7 @@ Author: Jahid Hasan (222-115-116, Batch 57 C). Supervisor: Shrabanti Chowdhury.
 
 | File | What it is |
 |---|---|
-| **[Sarabo_Final_Report.pdf](Sarabo_Final_Report.pdf)** | Final report, compiled from `report/` (76 pages, Metropolitan University template) |
+| **[Sarabo_Final_Report.pdf](Sarabo_Final_Report.pdf)** | Final report, compiled from `report/` (114 pages, Metropolitan University template; Chapter 7 is a screenshot walkthrough) |
 | `report/` | LaTeX source: `myThesis.tex` (main file), `tex/*.tex` (one file per chapter), `ref_file.bib`, `myStyle.sty`, `img/` |
 | **[presentation/Sarabo_Presentation.pptx](presentation/Sarabo_Presentation.pptx)** | 10-slide, 5-minute talk; the speaker script with timings is in each slide's notes |
 | [presentation/demo-script.md](presentation/demo-script.md) | Run of show for the 5-minute live demo |

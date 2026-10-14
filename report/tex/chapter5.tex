@@ -28,13 +28,13 @@ AI & Google Gemini (\texttt{@google/genai}) & Support chat, request helper, offe
 Email & Nodemailer (Gmail) & Request, reminder and job-offer emails \\
 Documents & pdfkit & PDF payment receipts \\
 Testing & Custom Node test harness, Playwright & Server integration tests; browser tests \\
-Delivery & GitHub Actions, Vercel, Firebase Hosting & CI, serverless API, cron, static hosting \\
+Delivery & GitHub Actions, Vercel & CI, serverless API (Mumbai region), cron, static hosting \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \section{Development Process}
-Sarabo was developed iteratively in small, reviewable phases between 26 July and 4 October 2026, followed by a final improvement phase up to 11 October: 156 commits in the client repository and 107 in the server repository. Each phase followed the same loop: define the rule, implement it on the server with tests, build the interface, run lint, build and tests, then review the result before moving on. Larger features were developed on separate branches and merged through pull requests once continuous integration passed. Table~\ref{tab:phases} summarises the phases.
+Sarabo was developed iteratively in small, reviewable phases between 26 July and 4 October 2026, followed by a final improvement phase from 11 to 14 October: 163 commits in the client repository and 119 in the server repository. Each phase followed the same loop: define the rule, implement it on the server with tests, build the interface, run lint, build and tests, then review the result before moving on. Larger features were developed on separate branches and merged through pull requests once continuous integration passed. Table~\ref{tab:phases} summarises the phases.
 
 \begin{longtable}{@{}p{3.2cm}p{2.2cm}p{8.8cm}@{}}
 \caption{Development phases (from the git history)}\label{tab:phases}\\
@@ -57,7 +57,7 @@ Sarabo was developed iteratively in small, reviewable phases between 26 July and
 7. Operations & 24--25 Sep & Pickup scheduling; region rule; email updates; Playwright tests; admin reports and attention list; in-app reminders; refusing unmatchable requests. \\
 8. Job portal and inspection fee & 25 Sep -- 2 Oct & Technician offers and customer choice; inspection-fee payment, credit, refunds and split; reject-and-repost; public jobs board; job notifications; PDF receipts; one-step approve-and-pay. \\
 9. AI helpers and payouts & 2--4 Oct & AI request helper (text and photo); price guide and AI offer note; AI report summary; bKash withdrawals; hosting configuration. \\
-10. Final improvements & from 11 Oct & Fixes and improvements for the final submission, recorded step by step in Section~\ref{sec:finalphase}. \\
+10. Final improvements & 11--14 Oct & Map search, final payout on removal, faster API and AI, offer ranking, warranty, deadlines for every waiting state, pickup condition, minimum inspection fee, technician profile editing (Section~\ref{sec:finalphase}). \\
 \end{longtable}
 
 \section{Frontend Implementation}
@@ -68,7 +68,7 @@ The dashboard is wrapped by an authenticated route and subdivided by role guards
 Each feature has a query-key factory (for example \texttt{quoteKeys}, \texttt{repairKeys}, \texttt{walletKeys}) and hooks for reading and mutating. A mutation invalidates exactly the queries that become stale: approving a quote refreshes the quote, the request detail, the customer's request list and the payment eligibility. This keeps the three roles' views consistent without reloading the page.
 
 \subsection{Action-First Workspace}
-Each request page shows the service spine at the top, then a ``next step'' panel that tells the signed-in role exactly what to do (for example ``Choose a technician: 2 offers waiting'' or ``Approve and pay BDT 2,300''), followed by supporting context. Reusable empty, loading, error, confirmation and form components keep behaviour consistent. A guided product tour introduces each dashboard on first visit, and a command menu allows keyboard navigation.
+Each request page (for example Figure~\ref{fig:scr-c10-quote}) shows the service spine at the top, then a ``next step'' panel that tells the signed-in role exactly what to do (for example ``Choose a technician: 2 offers waiting'' or ``Approve and pay BDT 2,300''), followed by supporting context. Reusable empty, loading, error, confirmation and form components keep behaviour consistent. A guided product tour introduces each dashboard on first visit, and a command menu allows keyboard navigation.
 
 \section{Backend Implementation}
 \subsection{Controllers, Services and Adapters}
@@ -81,7 +81,7 @@ Operations that update several dependent records use MongoDB transactions. Booki
 Important events create in-app notifications through one service, each with a de-duplication key so that a retried request never notifies twice. Emails (request received, pickup reminder, new job offer) are sent through Gmail after the main action succeeds; a failed email is logged in \texttt{email\_log} and never fails the request. A daily Vercel Cron job, protected by a secret, posts ``pickup tomorrow'' reminders to customers and technicians and automatically closes requests whose declined quote has had no response for three days.
 
 \section{Service Catalogue and Matching}
-Admins edit services and prices from the dashboard. A price change increments \texttt{pricingRule.version}; existing requests keep their own price snapshot. When a customer creates a request, \texttt{technicianMatchGate} checks that at least one approved technician in the same region has the required device, repair and expertise level. If not, the API answers \texttt{409 NO\_TECHNICIAN\_AVAILABLE}, the form explains why, and the refused demand is counted once per customer, service, region and day (with the customer identity hashed) so admins can see where to recruit.
+Admins edit services and prices from the dashboard. A price change increments \texttt{pricingRule.version}; existing requests keep their own price snapshot. Every service has an inspection fee of at least 100\,BDT, or 200\,BDT when its estimate tops out above 1,000\,BDT; the same rule (\texttt{minimumInspectionFee}) is applied to new requests, offers, the admin editor and the public price list, and a one-time migration raised the 16 live services that had no fee. When a customer creates a request, \texttt{technicianMatchGate} checks that at least one approved technician in the same region has the required device, repair and expertise level. If not, the API answers \texttt{409 NO\_TECHNICIAN\_AVAILABLE}, the form explains why, and the refused demand is counted once per customer, service, region and day (with the customer identity hashed) so admins can see where to recruit.
 
 \section{Pickup Scheduling}
 Customers pick one of four two-hour windows (10:00--18:00 Bangladesh time), Saturday to Thursday, at least one hour and at most seven days ahead. Each region accepts a configurable number of pickups per slot (default three); a full slot returns \texttt{409 PICKUP\_SLOT\_FULL}. The window can be changed until the device is collected, and a moved pickup is reminded again.
@@ -116,28 +116,39 @@ Images go directly from the browser to a private Supabase bucket through a signe
 New requests get a tracking code \texttt{SRB-<random>} with 128 bits of randomness. \texttt{GET /public/trackings/:code} returns only the status timeline and timestamps, is rate limited and accepts only exact codes. The public jobs board (\texttt{GET /jobs}, 60 requests per minute per address) lists open requests with device, repair, area, pickup day, usual price and number of offers, but never the problem text, photos, tracking code or any personal detail.
 
 \section{Deployment and Continuous Integration}
-The API is deployed as a Vercel serverless function (Node.js 24) and the client on Firebase Hosting at \url{https://sarabo-jahid.web.app}. Production uses its own database name, and the server refuses to start in production without the required secrets and an \texttt{https} client origin. GitHub Actions runs on every push: for the server, the full test suites against a throwaway MongoDB replica set started inside the job (CI is never given the real database credentials); for the client, ESLint and a production build. Deployment is a deliberate manual step.
+The API is deployed as a Vercel serverless function (Node.js 24) at \url{https://sarabo-server.vercel.app}, and the client as a static Vercel site at \url{https://sarabo-client-six.vercel.app}; both deploy automatically from the \texttt{main} branch. The API runs in Vercel's Mumbai region (\texttt{bom1}), next to the MongoDB Atlas cluster: this cut the first request after an idle period from 10.7\,s to 2.9\,s and a normal request from 0.75\,s to about 0.2\,s. Production uses its own database name, and the server refuses to start in production without the required secrets and an \texttt{https} client origin. GitHub Actions runs on every push: for the server, the full test suites against a throwaway MongoDB replica set started inside the job (CI is never given the real database credentials); for the client, ESLint and a production build. Pushing to \texttt{main} is a deliberate step taken only after all checks pass.
 
 \section{Final Improvement Phase}
 \label{sec:finalphase}
-After the system was feature-complete on 4 October 2026, a final phase of fixes and improvements began on 11 October 2026 to prepare the project for submission. It started with a full review of both codebases and their documentation and a fresh verification run of every automated check (Chapter~\ref{ch:testing}). Each later change is recorded with its problem, change, files and verification in the project work log and summarised in Table~\ref{tab:finalphase}.
+After the system was feature-complete on 4 October 2026, a final phase of fixes and improvements ran from 11 to 14 October 2026 to prepare the project for submission. It started with a full review of both codebases and their documentation and a fresh verification run of every automated check (Chapter~\ref{ch:testing}). Each later change is recorded with its problem, change, files and verification in the project work log and summarised in Table~\ref{tab:finalphase}.
 
-\begin{table}[htbp]
-\centering
-\caption{Final improvement phase log}
-\label{tab:finalphase}
-\small
-\begin{tabularx}{\textwidth}{@{}p{0.6cm}p{2cm}X@{}}
+{\small
+\begin{longtable}{@{}p{0.6cm}p{2cm}p{11.4cm}@{}}
+\caption{Final improvement phase log}\label{tab:finalphase}\\
 \toprule
 \textbf{\#} & \textbf{Date} & \textbf{Change and verification} \\
 \midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Date} & \textbf{Change and verification} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
 0 & 11 Oct 2026 & Codebase and documentation review; re-ran server suites against an isolated in-memory MongoDB replica set, client lint, production build and Playwright browser tests. \\
 1 & 11 Oct 2026 & Service-area map: OpenStreetMap coordinates for 226 of the 236 covered sub-areas, each kept only if it lies inside its own district. Searching a sub-area (e.g.\ Ambarkhana) now zooms to that spot instead of the district centre. Verified with two new browser tests on desktop and mobile. \\
 2 & 11 Oct 2026 & Final payout on technician removal: removing a technician queues their whole available balance as a bKash withdrawal in the same transaction (Section~\ref{sec:removalpayout}). Verified with 15 new server checks. \\
 3 & 11 Oct 2026 & Homepage hero: the photo moved to the right side (top band on phones) so the headline no longer sits over it. Checked with screenshots at three screen widths. \\
 4 & 11 Oct 2026 & Final verification of the committed code and CI on both repositories (Section~\ref{sec:results}). \\
-\bottomrule
-\end{tabularx}
-\end{table}
+5 & 14 Oct 2026 & Slow first load: the API was moved to Vercel's Mumbai region, next to the database (10.7\,s $\rightarrow$ 2.9\,s cold, 0.75\,s $\rightarrow$ 0.2\,s warm, measured live). \\
+6 & 14 Oct 2026 & AI support timeouts: faster Gemini model with an automatic fallback model; live answers now take 1.4--1.9\,s. 4 new tests. \\
+7 & 14 Oct 2026 & Smarter matching: offers ranked by rating, reliability, price, district and reply time, with a ``Best match'' badge and reasons (Section~\ref{sec:ranking}). 22 new tests. \\
+8 & 14 Oct 2026 & 30-day repair warranty with free re-inspection, re-repair, admin review and refunds (Section~\ref{sec:warranty}). 45 new tests. \\
+9 & 14 Oct 2026 & Whole-workflow review, then fixes so no request can get stuck: unpaid quotes, not-repairable devices, repairs that cannot be finished, unconfirmed receipt, warranty deadlines (Section~\ref{sec:nostuck}). 42 new tests. \\
+10 & 14 Oct 2026 & Remaining gaps: late payment after cancellation refunded, device return after cancellation, stalled-work alerts, pickup condition, customer not home. 30 new tests. \\
+11 & 14 Oct 2026 & Photos upload only when the customer presses ``Upload''; technicians edit their own profile; minimum inspection fee for every repair, applied to old offers and migrated on production. 22 new tests. \\
+12 & 14 Oct 2026 & All of the above pushed and deployed; full verification (Section~\ref{sec:results}) and screenshots of the running system (Chapter~\ref{ch:walkthrough}). \\
+\end{longtable}
+}
 
 \end{document}

@@ -25,6 +25,9 @@ A technician is either available or busy with one repair. This prevents double b
 \subsection{Legacy Internal Values}
 Some stored role and status values (\texttt{rider}, \texttt{parcel\_delivered}, and others) are inherited from the original parcel-delivery codebase. They are hidden from users, but a dedicated migration would make the data model cleaner.
 
+\subsection{Signed-In Screens Not Covered by Browser Tests}
+The automated browser tests cover public pages only, because signing in needs real Firebase accounts. Signed-in screens are covered by server tests of every endpoint behind them and were checked by hand (Chapter~\ref{ch:walkthrough}), but not by automated browser tests.
+
 \subsection{Not Yet Used by Real Customers}
 The platform is deployed and tested, but it has not been run with real customers, technicians and money, and it has not undergone load testing or an external security audit.
 
@@ -34,10 +37,10 @@ The platform is deployed and tested, but it has not been run with real customers
   \item \textbf{Live technician location}: show the technician's approach on a map on pickup day.
   \item \textbf{Mobile apps or a Progressive Web App}: offline-friendly technician app with push notifications.
   \item \textbf{SMS notifications}: many customers in Bangladesh rely on SMS more than email.
-  \item \textbf{Warranty and returns}: post-repair warranty cases with evidence and re-inspection.
   \item \textbf{Parts inventory}: track parts used, their cost and supplier per repair.
   \item \textbf{Technician scheduling}: daily capacity, working hours and route-aware assignment.
-  \item \textbf{Smarter matching}: rank offers using ratings, distance, response time and completion history.
+  \item \textbf{Cash payment}: record cash paid to the technician at hand-over, with the platform's share settled from the wallet.
+  \item \textbf{Own domain name}: a \texttt{.com} or \texttt{.com.bd} address, since some mobile networks were seen failing to resolve the free \texttt{.vercel.app} address.
   \item \textbf{Bangla interface}: full Bangla localisation of the user interface, not only of AI input.
   \item \textbf{Schema clean-up}: retire the remaining legacy values through a planned data migration.
 \end{enumerate}
