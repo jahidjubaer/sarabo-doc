@@ -386,3 +386,30 @@ Nothing in entries 3–4 was committed, pushed or deployed.
   `feat/smarter-matching`), local only, not pushed or deployed: server `c5ef6a5` feat:
   repair warranty claims with free re-inspection, admin review and refunds; client
   `cab2fa6` feat: warranty claims for customers, technicians and admins.
+
+### 12. Whole-workflow review before push — 2026-10-14
+- Type: review (no code changed)
+- Goal: Before pushing, find real-life situations the repair process does not handle and
+  states where a request can get stuck.
+- Found (checked in the code, not assumed):
+  1. An approved quote that is never paid stays in `quote_approved` forever. The customer
+     cannot cancel (cancelling is only allowed before a technician is assigned), nothing
+     times it out, and the technician stays "busy". An admin also cannot remove a
+     technician who has active work.
+  2. An inspection can record `not_repairable` or `not_economical`, but nothing acts on
+     it. The only next step is to submit a quote, so the request sits in
+     `inspection_completed` with the technician busy.
+  3. A paid repair has no way out except "complete". If parts are unavailable or the
+     technician disappears, there is no cancel, refund or reassignment.
+  4. Only the customer can confirm receipt. If they never do, the technician's money stays
+     pending forever and the warranty never starts.
+  5. Cancelling after pickup (declined quote, auto-close) marks the request `cancelled`,
+     but nothing tracks returning the device to the customer.
+  6. Admin alerts cover only problems before pickup; nothing flags stalled work after it.
+  7. Warranty (entry 11): a claim the technician never books has no deadline. A removed
+     technician cannot act on their claims, and an admin cannot take a claim over.
+     Removing a technician ignores open claims.
+  8. Not modelled: device condition at pickup, customer not home at pickup (a missed pickup
+     always refunds as a technician no-show), cash payment (Stripe test mode only).
+- Result: reported to the user with suggested fixes and an order; waiting for their
+  decision before any change.
