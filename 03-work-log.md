@@ -581,3 +581,35 @@ Nothing in entries 3–4 was committed, pushed or deployed.
 - Not checked: the new screens have not been clicked through while signed in.
 - Commits (author Jahid Hasan only), branch `fix/photo-profile-fee`: server `e0554b0`,
   `4d0d584`; client `9792490`, `6350f49`, `e9caaeb`. Not pushed.
+
+### 16. Old offers below the minimum inspection fee — 2026-10-14
+
+- Asked for: close the edge case from entry 15. An offer sent before the minimum
+  existed could still have a lower fee, even 0. Accepting a 0-fee offer booked the
+  visit with no fee at all.
+- Decision (user said go ahead): raise the fee when the offer is accepted, and also
+  raise stored waiting offers in the migration.
+- What changed:
+  - One rule, `offerInspectionFee` (`utils/jobPortal.js`): a waiting offer charges
+    at least its request's minimum. Closed offers keep their history.
+  - The customer's offer list, the ranking and the technician's own offer all show
+    that fee.
+  - When the customer accepts an older offer, its raised fee is saved on the offer
+    first, with the old value in `inspectionFeeRaisedFrom`. Checkout, the payment
+    webhook's amount check and the booking all use the same number. A free instant
+    booking can no longer happen. The save checks the stored fee first: if the
+    technician re-offered at that moment, the customer gets `APPLICATION_CHANGED` and
+    reloads.
+  - `migrate-inspection-fee-floor` also raises waiting offers below their request's
+    minimum. It reports them in the dry run, and running it again changes nothing.
+  - The AI support assistant now quotes the minimum fee too, not the raw stored 0.
+- Tests:
+  - Server: 4 new — the old offer is shown at the minimum, accepting opens a
+    checkout for it, paying books the technician with it, and the migration raises
+    only waiting offers.
+  - The job-portal booking test now books through a paid checkout, since every
+    offer has a fee.
+  - Suites: main **2,760 / 2,760**; support **164**, migrations **63**, feedback
+    **177**. No client change.
+- Commit (author Jahid Hasan only), branch `fix/photo-profile-fee`: server (this
+  entry). Not pushed.
