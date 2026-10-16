@@ -35,12 +35,12 @@ Figure~\ref{fig:e2e} shows the main path of a repair, from request to settlement
 \end{figure}
 
 \section{Request Creation}
-The customer chooses a device category and a repair service from the live catalogue (or lets the AI helper propose them), adds brand, model and a description, optionally adds up to three photos (shown as previews and sent only when the customer presses ``Upload''), and picks a pickup window. The estimate card shows the catalogue's price range. Before submitting, the form calls \texttt{GET /service-availability}; the server repeats the check on submission and refuses the request with a clear explanation if no approved technician in that region can do this repair at the required level. Accepted requests receive a tracking code and a confirmation email (Figures~\ref{fig:scr-c02-ai-helper}--\ref{fig:scr-c04-created}).
+The customer chooses a device category and a repair service from the live catalogue (or lets the AI helper propose them), adds brand, model and a description, optionally adds up to three photos (shown as previews and sent only when the customer presses ``Upload''), and picks a pickup window. The estimate card shows the catalogue's price range. Before submitting, the form calls \texttt{GET /service-availability}; the server repeats the check on submission and refuses the request with a clear explanation if no approved technician in that region can do this repair at the required level. Accepted requests receive a tracking code and a confirmation email (Figures~\ref{fig:wt-c02}--\ref{fig:wt-c04}).
 
 \section{Job Portal and Offers}
 A request is \emph{open} while it is waiting for a technician. It appears on the public jobs board as a safe summary, and every approved technician who matches it receives a \texttt{job\_posted} notification (at most once per request). A technician who starts matching later, after being approved or adding a skill, is told about the open jobs they can now take. Approved technicians see the details they need (district, pickup time, problem description and photos) but never the customer's name, email or street address.
 
-A technician sends an \emph{offer}: an estimate range, an inspection fee (at least the minimum fee and at most the catalogue fee for that service) and a note. The customer compares offers side by side and either chooses one or rejects one with a reason (price, inspection fee or other). A rejected offer causes the job to be \emph{reposted} to the top of the board; the rejected technician may send one revised offer, and other matching technicians are notified. If no offer is waiting 24 hours after the job was last posted, it appears on the admin attention list. Admins can also invite a specific technician to apply, or assign one directly as an override. Figures~\ref{fig:scr-t03-offer} and~\ref{fig:scr-c06-offers} show an offer being sent and compared.
+A technician sends an \emph{offer}: an estimate range, an inspection fee (at least the minimum fee and at most the catalogue fee for that service) and a note. The customer compares offers side by side and either chooses one or rejects one with a reason (price, inspection fee or other). A rejected offer causes the job to be \emph{reposted} to the top of the board; the rejected technician may send one revised offer, and other matching technicians are notified. If no offer is waiting 24 hours after the job was last posted, it appears on the admin attention list. Admins can also invite a specific technician to apply, or assign one directly as an override. Figures~\ref{fig:wt-t03} and~\ref{fig:wt-c06} show an offer being sent and compared.
 
 \section{Offer Ranking (Smarter Matching)}
 \label{sec:ranking}
@@ -65,7 +65,7 @@ Reply time & 10\% & Median minutes from the job being posted to the technician's
 \end{table}
 
 \section{Inspection Fee and Booking}
-Choosing an offer with a fee opens a Stripe Checkout for exactly that fee; nothing is booked yet. When Stripe confirms the payment, one transaction records it and books the technician. If the technician can no longer be booked at that moment (busy, request cancelled, someone else chosen), the payment is recorded and refunded automatically and the customer is asked to choose again. The fee is stored separately from the repair payment and is later credited toward the final price (Figures~\ref{fig:scr-c07-choose}--\ref{fig:scr-c09-booked} and~\ref{fig:scr-c10-quote}). Table~\ref{tab:feeoutcomes} shows what happens to the fee when the repair does not go ahead.
+Choosing an offer with a fee opens a Stripe Checkout for exactly that fee; nothing is booked yet. When Stripe confirms the payment, one transaction records it and books the technician. If the technician can no longer be booked at that moment (busy, request cancelled, someone else chosen), the payment is recorded and refunded automatically and the customer is asked to choose again. The fee is stored separately from the repair payment and is later credited toward the final price (Figures~\ref{fig:wt-c07}--\ref{fig:wt-c09} and~\ref{fig:wt-c10}). Table~\ref{tab:feeoutcomes} shows what happens to the fee when the repair does not go ahead.
 
 \begin{table}[htbp]
 \centering
@@ -142,7 +142,7 @@ Payment arrives after cancellation & Recorded and refunded at once; a failed ref
 Work not moving (no inspection, quote, answer or repair) & Shown on the admin overview with one alert per request and stage. \\
 \end{longtable}
 
-\paragraph*{Pickup condition.} When collecting a device the technician records its condition and any accessories (charger, case, SIM). The customer sees this record and can say it is wrong, in which case an admin reviews it. This protects both sides if the device's condition is later disputed (Figure~\ref{fig:scr-t05-pickup-condition}).
+\paragraph*{Pickup condition.} When collecting a device the technician records its condition and any accessories (charger, case, SIM). The customer sees this record and can say it is wrong, in which case an admin reviews it. This protects both sides if the device's condition is later disputed (Figure~\ref{fig:wt-t05}).
 
 \section{Repair Warranty}
 \label{sec:warranty}
@@ -168,7 +168,7 @@ Every finished repair is covered for 30 days from the moment the customer confir
 \label{fig:warranty}
 \end{figure}
 
-A customer may have one open claim at a time and at most two per repair. Every step is a guarded database update, so no step can be skipped and two people acting at once cannot both succeed. If the technician misses a deadline, the claim is marked overdue, admins are alerted and can take it over, and a technician with open claims cannot be removed. A refund covers the whole quote (repair payment plus the credited inspection fee) through Stripe with one idempotency key per part, so a retry never refunds twice. The technician's settlement for that repair becomes \emph{reversed}; if it had already been withdrawn, the wallet shows the amount as owed and it is deducted from future earnings. Figures~\ref{fig:scr-c16-warranty-claim}--\ref{fig:scr-c17-warranty-resolved} show a complete claim.
+A customer may have one open claim at a time and at most two per repair. Every step is a guarded database update, so no step can be skipped and two people acting at once cannot both succeed. If the technician misses a deadline, the claim is marked overdue, admins are alerted and can take it over, and a technician with open claims cannot be removed. A refund covers the whole quote (repair payment plus the credited inspection fee) through Stripe with one idempotency key per part, so a retry never refunds twice. The technician's settlement for that repair becomes \emph{reversed}; if it had already been withdrawn, the wallet shows the amount as owed and it is deducted from future earnings. Figures~\ref{fig:wt-c16}--\ref{fig:wt-c17} show a complete claim.
 
 \section{Settlement and Withdrawal Lifecycle}
 \begin{figure}[htbp]

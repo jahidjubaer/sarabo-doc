@@ -34,7 +34,7 @@ Delivery & GitHub Actions, Vercel & CI, serverless API (Mumbai region), cron, st
 \end{table}
 
 \section{Development Process}
-Sarabo was developed iteratively in small, reviewable phases between 26 July and 4 October 2026, followed by a final improvement phase from 11 to 14 October: 163 commits in the client repository and 119 in the server repository. Each phase followed the same loop: define the rule, implement it on the server with tests, build the interface, run lint, build and tests, then review the result before moving on. Larger features were developed on separate branches and merged through pull requests once continuous integration passed. Table~\ref{tab:phases} summarises the phases.
+Sarabo was developed iteratively in small, reviewable phases between 26 July and 4 October 2026, followed by a final improvement phase from 11 to 16 October: 163 commits in the client repository and 120 in the server repository. Each phase followed the same loop: define the rule, implement it on the server with tests, build the interface, run lint, build and tests, then review the result before moving on. Larger features were developed on separate branches and merged through pull requests once continuous integration passed. Table~\ref{tab:phases} summarises the phases.
 
 \begin{longtable}{@{}p{3.2cm}p{2.2cm}p{8.8cm}@{}}
 \caption{Development phases (from the git history)}\label{tab:phases}\\
@@ -57,7 +57,7 @@ Sarabo was developed iteratively in small, reviewable phases between 26 July and
 7. Operations & 24--25 Sep & Pickup scheduling; region rule; email updates; Playwright tests; admin reports and attention list; in-app reminders; refusing unmatchable requests. \\
 8. Job portal and inspection fee & 25 Sep -- 2 Oct & Technician offers and customer choice; inspection-fee payment, credit, refunds and split; reject-and-repost; public jobs board; job notifications; PDF receipts; one-step approve-and-pay. \\
 9. AI helpers and payouts & 2--4 Oct & AI request helper (text and photo); price guide and AI offer note; AI report summary; bKash withdrawals; hosting configuration. \\
-10. Final improvements & 11--14 Oct & Map search, final payout on removal, faster API and AI, offer ranking, warranty, deadlines for every waiting state, pickup condition, minimum inspection fee, technician profile editing (Section~\ref{sec:finalphase}). \\
+10. Final improvements & 11--16 Oct & Map search, final payout on removal, faster API and AI, offer ranking, warranty, deadlines for every waiting state, pickup condition, minimum inspection fee, technician profile editing (Section~\ref{sec:finalphase}). \\
 \end{longtable}
 
 \section{Frontend Implementation}
@@ -68,7 +68,7 @@ The dashboard is wrapped by an authenticated route and subdivided by role guards
 Each feature has a query-key factory (for example \texttt{quoteKeys}, \texttt{repairKeys}, \texttt{walletKeys}) and hooks for reading and mutating. A mutation invalidates exactly the queries that become stale: approving a quote refreshes the quote, the request detail, the customer's request list and the payment eligibility. This keeps the three roles' views consistent without reloading the page.
 
 \subsection{Action-First Workspace}
-Each request page (for example Figure~\ref{fig:scr-c10-quote}) shows the service spine at the top, then a ``next step'' panel that tells the signed-in role exactly what to do (for example ``Choose a technician: 2 offers waiting'' or ``Approve and pay BDT 2,300''), followed by supporting context. Reusable empty, loading, error, confirmation and form components keep behaviour consistent. A guided product tour introduces each dashboard on first visit, and a command menu allows keyboard navigation.
+Each request page (for example Figure~\ref{fig:wt-c10}) shows the service spine at the top, then a ``next step'' panel that tells the signed-in role exactly what to do (for example ``Choose a technician: 2 offers waiting'' or ``Approve and pay BDT 2,300''), followed by supporting context. Reusable empty, loading, error, confirmation and form components keep behaviour consistent. A guided product tour introduces each dashboard on first visit, and a command menu allows keyboard navigation.
 
 \section{Backend Implementation}
 \subsection{Controllers, Services and Adapters}
@@ -120,7 +120,7 @@ The API is deployed as a Vercel serverless function (Node.js 24) at \url{https:/
 
 \section{Final Improvement Phase}
 \label{sec:finalphase}
-After the system was feature-complete on 4 October 2026, a final phase of fixes and improvements ran from 11 to 14 October 2026 to prepare the project for submission. It started with a full review of both codebases and their documentation and a fresh verification run of every automated check (Chapter~\ref{ch:testing}). Each later change is recorded with its problem, change, files and verification in the project work log and summarised in Table~\ref{tab:finalphase}.
+After the system was feature-complete on 4 October 2026, a final phase of fixes and improvements ran from 11 to 16 October 2026 to prepare the project for submission. It started with a full review of both codebases and their documentation and a fresh verification run of every automated check (Chapter~\ref{ch:testing}). Each later change is recorded with its problem, change, files and verification in the project work log and summarised in Table~\ref{tab:finalphase}.
 
 {\small
 \begin{longtable}{@{}p{0.6cm}p{2cm}p{11.4cm}@{}}
@@ -148,6 +148,7 @@ After the system was feature-complete on 4 October 2026, a final phase of fixes 
 10 & 14 Oct 2026 & Remaining gaps: late payment after cancellation refunded, device return after cancellation, stalled-work alerts, pickup condition, customer not home. 30 new tests. \\
 11 & 14 Oct 2026 & Photos upload only when the customer presses ``Upload''; technicians edit their own profile; minimum inspection fee for every repair, applied to old offers and migrated on production. 22 new tests. \\
 12 & 14 Oct 2026 & All of the above pushed and deployed; full verification (Section~\ref{sec:results}) and screenshots of the running system (Chapter~\ref{ch:walkthrough}). \\
+13 & 16 Oct 2026 & Stripe's repair-payment page named the item ``Repair request: undefined''; it now names the device (``Repair: Samsung Galaxy A54''). 1 new test; pushed and deployed. \\
 \end{longtable}
 }
 

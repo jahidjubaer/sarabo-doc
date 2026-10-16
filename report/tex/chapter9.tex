@@ -24,22 +24,22 @@ Testing focused on \emph{domain correctness}: whether the right person can do th
 
 \paragraph*{Browser tests.} Playwright runs against a real production build of the client with a faked API, on a desktop and a mobile (Pixel~7) viewport. The tests cover public pages, the jobs board (listing, filtering, sorting, empty and error states), tracking (valid, unknown, invalid codes and server errors), authentication forms and route protection.
 
-\paragraph*{Continuous integration.} GitHub Actions runs the server suites against a throwaway MongoDB~8 replica set and runs client lint and build on every push and pull request. On the final commits (14 October 2026) the server workflow passed and the client lint-and-build job passed; the client browser-test job failed once on GitHub while the same 58 tests pass locally on that commit (Table~\ref{tab:results}).
+\paragraph*{Continuous integration.} GitHub Actions runs the server suites against a throwaway MongoDB~8 replica set and runs client lint and build on every push and pull request. On the final commits (server 16 October, client 14 October 2026) the server workflow passed and the client lint-and-build job passed; the client browser-test job failed once on GitHub while the same 58 tests pass locally on that commit (Table~\ref{tab:results}).
 
 \section{Verification Results}
 \label{sec:results}
-For this report every check was run on 14 October 2026 against the final code (client commit \texttt{e9caaeb}, server code commit \texttt{ca19105}; the later server commit \texttt{68800b6} changes only documentation and an example settings file). The server suites were run exactly as in CI, using a clean copy of the repository with no local secrets and a temporary in-memory MongoDB replica set. Table~\ref{tab:results} shows the results.
+For this report every check was run on 14--16 October 2026 against the final code (client commit \texttt{e9caaeb}, server commit \texttt{d81fa65}). The server suites were run against a temporary in-memory MongoDB replica set, as in CI, so no shared database state can affect the result. Table~\ref{tab:results} shows the results.
 
 \begin{table}[htbp]
 \centering
-\caption{Verification results (14 October 2026)}
+\caption{Verification results (14--16 October 2026)}
 \label{tab:results}
 \small
 \begin{tabularx}{\textwidth}{@{}Xrr@{}}
 \toprule
 \textbf{Check} & \textbf{Passed} & \textbf{Failed} \\
 \midrule
-Server full suite (\texttt{npm test}) & 2,760 & 0 \\
+Server full suite (\texttt{npm test}) & 2,761 & 0 \\
 \quad of which re-run on their own: support and AI suite & 164 & 0 \\
 \quad of which re-run on their own: data-migration suite & 63 & 0 \\
 \quad of which re-run on their own: feedback suite & 177 & 0 \\
@@ -53,7 +53,7 @@ GitHub Actions, client browser tests (same tests pass locally) & \multicolumn{2}
 \end{tabularx}
 \end{table}
 
-The server suite has grown from 1,890 checks at the time of the earlier report (August 2026) to 2,760. The final phase added 180 of them: 15 for the final payout on removal, 4 for the AI fallback, 22 for offer ranking, 45 for the warranty, 72 for the no-stuck workflow fixes and 22 for profile editing and the minimum inspection fee.
+The server suite has grown from 1,890 checks at the time of the earlier report (August 2026) to 2,761. The final phase added 181 of them: 15 for the final payout on removal, 4 for the AI fallback, 22 for offer ranking, 45 for the warranty, 72 for the no-stuck workflow fixes, 22 for profile editing and the minimum inspection fee, and 1 for the Stripe item name.
 
 \section{Representative Test Scenarios}
 \begin{longtable}{@{}p{1.1cm}p{6.1cm}p{6.9cm}@{}}
@@ -127,7 +127,7 @@ O7 & Achieved & Progress, evidence, receipt confirmation, reviews and reports (T
 O8 & Achieved & 47 notification types, email, daily reminders, sanitized tracking (T-23) \\
 O9 & Achieved & 90/10 settlement, computed wallet, bKash withdrawals, final payout on removal (T-16 -- T-18, T-25) \\
 O10 & Achieved & Attention list, reports with checked AI summary, catalogue editor, moderation (T-21) \\
-O11 & Achieved & 2,760 server checks, 58 browser tests, lint, build, CI, live deployment \\
+O11 & Achieved & 2,761 server checks, 58 browser tests, lint, build, CI, live deployment \\
 O12 & Achieved & Warranty, deadlines and stalled-work alerts (T-28 -- T-32) \\
 \bottomrule
 \end{tabularx}

@@ -5,150 +5,132 @@
 \chapter{System Walkthrough}
 \label{ch:walkthrough}
 
-This chapter shows the running system. All screenshots were taken on 14 October 2026 from the final code, running locally with the development database, real Firebase sign-in, real Gemini answers and Stripe in test mode. Sections~\ref{sec:wt-request} to \ref{sec:wt-warranty} follow \emph{one} repair from start to finish (a Samsung Galaxy A54 with a cracked screen), switching between the customer's and the technician's screens as the case moves on, so every state in Figure~\ref{fig:e2e} appears in order. Other requests, technicians and figures visible in the lists come from the seeded development data.
+These screenshots were taken on 14 October 2026 from the final code, running locally with real Firebase sign-in, real Gemini answers and Stripe in test mode. From Section~\ref{sec:wt-request} on they follow \emph{one} repair from start to finish, the cracked Samsung Galaxy A54 used throughout this report, switching between the customer's and the technician's screens, so every state in Figure~\ref{fig:e2e} appears in order. Each picture is cropped to the part that matters; other rows in lists come from the seeded development data, and personal email addresses are blurred.
 
+\FloatBarrier
+\needspace{9\baselineskip}
 \section{Public Website}
-Anyone can see the services, prices, service areas, open jobs and the public tracking page without an account, and the AI support chat is available on every page.
+Anyone can see services, prices, areas, open jobs and tracking without an account.
 
-\screen{p01-home}{Home page. The main actions are finding a repair service and tracking a repair; ``Ask Sarabo'' opens the AI support chat.}
-
-\screen{p02-services}{Services and prices: the live catalogue of 45 services with their estimate ranges and inspection fees.}
-
-\screen{p03-areas-search}{Service areas: searching ``Ambarkhana'' zooms the OpenStreetMap map to that sub-area of Sylhet and lists the other covered areas (Section~\ref{sec:areamap}).}
-
-\screen{p05-ai-chat}{AI support chat answering a real question. The price and the 200\,BDT inspection fee come from the live catalogue, and the suggested buttons come from a fixed list (Chapter~\ref{ch:ai}).}
-
-\screen{p04-jobs}{Public jobs board. Visitors see a safe summary of each open job (device, repair, area, pickup day, usual price, number of offers) but no customer details.}
-
-\screen{p06-tracking}{Public tracking page for the walkthrough repair. Only the stage and its time stamps are shown; personal and payment details stay hidden.}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.34\textwidth]{img/screens/p08-mob-home}\hspace{8mm}
-\includegraphics[width=0.34\textwidth]{img/screens/p09-mob-jobs}
-\caption{The same pages on a phone (393\,px wide): home page and jobs board.}
-\label{fig:scr-mobile}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.447\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/p01}}}\caption{Home page; ``Ask Sarabo'' opens the AI support chat.}\label{fig:wt-p01}\end{minipage}\hfill
+\begin{minipage}[t]{0.523\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/p02}}}\caption{Services and prices: the live catalogue of 45 services.}\label{fig:wt-p02}\end{minipage}
+\end{figure}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.644\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/p03}}}\caption{Service areas: searching ``Ambarkhana'' zooms to that part of Sylhet (Section~\ref{sec:areamap}).}\label{fig:wt-p03}\end{minipage}\hfill
+\begin{minipage}[t]{0.322\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/p05}}}\caption{AI support chat: price and 200\,BDT fee taken from the live catalogue (Chapter~\ref{ch:ai}).}\label{fig:wt-p05}\end{minipage}
+\end{figure}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.500\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/p04}}}\caption{Public jobs board: a safe summary of each open job, no customer details.}\label{fig:wt-p04}\end{minipage}\hfill
+\begin{minipage}[t]{0.470\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/p06}}}\caption{Public tracking of the walkthrough repair: stages and times only.}\label{fig:wt-p06}\end{minipage}
+\end{figure}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.360\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.420\linewidth]{img/wt/p08}}}\caption{Home page on a phone (393\,px wide).}\label{fig:wt-p08}\end{minipage}\hfill
+\begin{minipage}[t]{0.360\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.420\linewidth]{img/wt/p09}}}\caption{Jobs board on a phone.}\label{fig:wt-p09}\end{minipage}
 \end{figure}
 
-\section{Customer: Creating a Request}
-\label{sec:wt-request}
+\FloatBarrier
+\needspace{9\baselineskip}
+\section{Request and Offer}\label{sec:wt-request}
+Rahim describes the problem in Banglish; a local technician sends an offer.
 
-\screen{c01-overview}{Customer overview: requests that need the customer first, then requests in progress.}
-
-\screen{c02-ai-helper}{AI request helper. The customer wrote in Banglish (``\textit{Amar Samsung Galaxy A54 phone hat theke pore giye screen fete geche\ldots}''); Gemini filled in the device, brand, model, the catalogue service ``Screen Replacement'' and a clear English description. The summary on the right shows the estimate, and \emph{Undo} restores the form.}
-
-\screen{c03-location-pickup}{Location and pickup window: region, district, address, then a two-hour slot (Saturday--Thursday, Friday closed).}
-
-\screen{c04-created}{Request created. The customer can add up to three damage photos now or later; photos are sent only when the customer presses ``Upload''.}
-
-\section{Technician: Finding the Job and Sending an Offer}
-
-\screen{t02-jobs}{Jobs board for a signed-in technician, with filters for region, device, repair, ``No offers yet'', ``Not applied'' and ``My offers''.}
-
-\screen{t03-offer}{Sending an offer. The price guide (top) shows what technicians usually offer for this repair. The fee field enforces the minimum inspection fee (200\,BDT here). The technician typed only ``likely display panel and touch, original screen available'', and \emph{Write it for me} turned it into the note.}
-
-\section{Customer: Choosing a Technician and Booking}
-
-\screen{c05-my-requests}{My repairs: the new request asks the customer to choose a technician because an offer is waiting.}
-
-\screen{c06-offers}{Offer from a technician, with the ranking reasons from Section~\ref{sec:ranking}: ``12 repairs, no missed pickups'', ``In your district'' and ``Usually replies in 2 min'', plus rating, level, experience, estimate, fee and the AI-written note.}
-
-\screen{c07-choose}{Choosing the offer: the customer pays the inspection fee to book the visit. The fee counts toward the final price and is refunded if the booking fails.}
-
-\screen{c08-stripe}{Stripe Checkout (test mode, sandbox badge) for the 200\,BDT inspection fee, paid with Stripe's published test card.}
-
-\screen{c09-booked}{After payment the technician is booked. The page confirms the fee and that it counts toward the final price; ``Cancel visit'' applies the cancellation rules in Table~\ref{tab:feeoutcomes}.}
-
-\section{Technician: Pickup, Inspection and Quote}
-
-\screen{t04-assigned}{Assigned jobs, with the next action (``Start pickup'') on each job.}
-
-\screen{t05-pickup-condition}{Recording the device's condition and accessories at pickup (Section~\ref{sec:nostuck}). The customer sees this record and can dispute it.}
-
-\screen{t06-inspection}{Inspection: findings, detected issues with severity, a repairability decision and a preliminary estimate. ``Not repairable'' or ``Not economical'' would let either side close the request.}
-
-\screen{t07-quote}{Itemised quote: labour 800 + parts 3,200 = 4,000\,BDT. The form shows the 10\% platform commission and what the technician receives.}
-
-\section{Customer: Approving the Quote and Paying}
-
-\screen{c10-quote}{The customer reviews the quote. The 200\,BDT fee already paid is subtracted, so 3,800\,BDT is left to pay, and the approve button says so.}
-
-\screen{c11-approve-pay}{``Approve and pay'' leads straight to the card payment.}
-
-\screen{c12-payment-success}{Payment successful, with the Stripe transaction ID, the tracking code and a PDF receipt download.}
-
-\screen{c13-payment-history}{Payment history: one row each for the 3,800\,BDT repair payment and the 200\,BDT inspection fee, each with a PDF receipt.}
-
-\section{Technician: Repair and Hand-Over}
-
-\screen{t08-progress}{Repair in progress: the technician posts progress updates that the customer sees.}
-
-\screen{t09-complete}{Completing the repair with a summary of the work (and up to three optional completion photos). ``Can't finish this repair'' sends the case to an admin for a refund instead.}
-
-\screen{t10-returned}{Marking the device returned. If the customer does not answer within three days, receipt is confirmed automatically.}
-
-\section{Customer: Receipt, Review and Warranty}
-\label{sec:wt-warranty}
-
-\screen{c14-confirm-receipt}{The customer confirms receipt, or reports ``I haven't received it'', which goes to an admin. Confirming makes the technician's earning available and starts the warranty.}
-
-\screen{c15-review}{Rating the technician (1--5 with an optional comment). A private report to admins is a separate action.}
-
-\screen{c16-warranty-claim}{Reporting a problem under the 30-day warranty: the customer says what happened (same fault, or a fitted part failed), describes it and can add photos.}
-
-\screen{t11-warranty-book}{The technician books the free re-inspection, which must happen within three days, otherwise an admin can take the claim over.}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.92\textwidth]{img/screens/t12-warranty-card}
-\caption{The technician's warranty claim after the visit: booked re-inspection, decision ``Covered'' and the re-repair, each with its note.}
-\label{fig:scr-t12-warranty-card}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.597\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c02}}}\caption{AI request helper: Banglish text turned into device, service and an English description; \emph{Undo} restores the form.}\label{fig:wt-c02}\end{minipage}\hfill
+\begin{minipage}[t]{0.373\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c03}}}\caption{Address and a two-hour pickup window (Friday closed).}\label{fig:wt-c03}\end{minipage}
+\end{figure}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.696\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c04}}}\caption{Request created; photos are sent only when the customer presses ``Upload''.}\label{fig:wt-c04}\end{minipage}\hfill
+\begin{minipage}[t]{0.274\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/t03}}}\caption{Technician's offer: price guide, minimum fee, and an AI-written note from a few words.}\label{fig:wt-t03}\end{minipage}
 \end{figure}
 
-\screen{c17-warranty-resolved}{The customer's view at the end: the claim shows every step and the customer's answer ``Working now'', so the claim is resolved. Had the re-repair failed, an admin would have refunded the repair.}
+\FloatBarrier
+\needspace{9\baselineskip}
+\section{Choosing and Booking}
+The customer compares offers and pays the inspection fee to book the visit.
 
-\screen{c18-notifications}{Customer notifications for every step of this repair.}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.669\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c06}}}\caption{The offer with its ranking reasons (Section~\ref{sec:ranking}).}\label{fig:wt-c06}\end{minipage}\hfill
+\begin{minipage}[t]{0.301\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c07}}}\caption{Choosing the offer: pay the inspection fee to book.}\label{fig:wt-c07}\end{minipage}
+\end{figure}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.292\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c08}}}\caption{Stripe Checkout in test mode for the 200\,BDT fee.}\label{fig:wt-c08}\end{minipage}\hfill
+\begin{minipage}[t]{0.678\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c09}}}\caption{Technician booked; the fee counts toward the final price.}\label{fig:wt-c09}\end{minipage}
+\end{figure}
 
-\section{Technician: Wallet, Profile and History}
+\FloatBarrier
+\needspace{9\baselineskip}
+\section{Pickup, Inspection and Quote}
+The technician records the condition, inspects the phone and sends an itemised quote.
 
-\screen{t01-overview}{Technician overview: available balance, active jobs and rating.}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.379\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/t05}}}\caption{Device condition and accessories recorded at pickup.}\label{fig:wt-t05}\end{minipage}\hfill
+\begin{minipage}[t]{0.591\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/t06}}}\caption{Inspection: findings, issues and a repairability decision.}\label{fig:wt-t06}\end{minipage}
+\end{figure}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.430\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/t07}}}\caption{Itemised quote: 800 + 3,200 = 4,000\,BDT, with the 10\% commission shown.}\label{fig:wt-t07}\end{minipage}\hfill
+\begin{minipage}[t]{0.540\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c10}}}\caption{The customer's view: 200\,BDT already paid, 3,800 left to pay.}\label{fig:wt-c10}\end{minipage}
+\end{figure}
 
-\screen{t13-wallet}{Wallet after this repair: the 3,600\,BDT earning (4,000 minus 10\%) requested as a bKash withdrawal, shown as ``Withdrawal in progress''. Balances are computed from settlements and withdrawals, never stored.}
+\FloatBarrier
+\needspace{9\baselineskip}
+\section{Payment, Repair and Hand-Over}
+The customer pays the rest; the technician repairs and returns the phone.
 
-\screen{t14-profile-edit}{Editing the technician's own details (name, phone, region, district, address). The area cannot change while a repair is active.}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.319\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c12}}}\caption{Payment successful, with a PDF receipt.}\label{fig:wt-c12}\end{minipage}\hfill
+\begin{minipage}[t]{0.651\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c13}}}\caption{Payment history: the repair payment and the inspection fee.}\label{fig:wt-c13}\end{minipage}
+\end{figure}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.615\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/t08}}}\caption{Repair in progress, with updates the customer sees.}\label{fig:wt-t08}\end{minipage}\hfill
+\begin{minipage}[t]{0.355\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/t09}}}\caption{Completing the repair; ``Can't finish'' would go to an admin.}\label{fig:wt-t09}\end{minipage}
+\end{figure}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.688\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c14}}}\caption{Confirm receipt, or ``I haven't received it''; auto-confirmed after 3 days.}\label{fig:wt-c14}\end{minipage}\hfill
+\begin{minipage}[t]{0.282\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c15}}}\caption{Rating the technician.}\label{fig:wt-c15}\end{minipage}
+\end{figure}
 
-\screen{t15-completed-jobs}{Completed jobs, each with the amount the technician receives.}
+\FloatBarrier
+\needspace{9\baselineskip}
+\section{Warranty}\label{sec:wt-warranty}
+Ten days later the touch fails again, and the warranty covers it.
 
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.315\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c16}}}\caption{Reporting a problem under the 30-day warranty.}\label{fig:wt-c16}\end{minipage}\hfill
+\begin{minipage}[t]{0.451\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/t11}}}\caption{Technician books the free re-inspection (within 3 days).}\label{fig:wt-t11}\end{minipage}
+\end{figure}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.792\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c17}}}\caption{The resolved claim: re-inspection, ``Covered'', re-repair and the customer's ``Working now''.}\label{fig:wt-c17}\end{minipage}
+\end{figure}
+
+\FloatBarrier
+\needspace{9\baselineskip}
+\section{Technician Wallet and Profile}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.717\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/t13}}}\caption{Wallet: the 3,600\,BDT earning requested as a bKash withdrawal.}\label{fig:wt-t13}\end{minipage}\hfill
+\begin{minipage}[t]{0.253\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/t14}}}\caption{Technician edits own details; the area is locked during a repair.}\label{fig:wt-t14}\end{minipage}
+\end{figure}
+
+\FloatBarrier
+\needspace{9\baselineskip}
 \section{Admin}
+Admins see what needs attention, manage technicians and prices, and read reports.
 
-\screen{a01-overview}{Admin overview. The ``Needs you'' panel counts missed and overdue pickups, requests with no offers in 24 hours, stalled repairs and requests no local technician can take; each count opens its filtered list. (The counts come from the seeded development data.)}
-
-\screen{a02-requests}{All repair requests, with search, status and payment filters and selectable columns.}
-
-\screen{a03-request-detail}{The walkthrough repair from the admin's side, with the full record including the pickup condition.}
-
-\screen{a04-assign}{Assign technicians: requests waiting for a technician, with flags such as ``Pickup time passed'' and ``No offers in 24h''. The admin can invite a technician to apply or assign one directly.}
-
-\screen{a05-technicians}{Technician applications and approved technicians with their expertise, approval status and availability.}
-
-\screen{a06-catalogue}{Services and prices: the catalogue editor, showing for each service its open requests.}
-
-\screen{a07-service-editor}{Editing a service. Price changes create a new pricing version and never change existing requests; the inspection fee cannot be set below the minimum.}
-
-\screen{a08-reports}{Reports with the AI summary. The model only sees aggregate figures, and any sentence with a number that is not in the facts is removed before saving.}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.48\textwidth]{img/screens/a09-reports-charts}\hfill
-\includegraphics[width=0.48\textwidth]{img/screens/a09b-reports-charts2}
-\caption{Report charts: requests over time and demand against technicians by region (left); top devices and repairs and a pickup heat map by day and time (right).}
-\label{fig:scr-reports-charts}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.521\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/a01}}}\caption{Admin overview: missed pickups, no offers, stalled repairs first.}\label{fig:wt-a01}\end{minipage}\hfill
+\begin{minipage}[t]{0.449\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/a05}}}\caption{Technician applications and approved technicians.}\label{fig:wt-a05}\end{minipage}
+\end{figure}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.635\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/a06}}}\caption{Services and prices editor.}\label{fig:wt-a06}\end{minipage}\hfill
+\begin{minipage}[t]{0.265\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/a07}}}\caption{Editing a service: a price change creates a new version.}\label{fig:wt-a07}\end{minipage}
+\end{figure}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.588\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/a08}}}\caption{Reports with the AI summary; unverifiable numbers are removed.}\label{fig:wt-a08}\end{minipage}\hfill
+\begin{minipage}[t]{0.382\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/a09}}}\caption{Report charts: requests over time and demand by region.}\label{fig:wt-a09}\end{minipage}
+\end{figure}
+\begin{figure}[!htbp]\centering
+\begin{minipage}[t]{0.314\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/a10}}}\caption{Recording a bKash payout with its TrxID (test value).}\label{fig:wt-a10}\end{minipage}\hfill
+\begin{minipage}[t]{0.635\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/a11}}}\caption{Technician reviews, which admins can hide or restore.}\label{fig:wt-a11}\end{minipage}
 \end{figure}
 
-\screen{a10-mark-paid}{Recording a bKash payout. The admin sends the money with bKash Send Money first, then records the TrxID; this test record used a made-up TrxID.}
-
-\screen{a11-reviews}{Technician reviews, including the walkthrough review. Admins can hide or restore a review with a reason, and every change is kept.}
-
-\screen{a12-users}{User management: roles can be changed only by an admin.}
-
+\FloatBarrier
 \end{document}

@@ -686,3 +686,21 @@ Nothing in entries 3–4 was committed, pushed or deployed.
   trust, results and thanks). Large text, short points, zoomed screenshots cut from the
   report by `presentation/make_crops.py`; ER diagram with entity cards (PK/FK) and
   crow's-foot links. All shape positions are whole EMUs.
+
+### 20. Report shortened from 114 to 87 pages — 2026-10-16
+
+- Asked for: a shorter report without removing anything important (target about 90 pages,
+  screenshots two per row, personal emails blurred).
+- Emails: found with the Windows OCR engine and blurred in 8 screenshots (29 boxes); the
+  remaining visible addresses are seeded `@seed.sarabo.local` accounts.
+- Chapter 7: 52 full-width screenshots became 39 cropped ones, two per row at equal
+  height (`report/make_walkthrough.py` crops them into `img/wt/` and writes
+  `tex/walkthrough.tex`). Every step of the walkthrough repair keeps its picture; dropped
+  only near-duplicates (extra overview pages, a confirmation box, a second jobs list,
+  users list, notifications). 28 -> 10 pages.
+- Front matter: contents list to section level, and the contents, tables and figures lists
+  single-spaced; tables single-spaced. Body text keeps the template's 1.5 spacing, font
+  and margins.
+- Updated facts: 2,761 server tests, server commit `d81fa65` (120 commits), final phase
+  11-16 October, new log row for the Stripe item-name fix.
+- Result: 87 pages, no undefined references.
