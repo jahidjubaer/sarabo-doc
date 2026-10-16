@@ -35,16 +35,16 @@ Figure~\ref{fig:e2e} shows the main path of a repair, from request to settlement
 \end{figure}
 
 \section{Request Creation}
-The customer chooses a device category and a repair service from the live catalogue (or lets the AI helper propose them), adds brand, model and a description, optionally adds up to three photos (shown as previews and sent only when the customer presses ``Upload''), and picks a pickup window. The estimate card shows the catalogue's price range. Before submitting, the form calls \texttt{GET /service-availability}; the server repeats the check on submission and refuses the request with a clear explanation if no approved technician in that region can do this repair at the required level. Accepted requests receive a tracking code and a confirmation email (Figures~\ref{fig:wt-c02}--\ref{fig:wt-c04}).
+The customer picks a device and repair from the live catalogue (or lets the AI helper propose them), adds brand, model and a description, optionally up to three photos (sent only on ``Upload''), and a pickup window; the estimate shows the catalogue price range. The form checks \texttt{GET /service-availability}, and the server checks again on submission: if no approved technician in the region can do the repair at the required level, the request is refused with an explanation. Accepted requests get a tracking code and a confirmation email (Figures~\ref{fig:wt-c02} and~\ref{fig:wt-c03}).
 
 \section{Job Portal and Offers}
-A request is \emph{open} while it is waiting for a technician. It appears on the public jobs board as a safe summary, and every approved technician who matches it receives a \texttt{job\_posted} notification (at most once per request). A technician who starts matching later, after being approved or adding a skill, is told about the open jobs they can now take. Approved technicians see the details they need (district, pickup time, problem description and photos) but never the customer's name, email or street address.
+A request waiting for a technician is \emph{open}: it appears on the public jobs board as a safe summary, and each matching approved technician gets one \texttt{job\_posted} notification (also when they start matching later, after approval or a new skill). Technicians see the district, pickup time, problem and photos, never the customer's name, email or street address.
 
-A technician sends an \emph{offer}: an estimate range, an inspection fee (at least the minimum fee and at most the catalogue fee for that service) and a note. The customer compares offers side by side and either chooses one or rejects one with a reason (price, inspection fee or other). A rejected offer causes the job to be \emph{reposted} to the top of the board; the rejected technician may send one revised offer, and other matching technicians are notified. If no offer is waiting 24 hours after the job was last posted, it appears on the admin attention list. Admins can also invite a specific technician to apply, or assign one directly as an override. Figures~\ref{fig:wt-t03} and~\ref{fig:wt-c06} show an offer being sent and compared.
+An \emph{offer} has an estimate range, an inspection fee (between the minimum fee and the catalogue fee) and a note. The customer chooses one, or rejects one with a reason (price, fee or other); the job is then \emph{reposted}, the rejected technician may send one revised offer, and other matching technicians are notified. A job with no waiting offer 24 hours after its last posting goes on the admin attention list. Admins can also invite a technician to apply, or assign one directly as an override (Figures~\ref{fig:wt-t03} and~\ref{fig:wt-c06}).
 
 \section{Offer Ranking (Smarter Matching)}
 \label{sec:ranking}
-When several technicians send offers, the customer sees them ranked rather than in arrival order. A pure scoring module (\texttt{services/offerRanking.js}) combines five factors, all from data Sarabo already stores, so no paid service, map API or AI is needed (Table~\ref{tab:ranking}). A technician with no history gets a neutral score for that factor, neither a penalty nor a bonus. The top offer gets a ``Best match'' badge (only when there are at least two), and short reasons are shown only when they are true, for example ``Rated 4.8\,$\star$ from 12 reviews'' or ``In your district''. The customer can also sort by lowest price or newest, and always makes the final choice; nothing is booked automatically.
+Offers are ranked, not listed in arrival order. A pure scoring module (\texttt{services/offerRanking.js}) combines five factors from data Sarabo already stores, so no paid service, map API or AI is needed (Table~\ref{tab:ranking}); a technician with no history scores neutral on that factor. With two or more offers the top one gets a ``Best match'' badge, and reasons appear only when true (e.g.\ ``Rated 4.8\,$\star$ from 12 reviews'', ``In your district''). The customer can also sort by price or date, and always chooses; nothing is booked automatically.
 
 \begin{table}[htbp]
 \centering
@@ -65,7 +65,7 @@ Reply time & 10\% & Median minutes from the job being posted to the technician's
 \end{table}
 
 \section{Inspection Fee and Booking}
-Choosing an offer with a fee opens a Stripe Checkout for exactly that fee; nothing is booked yet. When Stripe confirms the payment, one transaction records it and books the technician. If the technician can no longer be booked at that moment (busy, request cancelled, someone else chosen), the payment is recorded and refunded automatically and the customer is asked to choose again. The fee is stored separately from the repair payment and is later credited toward the final price (Figures~\ref{fig:wt-c07}--\ref{fig:wt-c09} and~\ref{fig:wt-c10}). Table~\ref{tab:feeoutcomes} shows what happens to the fee when the repair does not go ahead.
+Choosing an offer opens a Stripe Checkout for exactly its fee. When Stripe confirms the payment, one transaction records it and books the technician; if booking is no longer possible (technician busy, request cancelled, another offer chosen), the payment is refunded automatically and the customer chooses again. The fee is stored apart from the repair payment and credited toward the final price (Figures~\ref{fig:wt-c07} and~\ref{fig:wt-c10}). Table~\ref{tab:feeoutcomes} lists what happens to it when the repair does not go ahead.
 
 \begin{table}[htbp]
 \centering
@@ -86,12 +86,12 @@ Booking fails after payment & Automatic full refund \\
 \end{tabularx}
 \end{table}
 
-Refunds happen in two steps. Inside the transaction that causes the refund, the fee and its payment row are marked \emph{refund pending}. After the transaction commits, Stripe is asked to refund with the idempotency key \texttt{inspection-refund-<session id>}, which guarantees at most one refund. If Stripe fails, the refund stays pending, appears on the admin home page, and can be retried with one click; it is never silently lost.
+Refunds take two steps: the transaction that causes the refund marks the fee and its payment row \emph{refund pending}; after it commits, Stripe is called with the idempotency key \texttt{inspection-refund-<session id>}, so at most one refund is made. A failed refund stays pending on the admin home page and can be retried with one click; it is never silently lost.
 
 \section{Inspection, Quotation and Revision}
-After collecting the device, only the booked technician can submit the inspection, which records findings and detected issues. The quote can be submitted only from \texttt{inspection\_completed}. The customer sees the quote together with the fee already paid and the amount still due, and the approve button reads ``Approve and pay BDT \textit{X}'', so approval leads straight to payment.
+Only the booked technician can submit the inspection (findings and detected issues) after collecting the device, and a quote only from \texttt{inspection\_completed}. The customer sees the quote with the fee already paid and the amount due, and the button ``Approve and pay BDT \textit{X}'' leads straight to payment.
 
-If the customer rejects the quote, the technician may revise or close the request (Figure~\ref{fig:revise}). Revising archives the old quote and reuses the normal submit-and-decide cycle. If the technician neither revises nor closes within three days, the daily job closes the request automatically; the request records who closed it (\texttt{technician}, \texttt{customer} or \texttt{auto}), and the inspection fee is kept and split.
+After a rejected quote the technician may revise or close the request (Figure~\ref{fig:revise}); revising archives the old quote and repeats the submit-and-decide cycle. With no action for three days the daily job closes the request, records who closed it (\texttt{technician}, \texttt{customer} or \texttt{auto}), and the inspection fee is kept and split.
 
 \begin{figure}[htbp]
 \centering
@@ -111,14 +111,14 @@ If the customer rejects the quote, the technician may revise or close the reques
 \label{fig:revise}
 \end{figure}
 
-Each quote round has its own notification identity, derived on the server as \texttt{quoteHistory.length + 1}. A retried submission of the same round is therefore harmless, while a genuine revision produces a new notification (see Appendix~\ref{app:incident}).
+Each quote round has its own notification identity (\texttt{quoteHistory.length + 1}, derived on the server), so a retried submission is harmless while a real revision notifies again (Appendix~\ref{app:incident}).
 
 \section{Payment, Repair and Receipt}
-Payment is possible only for an approved quote that is not yet paid. After payment the technician starts the repair, adds progress updates and completes it, optionally with evidence photos. Completion releases the technician for other work and shows the customer a ``Confirm receipt'' action. Only that confirmation moves the request to its terminal state and makes the technician's earning available, so a technician cannot withdraw money for a device the customer has not received.
+Only an approved, unpaid quote can be paid. The technician then starts the repair, posts progress updates and completes it, optionally with evidence photos; completion frees the technician and asks the customer to confirm receipt. Only that confirmation ends the request and makes the earning available, so no technician can withdraw money for a device the customer has not received.
 
 \section{No Request Can Get Stuck}
 \label{sec:nostuck}
-A review of the whole workflow before the final release looked for real-life situations in which a request could wait forever. Each one now has a way out, an automatic step after a deadline, or an admin alert (Table~\ref{tab:nostuck}). A daily scheduled job applies the deadlines, and a single rule set (\texttt{services/stalledWork.js}) shows any work that has not moved on in three days (fourteen for a running repair) on the admin overview.
+A review before the final release looked for situations in which a request could wait forever. Each now has a way out, an automatic step after a deadline, or an admin alert (Table~\ref{tab:nostuck}). A daily job applies the deadlines, and one rule set (\texttt{services/stalledWork.js}) lists work that has not moved for three days (fourteen for a running repair) on the admin overview.
 
 \begin{longtable}{@{}p{4.4cm}p{9.8cm}@{}}
 \caption{Situations that used to block a request, and how they end now}\label{tab:nostuck}\\
@@ -142,11 +142,11 @@ Payment arrives after cancellation & Recorded and refunded at once; a failed ref
 Work not moving (no inspection, quote, answer or repair) & Shown on the admin overview with one alert per request and stage. \\
 \end{longtable}
 
-\paragraph*{Pickup condition.} When collecting a device the technician records its condition and any accessories (charger, case, SIM). The customer sees this record and can say it is wrong, in which case an admin reviews it. This protects both sides if the device's condition is later disputed (Figure~\ref{fig:wt-t05}).
+\paragraph*{Pickup condition.} At collection the technician records the device's condition and accessories (charger, case, SIM). The customer sees the record and can dispute it, and an admin then reviews it; this protects both sides later (Figure~\ref{fig:wt-t05}).
 
 \section{Repair Warranty}
 \label{sec:warranty}
-Every finished repair is covered for 30 days from the moment the customer confirms receipt. The warranty covers the same fault coming back or a part the technician fitted failing, but not new damage, water damage or drops. Figure~\ref{fig:warranty} shows the claim lifecycle.
+Every finished repair is covered for 30 days from confirmed receipt: the same fault coming back or a fitted part failing, but not new damage, water damage or drops (Figure~\ref{fig:warranty}).
 
 \begin{figure}[htbp]
 \centering
@@ -168,7 +168,7 @@ Every finished repair is covered for 30 days from the moment the customer confir
 \label{fig:warranty}
 \end{figure}
 
-A customer may have one open claim at a time and at most two per repair. Every step is a guarded database update, so no step can be skipped and two people acting at once cannot both succeed. If the technician misses a deadline, the claim is marked overdue, admins are alerted and can take it over, and a technician with open claims cannot be removed. A refund covers the whole quote (repair payment plus the credited inspection fee) through Stripe with one idempotency key per part, so a retry never refunds twice. The technician's settlement for that repair becomes \emph{reversed}; if it had already been withdrawn, the wallet shows the amount as owed and it is deducted from future earnings. Figures~\ref{fig:wt-c16}--\ref{fig:wt-c17} show a complete claim.
+A customer may have one open claim at a time and two per repair. Each step is a guarded database update, so none can be skipped and two people acting at once cannot both succeed. A missed deadline marks the claim overdue and lets admins take it over, and a technician with open claims cannot be removed. A refund covers the whole quote (repair payment plus credited fee) through Stripe, with one idempotency key per part; the settlement becomes \emph{reversed}, and money already withdrawn is shown as owed and deducted from future earnings (Figures~\ref{fig:wt-c16} and~\ref{fig:wt-c17}).
 
 \section{Settlement and Withdrawal Lifecycle}
 \begin{figure}[htbp]
@@ -198,23 +198,23 @@ Because rejection simply removes a reservation, no compensating balance write is
 
 \paragraph*{Final payout when a technician is removed.}
 \label{sec:removalpayout}
-When an admin removes an approved technician, their whole available balance is queued as a withdrawal to their bKash number in the same database transaction as the removal, so either both happen or neither does. The number is taken, in order, from the admin's entry in the removal dialog, an already-open request (which is topped up rather than duplicated), the technician's last withdrawal, or their application phone. If money is owed and no valid number exists, the removal is refused until the admin enters one. Pending money is not yet available, so it is not included. The payout is tagged as a final payout in the admin queue and is sent and recorded with a bKash TrxID like any other withdrawal. Sarabo has no bKash API, so the transfer itself remains a manual bKash Send Money.
+Removing an approved technician queues their whole available balance as a bKash withdrawal in the same transaction, so both happen or neither does. The number comes, in order, from the admin's entry, an already-open request (topped up, not duplicated), the last withdrawal, or the application phone; with money owed and no valid number, the removal is refused. Pending money is not included. The payout is tagged ``final'' and sent and recorded like any withdrawal, by a manual bKash Send Money, since Sarabo has no bKash API.
 
 \section{Cancellation Rules}
-Before a technician is booked, a customer can cancel a request freely; a cancelled request can be requested again with its details pre-filled. After booking with a paid fee, \texttt{GET /repair-requests/:id/booking-cancellation} tells the customer in advance which outcome cancelling now would have (refund or kept fee), and the cancellation itself is allowed only until the device is collected.
+Before booking a customer can cancel freely and later ``Request again'' with the details pre-filled. After booking with a paid fee, \texttt{GET /repair-requests/:id/booking-cancellation} shows in advance whether cancelling now refunds or keeps the fee; cancelling is allowed only until the device is collected.
 
 \section{Technician Profile Editing}
-A technician can change their own name, phone, address and service area (region and district together) from the profile page; email, national ID, approval status and availability cannot be changed this way. The service area is locked while a repair is active, because the pickup was booked in the old area, and after a change the technician is told about open jobs in the new area.
+Technicians edit their own name, phone, address and service area (region and district together), but not email, national ID, approval status or availability. The area is locked during an active repair, since its pickup was booked there; after a change the technician is told about open jobs in the new area.
 
 \section{Service-Area Map}
 \label{sec:areamap}
-The public Service Areas page draws every listed district on an OpenStreetMap map (Leaflet) from the same \texttt{serviceAreas.json} file that drives the request form. Each district also stores the coordinates of its covered sub-areas. These were looked up once, offline, from OpenStreetMap and kept only if they lie inside that district (226 of 236). A search lists matching sub-areas before districts, so ``Ambarkhana'' opens Ambarkhana in Sylhet at street level instead of the city centre. A sub-area without a stored point falls back to its district's pin, and nothing is geocoded in the browser.
+The Service Areas page draws every district on an OpenStreetMap map (Leaflet) from the same \texttt{serviceAreas.json} that drives the request form. Sub-area coordinates were looked up once, offline, and kept only if inside their district (226 of 236). Search lists sub-areas before districts, so ``Ambarkhana'' opens at street level, not the city centre; a sub-area without a point falls back to its district's pin, and nothing is geocoded in the browser.
 
 \section{Feedback and Moderation}
-After a completed and receipt-confirmed repair, the customer may leave one review: a rating from 1 to 5 and an optional comment (up to 1,000 characters, plain text). Reviews are visible by default and admins can hide or restore them with a reason; every change is versioned and kept in a moderation history. Separately, a customer can file a private report about a technician (for example unprofessional behaviour, device damage or a payment issue). Reports go only to admins, move through \emph{open}, \emph{under review}, \emph{resolved} or \emph{dismissed}, and are never deleted with the request. Technicians see their average rating and visible reviews, but never reports or the reviewer's identity.
+After a receipt-confirmed repair the customer may leave one review: 1--5 stars and an optional plain-text comment of up to 1,000 characters. Admins can hide or restore a review with a reason, and every change is kept in a moderation history. A customer can also file a private report about a technician (e.g.\ unprofessional behaviour, device damage, a payment issue); reports go only to admins, move through \emph{open}, \emph{under review}, \emph{resolved} or \emph{dismissed}, and are never deleted with the request. Technicians see their rating and visible reviews, never reports or reviewer identities.
 
 \section{Notifications and Reminders}
-Forty-seven notification types, all defined in one module (\texttt{utils/notificationEvents.js}), cover offers, booking, refunds, inspection, quotes, payment, repair milestones, returns and disputes, warranty, reviews, withdrawals and a removed technician's final payout. Each has a de-duplication key. The daily job sends ``pickup tomorrow'' reminders in the app (and by email when enabled), once per pickup slot.
+Forty-seven notification types, defined in one module (\texttt{utils/notificationEvents.js}) and each with a de-duplication key, cover offers, booking, refunds, inspection, quotes, payment, repair, returns and disputes, warranty, reviews and withdrawals. The daily job sends one ``pickup tomorrow'' reminder per slot, in the app and by email when enabled.
 
 \section{Damage Image Upload}
 \begin{figure}[htbp]

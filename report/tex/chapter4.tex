@@ -5,7 +5,7 @@
 \chapter{System Design and Architecture}
 
 \section{High-Level Architecture}
-Sarabo follows a browser-client / API-server architecture with external services for identity, payment, storage, email and AI (Figure~\ref{fig:arch}). Both the React client and the Express API are hosted on Vercel; the API runs as a serverless function in the Mumbai region, next to the MongoDB Atlas cluster that holds all application data, and Vercel also triggers a daily scheduled job.
+Sarabo is a browser client and an API server, with external services for identity, payment, storage, email and AI (Figure~\ref{fig:arch}). Both run on Vercel; the API is a serverless function in Mumbai, next to the MongoDB Atlas cluster that holds all data, and Vercel also triggers a daily job.
 
 \begin{figure}[htbp]
 \centering
@@ -37,17 +37,17 @@ Sarabo follows a browser-client / API-server architecture with external services
 \section{Client Architecture}
 The client (about 337 source files) is organised around five concerns:
 \begin{enumerate}
-  \item \textbf{Routing and guards}: public pages (home, services, service areas, jobs board, tracking, about, become a technician), authentication pages, and a dashboard subdivided by \texttt{CustomerRoute}, \texttt{TechnicianRoute} and \texttt{AdminRoute}. Guards improve usability only; the server enforces every rule again.
-  \item \textbf{Feature components}: request creation and the AI helper, damage images, pickup slots, job offers, inspection, quotation, payment, repair, feedback, wallet, notifications, support chat and administration.
-  \item \textbf{Server-state hooks}: TanStack Query hooks with central query-key factories provide caching, loading and error states, mutations and targeted invalidation.
-  \item \textbf{Presentation utilities}: status-to-stage mapping (the ``service spine''), currency formatting, eligibility helpers and per-action error messages.
-  \item \textbf{Design system}: shared tokens (colours, type scale, radii), light and dark themes, and reusable primitives built on Radix UI.
+  \item \textbf{Routing and guards}: public pages (home, services, areas, jobs, tracking, about, become a technician), sign-in pages, and a dashboard split by \texttt{CustomerRoute}, \texttt{TechnicianRoute} and \texttt{AdminRoute}; the server re-checks every rule.
+  \item \textbf{Feature components}: request and AI helper, photos, pickup slots, offers, inspection, quote, payment, repair, warranty, feedback, wallet, notifications, support chat, administration.
+  \item \textbf{Server-state hooks}: TanStack Query with central query keys for caching, loading and error states, mutations and targeted invalidation.
+  \item \textbf{Presentation utilities}: the status-to-stage ``service spine'', currency formatting, eligibility helpers, per-action error messages.
+  \item \textbf{Design system}: shared tokens, light and dark themes, and Radix UI primitives.
 \end{enumerate}
 
 \section{Server Architecture}
-The server (about 191 JavaScript files including tests) is layered as \emph{routes} $\rightarrow$ \emph{middleware} $\rightarrow$ \emph{controllers} $\rightarrow$ \emph{services} / \emph{utilities} $\rightarrow$ \emph{database}. Middleware attaches a request ID, logs safely, verifies the Firebase token and waits for the database connection. Controllers own the state rules of one domain; services hold logic shared by several endpoints (payment eligibility, job booking, refunds, settlement, notifications, matching, AI calls, email). External providers (Stripe, Supabase, Gemini, Gmail) sit behind small adapters, so automated tests can inject fakes and never contact the real services.
+The server (about 191 JavaScript files with tests) is layered \emph{routes} $\rightarrow$ \emph{middleware} $\rightarrow$ \emph{controllers} $\rightarrow$ \emph{services} / \emph{utilities} $\rightarrow$ \emph{database}. Middleware adds a request ID, logs safely, verifies the Firebase token and waits for the database. Controllers own one domain's state rules; services hold shared logic (eligibility, booking, refunds, settlement, notifications, matching, AI, email); external providers sit behind adapters that tests replace with fakes.
 
-The Stripe webhook route is registered before the global JSON parser because signature verification needs the exact raw request body. Routes stay registered even if the database is briefly unavailable; database-backed requests then fail with a controlled 503 instead of a misleading 404.
+The Stripe webhook route is registered before the JSON parser, since signature checks need the raw body. Routes stay registered while the database is briefly down, so requests fail with a controlled 503, not a misleading 404.
 
 \section{Data Collections}
 Table~\ref{tab:collections} lists the 21 MongoDB collections.
@@ -87,7 +87,7 @@ Table~\ref{tab:collections} lists the 21 MongoDB collections.
 \end{table}
 
 \section{Repair Request Document}
-Modern requests carry \texttt{schemaVersion: 2}. Device identity is a structured \texttt{product} snapshot (category, brand, model) and the chosen service is copied together with its price rule, so later catalogue edits never change an existing request. Figure~\ref{fig:requestdoc} shows the main parts.
+Requests carry \texttt{schemaVersion: 2}, a \texttt{product} snapshot (category, brand, model) and a copy of the chosen service with its price rule, so catalogue edits never change an existing request (Figure~\ref{fig:requestdoc}).
 
 \begin{figure}[htbp]
 \centering
@@ -108,7 +108,7 @@ Modern requests carry \texttt{schemaVersion: 2}. Device identity is a structured
 \end{figure}
 
 \section{State Model}
-The stored status field \texttt{deliveryStatus} and several of its values were inherited from the original parcel-delivery codebase. They are kept as a frozen internal contract, while all user-facing labels use repair terminology (Table~\ref{tab:states}).
+The status field \texttt{deliveryStatus} and several values come from the original parcel-delivery codebase; they are a frozen internal contract, and users see only repair terms (Table~\ref{tab:states}).
 
 \begin{table}[htbp]
 \centering
@@ -140,7 +140,7 @@ The stored status field \texttt{deliveryStatus} and several of its values were i
 A job application (offer) has its own states: \texttt{pending}, \texttt{accepted}, \texttt{not\_chosen}, \texttt{withdrawn}, \texttt{no\_show} and \texttt{declined}. A settlement moves from \emph{pending} to \emph{available} (or to \emph{reversed} after a refund), a warranty claim from \emph{submitted} through re-inspection and decision to \emph{resolved} or \emph{refunded}, and a withdrawal from \emph{requested} to \emph{paid} or \emph{rejected}.
 
 \section{The Service Spine}
-The interface compresses the detailed states into four stages that customers understand (Figure~\ref{fig:spine}). The same component appears horizontally on the home page and vertically on the tracking page and in the dashboards. Receipt confirmation is shown as a hand-over action after ``Repaired'' rather than as a fifth stage.
+The interface folds the states into four stages customers understand (Figure~\ref{fig:spine}), shown on the home page, the tracking page and every dashboard; receipt confirmation is a hand-over action after ``Repaired'', not a fifth stage.
 
 \begin{figure}[htbp]
 \centering
@@ -156,7 +156,7 @@ The interface compresses the detailed states into four stages that customers und
 \end{figure}
 
 \section{API Design}
-The API exposes around 100 endpoints grouped into resource families. Table~\ref{tab:api} lists representative ones; Appendix~\ref{app:api} gives a fuller list.
+The API has over 120 endpoints in resource families; Table~\ref{tab:api} lists representative ones and Appendix~\ref{app:api} a fuller list.
 
 \begin{table}[htbp]
 \centering

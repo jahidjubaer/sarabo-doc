@@ -704,3 +704,18 @@ Nothing in entries 3–4 was committed, pushed or deployed.
 - Updated facts: 2,761 server tests, server commit `d81fa65` (120 commits), final phase
   11-16 October, new log row for the Stripe item-name fix.
 - Result: 87 pages, no undefined references.
+
+### 21. Readable screenshots on A4, and tighter text — 2026-10-16
+
+- Problem: at two per row, the text inside screenshots printed at about 3 pt on A4.
+- Chapter 7 now has 21 key screenshots, one per row at full text width, each cropped to
+  the part that matters, so their text prints at about 7-8 pt (checked by rendering at
+  print resolution). Kept one screen per main step of the walkthrough repair plus the AI,
+  wallet and admin screens.
+- Tightened the prose of Chapters 2, 4, 5, 6, 8 (AI), 9 (security), 10 (testing) and 11
+  (limitations as one list): shorter sentences, no repetition; every table, rule, number
+  and requirement kept.
+- Corrected while editing: the AI helper's photo now waits for "Upload" (it no longer
+  uploads on its own); client CI also runs browser tests; the API has 125 routes
+  ("over 120"); the manual-acceptance section now records the 14 October walkthrough.
+- Result: 86 pages, no undefined references.

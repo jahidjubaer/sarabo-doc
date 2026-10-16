@@ -20,11 +20,11 @@ Testing focused on \emph{domain correctness}: whether the right person can do th
 \label{fig:testlayers}
 \end{figure}
 
-\paragraph*{Server integration tests.} A custom harness (\texttt{test-all.js}) starts its own API server on a random port against an isolated test database, seeds a baseline (role accounts, an approved technician, the catalogue) and exercises endpoints over real HTTP, plus direct service-level checks. Stripe, Supabase, Gemini and email are replaced by injected fakes, so the suite never touches external services or money. Concurrency is tested by firing competing requests at once, for example two admins assigning different technicians to the same request, a cancellation racing a payment, or the same Stripe webhook delivered several times in parallel; each must produce exactly one winner and a consistent final state.
+\paragraph*{Server integration tests.} A custom harness (\texttt{test-all.js}) starts its own API on a random port against an isolated test database, seeds role accounts, an approved technician and the catalogue, and calls endpoints over real HTTP, plus direct service checks. Stripe, Supabase, Gemini and email are injected fakes, so no external service or money is touched. Races are tested by firing competing requests at once (two admins assigning, a cancellation racing a payment, one webhook delivered several times): each must give exactly one winner and a consistent state.
 
-\paragraph*{Browser tests.} Playwright runs against a real production build of the client with a faked API, on a desktop and a mobile (Pixel~7) viewport. The tests cover public pages, the jobs board (listing, filtering, sorting, empty and error states), tracking (valid, unknown, invalid codes and server errors), authentication forms and route protection.
+\paragraph*{Browser tests.} Playwright runs a production build of the client against a faked API on desktop and mobile (Pixel~7) viewports, covering public pages, the jobs board (listing, filters, sorting, empty and error states), tracking (valid, unknown and invalid codes, server errors), sign-in forms and route protection.
 
-\paragraph*{Continuous integration.} GitHub Actions runs the server suites against a throwaway MongoDB~8 replica set and runs client lint and build on every push and pull request. On the final commits (server 16 October, client 14 October 2026) the server workflow passed and the client lint-and-build job passed; the client browser-test job failed once on GitHub while the same 58 tests pass locally on that commit (Table~\ref{tab:results}).
+\paragraph*{Continuous integration.} GitHub Actions runs the server suites on a throwaway MongoDB~8 replica set, and client lint, build and browser tests, on every push and pull request. On the final commits (server 16 October, client 14 October 2026) the server workflow passed and the client lint-and-build job passed; the client browser-test job failed once on GitHub while the same 58 tests pass locally on that commit (Table~\ref{tab:results}).
 
 \section{Verification Results}
 \label{sec:results}
@@ -105,7 +105,7 @@ T-34 & Technician changes service area during an active repair & Refused; allowe
 \end{longtable}
 
 \section{Manual End-to-End Acceptance}
-In August 2026 the core lifecycle was accepted by hand in the development environment with three accounts and Stripe test cards: request, assign, accept, inspect, quote, reject, revise, re-quote, approve, pay, repair, complete and confirm receipt, checking at each step that all three roles saw the same state and that the settlement became available only after receipt. For the final submission the same walkthrough is extended to the marketplace flow (AI-assisted request, offers, offer rejection and repost, inspection-fee payment, approve-and-pay, bKash withdrawal and review) as part of the final improvement phase (Section~\ref{sec:finalphase}). The screenshots in Chapter~\ref{ch:walkthrough} were taken from the running system with real customer, technician and admin accounts and serve as a visual record of this walkthrough.
+In August 2026 the core lifecycle (request, assign, inspect, quote, reject, revise, approve, pay, repair, complete, confirm receipt) was accepted by hand with three accounts and Stripe test cards, checking that all roles saw the same state and that money became available only after receipt. On 14 October 2026 the marketplace flow was walked through the same way with real customer, technician and admin accounts: AI-assisted request, offer with AI note, inspection-fee payment, pickup condition, inspection, quote, approve-and-pay, repair, hand-back, review, a warranty claim to resolution, and a bKash withdrawal marked paid. Chapter~\ref{ch:walkthrough} is the record of that run.
 
 \section{Evaluation Against Objectives}
 \begin{table}[htbp]
@@ -134,6 +134,6 @@ O12 & Achieved & Warranty, deadlines and stalled-work alerts (T-28 -- T-32) \\
 \end{table}
 
 \section{Validation Boundary}
-The automated results above refer to an isolated test environment with fake external providers. Payments run in Stripe test mode, so no real money has moved through the platform, and the system has not yet been used by real customers. Load and performance testing under heavy traffic, and a formal security audit, were outside the scope of this project.
+The automated results come from an isolated environment with fake providers. Payments use Stripe test mode, so no real money has moved, and there are no real customers yet. Load testing and a formal security audit were out of scope.
 
 \end{document}

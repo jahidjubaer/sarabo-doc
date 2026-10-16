@@ -5,132 +5,70 @@
 \chapter{System Walkthrough}
 \label{ch:walkthrough}
 
-These screenshots were taken on 14 October 2026 from the final code, running locally with real Firebase sign-in, real Gemini answers and Stripe in test mode. From Section~\ref{sec:wt-request} on they follow \emph{one} repair from start to finish, the cracked Samsung Galaxy A54 used throughout this report, switching between the customer's and the technician's screens, so every state in Figure~\ref{fig:e2e} appears in order. Each picture is cropped to the part that matters; other rows in lists come from the seeded development data, and personal email addresses are blurred.
+The screenshots below were taken on 14 October 2026 from the final code, with real Firebase sign-in, real Gemini answers and Stripe in test mode. From Section~\ref{sec:wt-request} they follow \emph{one} repair, the cracked Samsung Galaxy A54 used throughout this report, through every state in Figure~\ref{fig:e2e}. Each picture shows only the part of the screen that matters; personal email addresses are blurred.
 
 \FloatBarrier
 \needspace{9\baselineskip}
 \section{Public Website}
-Anyone can see services, prices, areas, open jobs and tracking without an account.
+Anyone can browse services, prices, service areas, open jobs and tracking without an account.
 
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.447\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/p01}}}\caption{Home page; ``Ask Sarabo'' opens the AI support chat.}\label{fig:wt-p01}\end{minipage}\hfill
-\begin{minipage}[t]{0.523\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/p02}}}\caption{Services and prices: the live catalogue of 45 services.}\label{fig:wt-p02}\end{minipage}
-\end{figure}
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.644\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/p03}}}\caption{Service areas: searching ``Ambarkhana'' zooms to that part of Sylhet (Section~\ref{sec:areamap}).}\label{fig:wt-p03}\end{minipage}\hfill
-\begin{minipage}[t]{0.322\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/p05}}}\caption{AI support chat: price and 200\,BDT fee taken from the live catalogue (Chapter~\ref{ch:ai}).}\label{fig:wt-p05}\end{minipage}
-\end{figure}
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.500\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/p04}}}\caption{Public jobs board: a safe summary of each open job, no customer details.}\label{fig:wt-p04}\end{minipage}\hfill
-\begin{minipage}[t]{0.470\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/p06}}}\caption{Public tracking of the walkthrough repair: stages and times only.}\label{fig:wt-p06}\end{minipage}
-\end{figure}
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.360\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.420\linewidth]{img/wt/p08}}}\caption{Home page on a phone (393\,px wide).}\label{fig:wt-p08}\end{minipage}\hfill
-\begin{minipage}[t]{0.360\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.420\linewidth]{img/wt/p09}}}\caption{Jobs board on a phone.}\label{fig:wt-p09}\end{minipage}
-\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.748\linewidth]{img/wt/p03}}}\caption{Service areas: searching ``Ambarkhana'' zooms the map to that part of Sylhet (Section~\ref{sec:areamap}).}\label{fig:wt-p03}\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.433\linewidth]{img/wt/p05}}}\caption{AI support chat: the price and the 200\,BDT fee come from the live catalogue (Chapter~\ref{ch:ai}).}\label{fig:wt-p05}\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.894\linewidth]{img/wt/p04}}}\caption{Public jobs board: a safe summary of each open job, with no customer details.}\label{fig:wt-p04}\end{figure}
 
 \FloatBarrier
 \needspace{9\baselineskip}
 \section{Request and Offer}\label{sec:wt-request}
-Rahim describes the problem in Banglish; a local technician sends an offer.
+Rahim describes the problem in Banglish and books a pickup; a local technician sends an offer.
 
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.597\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c02}}}\caption{AI request helper: Banglish text turned into device, service and an English description; \emph{Undo} restores the form.}\label{fig:wt-c02}\end{minipage}\hfill
-\begin{minipage}[t]{0.373\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c03}}}\caption{Address and a two-hour pickup window (Friday closed).}\label{fig:wt-c03}\end{minipage}
-\end{figure}
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.696\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c04}}}\caption{Request created; photos are sent only when the customer presses ``Upload''.}\label{fig:wt-c04}\end{minipage}\hfill
-\begin{minipage}[t]{0.274\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/t03}}}\caption{Technician's offer: price guide, minimum fee, and an AI-written note from a few words.}\label{fig:wt-t03}\end{minipage}
-\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.982\linewidth]{img/wt/c02}}}\caption{AI request helper: the Banglish text became the device, the catalogue service and an English description.}\label{fig:wt-c02}\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.606\linewidth]{img/wt/c03}}}\caption{Address and a two-hour pickup window (Friday closed).}\label{fig:wt-c03}\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.560\linewidth]{img/wt/t03}}}\caption{Technician's offer: price guide, minimum fee, and a note written by AI from a few words.}\label{fig:wt-t03}\end{figure}
 
 \FloatBarrier
 \needspace{9\baselineskip}
 \section{Choosing and Booking}
-The customer compares offers and pays the inspection fee to book the visit.
+He compares offers and pays the inspection fee to book the visit.
 
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.669\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c06}}}\caption{The offer with its ranking reasons (Section~\ref{sec:ranking}).}\label{fig:wt-c06}\end{minipage}\hfill
-\begin{minipage}[t]{0.301\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c07}}}\caption{Choosing the offer: pay the inspection fee to book.}\label{fig:wt-c07}\end{minipage}
-\end{figure}
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.292\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c08}}}\caption{Stripe Checkout in test mode for the 200\,BDT fee.}\label{fig:wt-c08}\end{minipage}\hfill
-\begin{minipage}[t]{0.678\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c09}}}\caption{Technician booked; the fee counts toward the final price.}\label{fig:wt-c09}\end{minipage}
-\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c06}}}\caption{The offer as the customer sees it, with its ranking reasons (Section~\ref{sec:ranking}).}\label{fig:wt-c06}\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.676\linewidth]{img/wt/c07}}}\caption{Choosing the offer: the inspection fee is paid by Stripe (test mode) to book the visit.}\label{fig:wt-c07}\end{figure}
 
 \FloatBarrier
 \needspace{9\baselineskip}
 \section{Pickup, Inspection and Quote}
 The technician records the condition, inspects the phone and sends an itemised quote.
 
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.379\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/t05}}}\caption{Device condition and accessories recorded at pickup.}\label{fig:wt-t05}\end{minipage}\hfill
-\begin{minipage}[t]{0.591\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/t06}}}\caption{Inspection: findings, issues and a repairability decision.}\label{fig:wt-t06}\end{minipage}
-\end{figure}
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.430\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/t07}}}\caption{Itemised quote: 800 + 3,200 = 4,000\,BDT, with the 10\% commission shown.}\label{fig:wt-t07}\end{minipage}\hfill
-\begin{minipage}[t]{0.540\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c10}}}\caption{The customer's view: 200\,BDT already paid, 3,800 left to pay.}\label{fig:wt-c10}\end{minipage}
-\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.536\linewidth]{img/wt/t05}}}\caption{The device's condition and accessories recorded at pickup.}\label{fig:wt-t05}\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.837\linewidth]{img/wt/t06}}}\caption{Inspection: findings, issues and a repairability decision.}\label{fig:wt-t06}\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.787\linewidth]{img/wt/t07}}}\caption{Itemised quote (800 + 3,200 = 4,000\,BDT), with the 10\% commission shown.}\label{fig:wt-t07}\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c10}}}\caption{The customer's view of the quote: nothing is charged before approval.}\label{fig:wt-c10}\end{figure}
 
 \FloatBarrier
 \needspace{9\baselineskip}
 \section{Payment, Repair and Hand-Over}
-The customer pays the rest; the technician repairs and returns the phone.
+Rahim pays the rest; the technician repairs and returns the phone.
 
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.319\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c12}}}\caption{Payment successful, with a PDF receipt.}\label{fig:wt-c12}\end{minipage}\hfill
-\begin{minipage}[t]{0.651\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c13}}}\caption{Payment history: the repair payment and the inspection fee.}\label{fig:wt-c13}\end{minipage}
-\end{figure}
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.615\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/t08}}}\caption{Repair in progress, with updates the customer sees.}\label{fig:wt-t08}\end{minipage}\hfill
-\begin{minipage}[t]{0.355\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/t09}}}\caption{Completing the repair; ``Can't finish'' would go to an admin.}\label{fig:wt-t09}\end{minipage}
-\end{figure}
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.688\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c14}}}\caption{Confirm receipt, or ``I haven't received it''; auto-confirmed after 3 days.}\label{fig:wt-c14}\end{minipage}\hfill
-\begin{minipage}[t]{0.282\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c15}}}\caption{Rating the technician.}\label{fig:wt-c15}\end{minipage}
-\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.541\linewidth]{img/wt/c12}}}\caption{Payment successful (3,800\,BDT after the 200\,BDT fee), with a PDF receipt.}\label{fig:wt-c12}\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.583\linewidth]{img/wt/t09}}}\caption{Completing the repair; ``Can't finish this repair'' would send it to an admin.}\label{fig:wt-t09}\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c14}}}\caption{Confirm receipt, or ``I haven't received it''; confirmed automatically after 3 days.}\label{fig:wt-c14}\end{figure}
 
 \FloatBarrier
 \needspace{9\baselineskip}
 \section{Warranty}\label{sec:wt-warranty}
 Ten days later the touch fails again, and the warranty covers it.
 
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.315\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c16}}}\caption{Reporting a problem under the 30-day warranty.}\label{fig:wt-c16}\end{minipage}\hfill
-\begin{minipage}[t]{0.451\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/t11}}}\caption{Technician books the free re-inspection (within 3 days).}\label{fig:wt-t11}\end{minipage}
-\end{figure}
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.792\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c17}}}\caption{The resolved claim: re-inspection, ``Covered'', re-repair and the customer's ``Working now''.}\label{fig:wt-c17}\end{minipage}
-\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.423\linewidth]{img/wt/c16}}}\caption{Reporting a problem under the 30-day warranty.}\label{fig:wt-c16}\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/c17}}}\caption{The resolved claim: free re-inspection, ``Covered'', re-repair and the customer's ``Working now''.}\label{fig:wt-c17}\end{figure}
 
 \FloatBarrier
 \needspace{9\baselineskip}
-\section{Technician Wallet and Profile}
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.717\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/t13}}}\caption{Wallet: the 3,600\,BDT earning requested as a bKash withdrawal.}\label{fig:wt-t13}\end{minipage}\hfill
-\begin{minipage}[t]{0.253\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/t14}}}\caption{Technician edits own details; the area is locked during a repair.}\label{fig:wt-t14}\end{minipage}
-\end{figure}
+\section{Technician and Admin}
+The technician withdraws the earning; the admin sees what needs attention and records the payout.
 
-\FloatBarrier
-\needspace{9\baselineskip}
-\section{Admin}
-Admins see what needs attention, manage technicians and prices, and read reports.
-
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.521\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/a01}}}\caption{Admin overview: missed pickups, no offers, stalled repairs first.}\label{fig:wt-a01}\end{minipage}\hfill
-\begin{minipage}[t]{0.449\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/a05}}}\caption{Technician applications and approved technicians.}\label{fig:wt-a05}\end{minipage}
-\end{figure}
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.635\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/a06}}}\caption{Services and prices editor.}\label{fig:wt-a06}\end{minipage}\hfill
-\begin{minipage}[t]{0.265\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/a07}}}\caption{Editing a service: a price change creates a new version.}\label{fig:wt-a07}\end{minipage}
-\end{figure}
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.588\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/a08}}}\caption{Reports with the AI summary; unverifiable numbers are removed.}\label{fig:wt-a08}\end{minipage}\hfill
-\begin{minipage}[t]{0.382\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/a09}}}\caption{Report charts: requests over time and demand by region.}\label{fig:wt-a09}\end{minipage}
-\end{figure}
-\begin{figure}[!htbp]\centering
-\begin{minipage}[t]{0.314\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/a10}}}\caption{Recording a bKash payout with its TrxID (test value).}\label{fig:wt-a10}\end{minipage}\hfill
-\begin{minipage}[t]{0.635\linewidth}\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/a11}}}\caption{Technician reviews, which admins can hide or restore.}\label{fig:wt-a11}\end{minipage}
-\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.981\linewidth]{img/wt/t13}}}\caption{Technician wallet: the 3,600\,BDT earning requested as a bKash withdrawal.}\label{fig:wt-t13}\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/a01}}}\caption{Admin overview: missed pickups, requests without offers and stalled repairs come first.}\label{fig:wt-a01}\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=1.000\linewidth]{img/wt/a08}}}\caption{Admin reports with the AI summary; sentences with numbers not in the data are removed.}\label{fig:wt-a08}\end{figure}
+\begin{figure}[!htbp]\centering{\setlength{\fboxsep}{0pt}\fbox{\includegraphics[width=0.421\linewidth]{img/wt/a10}}}\caption{Recording a bKash payout with its TrxID (a test value).}\label{fig:wt-a10}\end{figure}
 
 \FloatBarrier
 \end{document}

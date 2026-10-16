@@ -6,43 +6,29 @@
 \label{ch:limitations}
 
 \section{Current Limitations}
-
-\subsection{Manual Technician Payouts}
-The wallet tracks earnings and withdrawals precisely, but the money itself is sent by an admin using bKash ``Send Money'', who then records the transaction ID. The platform does not yet pay technicians automatically through a bKash, Nagad or bank API.
-
-\subsection{Card Payments in Test Mode}
-Customer payments use Stripe in test mode. Stripe does not offer local accounts for businesses in Bangladesh, so a real launch would need a local gateway such as SSLCOMMERZ or bKash Payment Gateway behind the same payment service interface.
-
-\subsection{Pickup Capacity Is Checked, Not Locked}
-Slot capacity is counted before a request is saved but is not locked, so two customers booking the last place in the same second could both succeed. At the current scale this is acceptable (admins see every pickup time), but a busy service would need an atomic slot counter.
-
-\subsection{Provisional Catalogue Prices}
-The 45 services and their estimate ranges are a starting point for demonstration, not prices reviewed or approved by a real repair business. Admins can change them at any time.
-
-\subsection{Single Active Job per Technician}
-A technician is either available or busy with one repair. This prevents double booking but does not model technicians who can handle several small jobs per day.
-
-\subsection{Legacy Internal Values}
-Some stored role and status values (\texttt{rider}, \texttt{parcel\_delivered}, and others) are inherited from the original parcel-delivery codebase. They are hidden from users, but a dedicated migration would make the data model cleaner.
-
-\subsection{Signed-In Screens Not Covered by Browser Tests}
-The automated browser tests cover public pages only, because signing in needs real Firebase accounts. Signed-in screens are covered by server tests of every endpoint behind them and were checked by hand (Chapter~\ref{ch:walkthrough}), but not by automated browser tests.
-
-\subsection{Not Yet Used by Real Customers}
-The platform is deployed and tested, but it has not been run with real customers, technicians and money, and it has not undergone load testing or an external security audit.
+\begin{itemize}
+  \item \textbf{Manual technician payouts.} The wallet tracks earnings and withdrawals exactly, but an admin sends the money by bKash Send Money and records the TrxID; there is no automatic payout through a bKash, Nagad or bank API.
+  \item \textbf{Card payments in test mode.} Stripe has no local accounts for businesses in Bangladesh, so a launch needs a local gateway (SSLCOMMERZ or bKash Payment Gateway) behind the same payment service interface.
+  \item \textbf{Pickup capacity checked, not locked.} Two customers booking the last place in a slot in the same second could both succeed. This is acceptable at the current scale (admins see every pickup time), but a busy service needs an atomic slot counter.
+  \item \textbf{Provisional prices.} The 45 services and their ranges are a demonstration starting point, not prices approved by a real repair business; admins can change them at any time.
+  \item \textbf{One active job per technician.} This prevents double booking but does not model technicians who handle several small jobs a day.
+  \item \textbf{Legacy internal values.} Stored values such as \texttt{rider} and \texttt{parcel\_delivered} come from the parcel-delivery codebase; they are hidden from users, but a migration would make the model cleaner.
+  \item \textbf{Signed-in screens not in browser tests.} Browser tests cover public pages only, since sign-in needs real Firebase accounts. Signed-in screens are covered by server tests of every endpoint behind them and were checked by hand (Chapter~\ref{ch:walkthrough}).
+  \item \textbf{No real customers yet.} The platform is deployed and tested, but has not run with real customers, technicians and money, and has had no load test or external security audit.
+\end{itemize}
 
 \section{Future Enhancements}
 \begin{enumerate}
-  \item \textbf{Local payment gateway and automated payouts}: integrate SSLCOMMERZ or bKash for customer payments and technician disbursement, with reconciliation.
-  \item \textbf{Live technician location}: show the technician's approach on a map on pickup day.
-  \item \textbf{Mobile apps or a Progressive Web App}: offline-friendly technician app with push notifications.
+  \item \textbf{Local payment gateway and automated payouts}: SSLCOMMERZ or bKash for customer payments and technician disbursement, with reconciliation.
+  \item \textbf{Live technician location}: the technician's approach on a map on pickup day.
+  \item \textbf{Mobile app or Progressive Web App}: an offline-friendly technician app with push notifications.
   \item \textbf{SMS notifications}: many customers in Bangladesh rely on SMS more than email.
-  \item \textbf{Parts inventory}: track parts used, their cost and supplier per repair.
+  \item \textbf{Parts inventory}: parts used per repair, with cost and supplier.
   \item \textbf{Technician scheduling}: daily capacity, working hours and route-aware assignment.
-  \item \textbf{Cash payment}: record cash paid to the technician at hand-over, with the platform's share settled from the wallet.
-  \item \textbf{Own domain name}: a \texttt{.com} or \texttt{.com.bd} address, since some mobile networks were seen failing to resolve the free \texttt{.vercel.app} address.
-  \item \textbf{Bangla interface}: full Bangla localisation of the user interface, not only of AI input.
-  \item \textbf{Schema clean-up}: retire the remaining legacy values through a planned data migration.
+  \item \textbf{Cash payment}: cash paid at hand-over, with the platform's share settled from the wallet.
+  \item \textbf{Own domain name}: a \texttt{.com} or \texttt{.com.bd} address, since some mobile networks failed to resolve the free \texttt{.vercel.app} address.
+  \item \textbf{Bangla interface}: full localisation of the interface, not only of AI input.
+  \item \textbf{Schema clean-up}: retire the legacy values through a planned migration.
 \end{enumerate}
 
 \end{document}
