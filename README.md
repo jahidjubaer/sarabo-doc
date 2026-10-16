@@ -7,9 +7,9 @@ Author: Jahid Hasan (222-115-116, Batch 57 C). Supervisor: Shrabanti Chowdhury.
 |---|---|
 | **[Sarabo_Final_Report.pdf](Sarabo_Final_Report.pdf)** | Final report, compiled from `report/` (114 pages, Metropolitan University template; Chapter 7 is a screenshot walkthrough) |
 | `report/` | LaTeX source: `myThesis.tex` (main file), `tex/*.tex` (one file per chapter), `ref_file.bib`, `myStyle.sty`, `img/` |
-| **[presentation/Sarabo_Presentation.pptx](presentation/Sarabo_Presentation.pptx)** | 10-slide, 5-minute talk; the speaker script with timings is in each slide's notes |
+| **[presentation/Sarabo_Presentation.pptx](presentation/Sarabo_Presentation.pptx)** | 16 slides (about 8 minutes) with short points, large text, zoomed screenshots and an ER diagram (slide 5); the speaker script is in each slide's notes |
 | [presentation/demo-script.md](presentation/demo-script.md) | Run of show for the 5-minute live demo |
-| `presentation/build_slides.py` | Rebuilds the PPTX (`python build_slides.py`) |
+| `presentation/build_slides.py`, `make_crops.py` | Rebuild the PPTX: `python make_crops.py` (cuts the slide screenshots from `report/img/screens`), then `python build_slides.py` |
 | [01-project-overview.md](01-project-overview.md) | What Sarabo is, its users, features, architecture and tech stack |
 | [02-development-history.md](02-development-history.md) | How the project was built, phase by phase |
 | [03-work-log.md](03-work-log.md) | Log of every fix and improvement from 11 Oct 2026; feeds Section 5.13 of the report |

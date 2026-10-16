@@ -669,3 +669,20 @@ Nothing in entries 3–4 was committed, pushed or deployed.
   while the same 58 tests pass locally; the report says so.
 - Build: Tectonic 0.15.0, 114 pages, no undefined references; copied to
   `Sarabo_Final_Report.pdf`.
+
+### 19. Stripe item name fix, and a 10-slide deck — 2026-10-16
+
+- Stripe: the repair-payment checkout said "Repair request: undefined" because
+  `paymentController.createV2CheckoutSession` used the legacy `deviceName`, which v2
+  requests do not have. It now uses `deviceLabelOf` (brand + model from the product
+  snapshot, else the device type), as the emails already do. New check 19b. Server
+  suite on a temporary in-memory MongoDB 7 replica set: **2,761 / 2,761**. (A run
+  against the shared Atlas `sarabo-test-db` failed 3 BDT-migration checks only because
+  that database still holds catalogue rows seeded before the minimum-fee change; a fresh
+  database passes.) Server `d81fa65`, pushed to `main`; Vercel production deploy Ready,
+  `/health` 200.
+- Slides: rebuilt as 10 slides for a 5-minute talk (title, problem, solution, how it
+  works, ER diagram, ranked offer and quote, warranty and deadlines, AI, architecture and
+  trust, results and thanks). Large text, short points, zoomed screenshots cut from the
+  report by `presentation/make_crops.py`; ER diagram with entity cards (PK/FK) and
+  crow's-foot links. All shape positions are whole EMUs.
