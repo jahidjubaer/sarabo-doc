@@ -484,6 +484,191 @@ components/workspace/NextStepPanel.jsx ("Your next step")</div>
 <p class="q">অন্য platform থেকে আলাদা কীভাবে?</p>
 <p class="a">Inspection-এর পর itemised quote, approve-এর আগে চার্জ নেই, condition record, 30-দিনের warranty workflow, region-ভিত্তিক matching আর ranking, আর technician-এর guaranteed payment (আগে online payment, receipt confirm-এ release)।</p>
 
+<h2>১২. Theory / concept প্রশ্ন (basic জিনিস, কিন্তু প্রায়ই জিজ্ঞেস করে)</h2>
+
+<p class="q">REST API কী? তোমার API কি RESTful?</p>
+<p class="a">Resource-ভিত্তিক URL আর HTTP method দিয়ে কাজ: <code>GET /repair-requests/:id</code> পড়া, <code>POST /repair-requests</code> তৈরি, <code>PATCH</code> আংশিক বদল, <code>DELETE</code> মোছা। Stateless — প্রতিটা request-এ token যায়, server session রাখে না। যেখানে কাজটা "action" (যেমন accept, cancel-booking), সেখানে sub-resource action path দিয়েছি: <code>POST …/applications/:id/accept</code>।</p>
+
+<p class="q">Middleware কী? তোমার project-এ উদাহরণ দাও।</p>
+<p class="a">Request controller-এ পৌঁছানোর আগে মাঝখানে চলা function, যেটা <code>next()</code> ডাকে বা response দিয়ে থামিয়ে দেয়। উদাহরণ: <code>verifyFBToken</code> (token না থাকলে 401), <code>verifyAdmin</code> (403), <code>ensureDatabaseReady</code>, <code>requestId</code> (প্রতিটা request-এ id), <code>supportRateLimit</code>। সব <code>middleware/</code> folder-এ।</p>
+
+<p class="q">Firebase ID token আর JWT-র সম্পর্ক কী?</p>
+<p class="a">Firebase ID token একটা signed JWT (মেয়াদ ১ ঘণ্টা)। Client <code>getIdToken()</code> দিয়ে নেয়, header-এ পাঠায়; server <code>admin.auth().verifyIdToken()</code> দিয়ে signature আর মেয়াদ চেক করে email, <code>email_verified</code> বের করে। মেয়াদ শেষ হলে interceptor নতুন token নিয়ে একবার retry করে।</p>
+
+<p class="q">CORS কী, কেন লাগে?</p>
+<p class="a">Browser অন্য domain-এর API call আটকায়, যদি না server বলে "এই origin চলবে"। আমার client আর API আলাদা domain-এ, তাই <code>config/cors.js</code>-এ allow-list: production-এ শুধু Vercel client, dev-এ localhost:5173। অন্য site থেকে কেউ API চালাতে পারবে না browser দিয়ে।</p>
+
+<p class="q">Transaction আর ACID বুঝিয়ে বলো, তোমার কোথায় লেগেছে?</p>
+<p class="a">কয়েকটা write হয় সব একসাথে হবে, নয়তো একটাও না (Atomicity); data সবসময় নিয়মে থাকে (Consistency); একসাথে চলা কাজ একে অন্যকে নষ্ট করে না (Isolation); commit হলে থেকে যায় (Durability)। Booking-এ request, technician আর সব offer একসাথে বদলায়; payment-এ payment row + status + settlement। <code>session.withTransaction()</code> — যেমন <code>services/jobBooking.js</code>, <code>services/paymentProcessor.js</code>, <code>services/requestClosure.js</code>। Multi-document transaction-এর জন্য MongoDB replica set লাগে।</p>
+
+<p class="q">Idempotency কী? কোথায় ব্যবহার করেছ?</p>
+<p class="a">একই কাজ একাধিকবার হলেও ফল একবারের মতো। Stripe-এ checkout create আর refund-এ <code>idempotencyKey</code> (যেমন <code>inspection-refund-&lt;sessionId&gt;</code>); webhook একই event দুবার এলে একবার record (<code>payments.sessionId</code> unique index); notification-এ <code>deduplicationKey</code> unique; email-এ <code>email_log</code>; receipt confirm <code>confirmReceiptOnce()</code>।</p>
+
+<p class="q">Webhook কী? Redirect URL দিয়ে কেন payment confirm করোনি?</p>
+<p class="a">Webhook = Stripe নিজে থেকে আমার server-কে POST করে জানায় "payment হয়েছে"। Redirect URL-এ user নিজে যায় — বন্ধ করে দিতে পারে, বা বানিয়ে URL খুলতে পারে। তাই redirect শুধু দেখায়, সত্য হলো signature-verified webhook।</p>
+
+<p class="q">SPA কী? SEO-র সমস্যা?</p>
+<p class="a">React single-page app: একবার load, তারপর route বদলায় browser-এ। Dashboard-এর জন্য ঠিক আছে। Public page-এর SEO দুর্বল হতে পারে — দরকার হলে SSR/pre-render (যেমন Next.js) future-এ। Project-এর মূল কাজ logged-in workflow, তাই SPA বেছেছি।</p>
+
+<p class="q">HTTP status code কোনগুলো ব্যবহার করেছ, কেন?</p>
+<p class="a"><code>400</code> ভুল input, <code>401</code> login নেই/token ভুল, <code>403</code> login আছে কিন্তু অনুমতি নেই (role, email not verified), <code>404</code> নেই বা দেখার অধিকার নেই, <code>409</code> state conflict (যেমন <code>NO_TECHNICIAN_AVAILABLE</code>, <code>PICKUP_SLOT_FULL</code>, <code>BKASH_TRX_ID_ALREADY_USED</code>), <code>429</code> rate limit, <code>503</code> service configure হয়নি (যেমন AI বা cron)। প্রতিটা error-এর সাথে একটা স্থির <code>code</code> থাকে, client সেটা দেখে message দেখায়।</p>
+
+<p class="q">Signed URL কী?</p>
+<p class="a">Storage-এর একটা link যেটায় সই আর মেয়াদ লাগানো — যার কাছে আছে সে নির্দিষ্ট সময় পর্যন্ত শুধু ওই একটা file পড়তে/লিখতে পারে। Upload-এর জন্য upload URL, দেখার জন্য কয়েক মিনিটের read URL; bucket নিজে private।</p>
+
+<p class="q">Cron job কী? Serverless-এ কীভাবে চালালে?</p>
+<p class="a">নির্দিষ্ট সময়ে নিজে থেকে চলা কাজ। Serverless-এ সবসময় চলা process নেই, তাই Vercel Cron প্রতিদিন একটা URL call করে (<code>vercel.json</code>), আর server secret চেক করে কাজ চালায়।</p>
+
+<p class="q">Cold start কী?</p>
+<p class="a">অনেকক্ষণ request না এলে serverless function ঘুমিয়ে পড়ে; পরের request-এ নতুন করে চালু হতে সময় লাগে (DB connect, index চেক)। Region DB-র পাশে এনে কমিয়েছি; free uptime ping দিলে আরও কমত।</p>
+
+<h2>১৩. Database আর index প্রশ্ন</h2>
+
+<p class="q">কোন কোন collection আছে?</p>
+<p class="a">মূল: <code>users</code>, <code>technicians</code>, <code>repair_requests</code>, <code>service_definitions</code>, <code>jobApplications</code> (offer), <code>payments</code>, <code>withdrawals</code>, <code>warranty claims</code>, <code>notifications</code>, <code>trackingEvents</code>, reviews/reports। সহায়ক: <code>checkoutSessions</code>, upload session, <code>email_log</code>, <code>turned_away_requests</code>, <code>ai_report_summaries</code>, rate-limit store। পুরো তালিকা report-এর Chapter 4 table-এ।</p>
+
+<p class="q">Index কী? কয়টা আর কেন?</p>
+<p class="a">Index = দ্রুত খোঁজার জন্য সাজানো তালিকা, আর unique index নিয়মও চাপায়। Server start-এ 44টা <code>createIndex</code> (<code>config/database.js</code>)। উদাহরণ: <code>trackingId</code> unique; <code>payments.sessionId</code> unique (একই Stripe session দুবার না); review প্রতি repair-এ একটা (<code>reviews_repair_unique</code>); প্রতি technician প্রতি request-এ একটাই offer (<code>jobApplications_request_technician_unique</code>)।</p>
+
+<p class="q">Partial unique index কোথায়, কেন?</p>
+<p class="a">শুধু কিছু document-এর উপর unique: (১) technician-এর একসাথে একটাই খোলা withdrawal — <code>partialFilterExpression: { status: 'requested' }</code>; (২) bKash TrxID একবারই — শুধু যেখানে <code>payoutReference</code> string; (৩) একটা request-এ একটাই active checkout — <code>{ active: true }</code>। App code ভুল করলেও database নিজেই আটকায়।</p>
+
+<p class="q">TTL index কী?</p>
+<p class="a">সময় হলে MongoDB নিজে document মুছে দেয় (<code>expireAfterSeconds</code>)। ব্যবহার: <code>email_log</code> (90 দিন), <code>turned_away_requests</code> (180 দিন), rate-limit counter, পুরনো warranty photo upload session।</p>
+
+<p class="q">Embedded রাখলে কেন, আলাদা collection কেন না (quote, inspection)?</p>
+<p class="a">Quote আর inspection সবসময় একটা request-এর সাথে পড়া হয় আর একটা request-এর একটাই চলতি quote — embed করলে এক read-এ পুরো case। Offer আলাদা collection, কারণ একটা request-এ অনেক offer, আর technician-এর দিক থেকেও খোঁজা লাগে।</p>
+
+<p class="q">Balance কেন store করোনি?</p>
+<p class="a">Store করলে কোনো bug-এ সংখ্যা আর record আলাদা হয়ে যেতে পারে। প্রতিবার settlement আর withdrawal থেকে হিসাব (<code>calculateWallet</code>), তাই "drift" হতে পারে না। Data কম, তাই খরচও কম।</p>
+
+<p class="q">Price snapshot মানে কী?</p>
+<p class="a">Request তৈরির সময় service-এর দাম আর version request-এ কপি রাখা। পরে admin দাম বদলালেও পুরনো request-এর দাম বদলায় না।</p>
+
+<h2>১৪. Frontend প্রশ্ন</h2>
+
+<p class="q">Page গুলো কীভাবে load হয়? Bundle বড় না?</p>
+<p class="a">Route-ভিত্তিক lazy loading: <code>routes/router.jsx</code>-এ <code>lazy(() =&gt; import(...))</code>, আর <code>RouteSuspense</code> loading দেখায়। দরকারি page-এর code তখনই আসে।</p>
+
+<p class="q">Data fetch-এ useEffect + useState না করে TanStack Query কেন?</p>
+<p class="a">Cache, loading/error state, retry, background refetch আর mutation-এর পর invalidate নিজে থেকে। যেমন job board প্রতি 60 সেকেন্ডে refresh (<code>refetchInterval</code>, <code>hooks/useJobPortal.js</code>)। Query key গুলো এক জায়গায় (<code>hooks/*Keys.js</code>), তাই ভুল cache কম।</p>
+
+<p class="q">Form validation কোথায়? Client-এ করলেই হয়?</p>
+<p class="a">Client-এ react-hook-form দিয়ে তাড়াতাড়ি ভুল দেখানো (UX), কিন্তু আসল validation server-এ (<code>utils/repairRequestV2.js</code>, <code>utils/quote.js</code>, <code>utils/jobPortal.js</code> …), কারণ client bypass করা যায়।</p>
+
+<p class="q">এক page তিন role-এর জন্য কীভাবে আলাদা দেখায়?</p>
+<p class="a"><code>RequestDetails.jsx</code> viewer role বের করে (<code>utils/workspacePresentation.js</code>) আর Customer/Technician/Admin view render করে। সবার উপরে একই ৪-ধাপের spine; "Your next step" panel শুধু ওই role-এর কাজ দেখায়।</p>
+
+<p class="q">UX-এর জন্য আর কী করেছ?</p>
+<p class="a">Dark/light mode (<code>ThemeToggle.jsx</code>), Ctrl+K command menu (<code>CommandMenu.jsx</code>), নতুন user-এর জন্য product tour (react-joyride, <code>components/tour/SaraboTour.jsx</code>), mobile layout (<code>MobileTabBar.jsx</code>, <code>MobileActionBar.jsx</code>), empty/loading/error state component, chart-এর পাশে "Show as a table"।</p>
+
+<p class="q">Map কীভাবে করেছ? Google Maps না কেন?</p>
+<p class="a">Leaflet + OpenStreetMap (free)। Area data <code>public/serviceAreas.json</code>; sub-area-র coordinate একবার offline-এ বের করে রাখা, browser-এ geocoding হয় না। Google Maps-এ API key আর billing লাগে।</p>
+
+<h2>১৫. Notification আর email</h2>
+
+<p class="q">Notification কীভাবে তৈরি হয়?</p>
+<p class="a">সব ধরন এক file-এ define (<code>utils/notificationEvents.js</code>, 47টা) — title, message, link, priority, dedupe key। কোনো event ঘটলে <code>services/notificationService.js</code> সেটা তৈরি করে; একই key দ্বিতীয়বার এলে unique index আটকায়। Client <code>NotificationBell.jsx</code> unread count দেখায় (<code>GET /notifications/unread-count</code>)।</p>
+
+<p class="q">Email fail করলে কি request fail হয়?</p>
+<p class="a">না। Email মূল কাজ সফল হওয়ার পরে যায়; fail হলে log হয়, কখনো error ছোঁড়ে না। পাঠানোর আগে <code>email_log</code>-এ key লেখা হয়, তাই retry বা দ্বিতীয় cron-এ একই email দুবার যায় না (<code>services/emailService.js</code>, template <code>utils/emailTemplates.js</code>)।</p>
+
+<p class="q">কোন কোন email যায়?</p>
+<p class="a">তিনটা: request received (আর pickup বদলালে), আগের দিনের pickup reminder, আর technician-কে নতুন job। Gmail SMTP (Nodemailer) দিয়ে; production-এ চালু।</p>
+
+<h2>১৬. Payment আরও গভীরে</h2>
+
+<p class="q">Customer কত টাকা কখন দেয়? পুরো হিসাবটা বলো।</p>
+<p class="a">Choose করার সময় inspection fee 200 (Stripe)। Quote 4,000 approve করলে বাকি 3,800 (Stripe)। মোট 4,000। Technician পায় 4,000-এর 90% = 3,600, Sarabo 400। Fee আলাদা row-এ থাকে কিন্তু final price-এ credit হয়।</p>
+
+<p class="q">Fee কখন ফেরত, কখন রাখা হয়?</p>
+<p class="a">ফেরত: technician না এলে (no-show), booking fail হলে, customer pickup-এর ≥2 ঘণ্টা আগে cancel করলে। রাখা (90/10): দেরিতে cancel, quote decline করে close, not repairable। Report-এর Table "fee outcomes"-এ পুরোটা।</p>
+
+<p class="q">Stripe-এ BDT চলে? টাকার ভগ্নাংশ?</p>
+<p class="a">Test mode-এ BDT দিয়ে চালাই। সব হিসাব পূর্ণ টাকায় (integer) — commission integer ratio-তে, technician-এর অংশ বিয়োগ করে, তাই কখনো ০.৫ টাকা হারায় না।</p>
+
+<p class="q">PDF receipt কে দেখতে পারে?</p>
+<p class="a">শুধু যে payment করেছে আর admin; অন্য কেউ চাইলে 404। <code>GET /payments/:transactionId/receipt.pdf</code> → <code>services/paymentReceipt.js</code> (pdfkit) server-এ বানায়।</p>
+
+<p class="q">Payment success page কেন সাথে সাথে redirect করে না?</p>
+<p class="a">Receipt download করার সুযোগ দিতে; কয়েক সেকেন্ড পরে ফেরত নেয়, আর button দিয়ে repairs/payment history-তে যাওয়া যায়।</p>
+
+<h2>১৭. Technician আর admin process</h2>
+
+<p class="q">Technician কীভাবে যোগ দেয়?</p>
+<p class="a"><code>pages/BecomeTechnician/BecomeTechnician.jsx</code> → <code>POST /technicians</code>: নাম, phone, NID, region/district, address, আর expertise (device, repair type, level, অভিজ্ঞতার বছর)। Admin <code>ApproveTechnicians.jsx</code>-এ approve/reject করে (<code>PATCH /technicians/:id</code>); approve হলে একই transaction-এ user-এর role technician (<code>rider</code>) হয়; admin account-এর role কখনো বদলায় না।</p>
+
+<p class="q">Technician কি নিজের email/NID বদলাতে পারে?</p>
+<p class="a">না — approval-এর সময় যাচাই করা, তাই admin-কে বলতে হয়। নাম, phone, area, address নিজে বদলাতে পারে (<code>PATCH /technicians/me</code>), কিন্তু active repair থাকলে area না।</p>
+
+<p class="q">কেউ admin হয় কীভাবে?</p>
+<p class="a">শুধু অন্য admin Users page থেকে "Make admin" দিয়ে (<code>PATCH /users/:id/role</code>, <code>verifyAdmin</code>)। Customer নিজে role বদলাতে পারে না; technician হয় শুধু approved application দিয়ে।</p>
+
+<p class="q">Admin কি সরাসরি technician assign করতে পারে?</p>
+<p class="a">হ্যাঁ, override হিসেবে (<code>AssignTechnicians.jsx</code> → <code>PATCH /repair-requests/:id</code>), কিন্তু শুধু matching rule যাদের eligible বলে (<code>GET /repair-requests/:id/eligible-technicians</code>)। সাধারণত admin invite পাঠায় (<code>POST /admin/repair-requests/:id/invite</code>), technician নিজে offer দেয়।</p>
+
+<p class="q">Request delete করা যায়?</p>
+<p class="a">শুধু একদম শুরুর অবস্থায় (technician নেই, payment নেই) — <code>services/deletionPolicy.js</code>। Delete করলে তার upload session আর storage-এর ছবিও মোছে। পরে শুধু cancel/close, যাতে টাকার record থাকে।</p>
+
+<h2>১৮. আরও "code দেখাও" walkthrough</h2>
+
+<p class="q">Warranty claim খোলা থেকে শেষ পর্যন্ত code-এ কী হয়?</p>
+<p class="a">Customer <code>CustomerWarrantySection.jsx</code> → <code>POST /repair-requests/:id/warranty-claims</code> → <code>warrantyController.openClaim()</code>: <code>claimEligibility()</code> (30 দিনের মধ্যে? খোলা claim নেই? ২টার কম?) আর <code>validateClaimInput()</code> (<code>utils/warranty.js</code>)। Technician <code>WarrantyClaims.jsx</code> → <code>schedule</code> → <code>decision</code> (covered/not covered কারণসহ) → <code>rerepair</code>; customer <code>confirm</code> ("Working now") → resolved। Deadline cron-এ <code>alertOverdueClaims()</code>; admin <code>adminRefund</code> → <code>services/warrantyRefunds.js</code>।</p>
+
+<p class="q">Withdrawal request থেকে paid পর্যন্ত?</p>
+<p class="a"><code>Wallet.jsx</code> → <code>POST /technician/withdrawals</code> (bKash number <code>01XXXXXXXXX</code>-এ normalise, amount ≤ available) → <code>walletController.requestWithdrawal()</code>, partial unique index একটার বেশি খোলা আটকায়। Admin <code>WithdrawalRequests.jsx</code> → <code>POST /admin/withdrawals/:id/mark-paid</code> TrxID সহ → <code>processWithdrawal()</code>; বা <code>reject</code> করলে টাকা আবার available।</p>
+
+<p class="q">Review দেওয়ার code?</p>
+<p class="a"><code>components/feedback/customer/ReviewDialog.jsx</code> → <code>POST /repair-requests/:id/review</code> → <code>feedbackController.createReview()</code>: শুধু receipt-confirmed repair-এর customer, প্রতি repair-এ একটা (unique index), 1–5 star, comment ≤1,000। Admin hide/restore করে <code>ModerationDialog.jsx</code> → <code>PATCH /admin/technician-reviews/:id/visibility</code>, history থাকে।</p>
+
+<p class="q">AI offer note লেখার code?</p>
+<p class="a"><code>JobApplicationSheet.jsx</code>-এর "Write it for me" → <code>POST /repair-requests/:id/applications/ai-note</code> → <code>jobPortalController.aiNote()</code> → <code>services/aiOfferNoteService.js</code>: Gemini-কে শুধু device, repair, সমস্যা আর technician-এর কয়েকটা শব্দ দেয়; উত্তর থেকে <code>removeContactDetails()</code> phone/email/link সরায়; ভাষা en/bn।</p>
+
+<p class="q">Technician job board-এ কোন job দেখবে, সেটা কোথায় ঠিক হয়?</p>
+<p class="a"><code>GET /technician/job-portal</code> → <code>jobPortalController.listPortal()</code>: technician-এর region আর expertise (<code>utils/technicianExpertise.js</code>) মিলিয়ে <code>canTechnicianEverTakeRequest</code> (<code>services/technicianEligibilityService.js</code>)। Public <code>/jobs</code>-এ সব open job-এর নিরাপদ summary।</p>
+
+<h2>১৯. Scaling আর "যদি…" প্রশ্ন</h2>
+
+<p class="q">১০,০০০ user হলে কী ভাঙবে?</p>
+<p class="a">প্রথমে slot capacity (lock নেই), cron-এর batch limit, আর free tier (Gemini, Atlas)। সমাধান: atomic slot counter, cron-কে ছোট batch/queue-তে ভাগ, paid tier, public catalogue-এ cache। Code layered বলে এগুলো আলাদা করে বদলানো যায়।</p>
+
+<p class="q">বাংলাদেশের বাইরে নিতে চাইলে?</p>
+<p class="a">Region/district data, timezone (<code>Asia/Dhaka</code>), currency (BDT), payment gateway আর ভাষা বদলাতে হবে। এগুলো config/data-তে আলাদা আছে।</p>
+
+<p class="q">Mobile app বানাতে চাইলে?</p>
+<p class="a">API আলাদা আর REST, তাই React Native বা PWA একই API ব্যবহার করতে পারবে। Push notification যোগ করতে হবে।</p>
+
+<p class="q">Technician আর customer platform-এর বাইরে deal করে ফেললে?</p>
+<p class="a">পুরোপুরি আটকানো যায় না। কমাতে: public board-এ contact নেই, AI note থেকে phone/email সরানো, আর platform-এ থাকলে warranty, receipt, guaranteed payment — বাইরে গেলে এগুলো নেই।</p>
+
+<p class="q">ভুয়া review?</p>
+<p class="a">Review শুধু সেই customer দিতে পারে যার repair receipt-confirmed, প্রতি repair-এ একটা, আর edit/delete হয় না। Admin hide করতে পারে, কিন্তু rating বদলাতে পারে না।</p>
+
+<h2>২০. Rapid-fire (এক লাইনে উত্তর)</h2>
+<table>
+<tr><th>প্রশ্ন</th><th>উত্তর</th></tr>
+<tr><td>Backend language/framework?</td><td>Node.js, Express 5</td></tr>
+<tr><td>Frontend?</td><td>React 19, Vite 7, React Router 7, TanStack Query, Tailwind CSS 4, Radix UI</td></tr>
+<tr><td>Database?</td><td>MongoDB Atlas (official driver, Mongoose না)</td></tr>
+<tr><td>Image storage?</td><td>Supabase Storage, private bucket</td></tr>
+<tr><td>Chart?</td><td>Recharts</td></tr>
+<tr><td>PDF receipt?</td><td>pdfkit, server-এ</td></tr>
+<tr><td>Email?</td><td>Nodemailer + Gmail SMTP</td></tr>
+<tr><td>Test command?</td><td>Server <code>npm test</code> (<code>test-all.js</code>); client <code>npm run lint</code>, <code>npm run build</code>, <code>npm run test:e2e</code> (Playwright)</td></tr>
+<tr><td>Browser test file কোথায়?</td><td><code>sarabo-client/e2e/*.spec.js</code> (public-pages, jobs, tracking, navigation, auth-forms)</td></tr>
+<tr><td>Seed/migration script?</td><td><code>sarabo-server/scripts/</code> (seed-dev-people, migrate-inspection-fee-floor …)</td></tr>
+<tr><td>Live URL?</td><td>Client <code>sarabo-client-six.vercel.app</code>, API <code>sarabo-server.vercel.app</code></td></tr>
+<tr><td>Health check?</td><td><code>GET /health</code> (DB connected কি না)</td></tr>
+<tr><td>Tracking code দেখতে কেমন?</td><td><code>SRB-</code> + random অংশ</td></tr>
+<tr><td>Request body limit?</td><td>Express default 100 kB; শুধু AI request-draft-এ 2.5 MB (photo)</td></tr>
+<tr><td>Webhook কেন express.json()-এর আগে?</td><td>Signature raw body-র উপর হিসাব হয়; JSON parse হলে signature মেলে না</td></tr>
+<tr><td>Technician-কে DB-তে কী বলে?</td><td><code>rider</code> (legacy নাম)</td></tr>
+<tr><td>সর্বোচ্চ damage photo?</td><td>3টা (warranty claim-এ 4টা)</td></tr>
+<tr><td>Review comment সর্বোচ্চ?</td><td>1,000 অক্ষর</td></tr>
+<tr><td>Warranty কখন শুরু?</td><td>Receipt confirm হলে, 30 দিন</td></tr>
+<tr><td>Signed-out AI chat limit?</td><td>10 মিনিটে 8টা প্রশ্ন</td></tr>
+</table>
+
 <div class="tip"><b>শেষ টিপস:</b> Demo-র আগে <code>RepairRequestV2Form.jsx</code>, <code>jobBooking.js</code>, <code>settlement.js</code>, <code>offerRanking.js</code>, <code>paymentController.js</code> (webhook অংশ) আর <code>middleware/auth.js</code> একবার খুলে দেখে নাও — "code দেখাও" বললে এগুলোই সবচেয়ে বেশি চাওয়া হয়। VS Code-এ <b>Ctrl+P</b> দিয়ে file নাম লিখে দ্রুত খোলো, <b>Ctrl+Shift+F</b> দিয়ে route path (যেমন <code>/applications</code>) খুঁজে দেখাও।</div>
 
 </body>

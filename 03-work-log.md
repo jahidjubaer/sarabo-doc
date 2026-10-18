@@ -797,3 +797,16 @@ Nothing in entries 3–4 was committed, pushed or deployed.
 - `presentation/Sarabo_Demo_Script.pdf` (5 pages, from `demo-script.html`): the story, the
   checklist, the 5-minute run of show and the detailed version, each with a fallback plan.
 - Rendered with headless Chrome (Bangla in Nirmala UI).
+
+### 27. More questions in the viva Q&A — 2026-10-18
+
+- Asked for: more questions in the Q&A practice sheet.
+- Added nine sections (12-20): theory and concepts (REST, middleware, ID token, CORS,
+  transactions, idempotency, webhook, SPA, status codes, signed URL, cron, cold start);
+  database and the 44 indexes (unique, partial unique, TTL); frontend (lazy routes,
+  TanStack Query, validation, role views, UX extras, map); notifications and email;
+  payment in depth; technician and admin processes; five more code walkthroughs (warranty,
+  withdrawal, review, AI offer note, job eligibility); scaling and what-if questions; and a
+  rapid-fire table. Each new fact was checked in the code.
+- Result: `presentation/Sarabo_Viva_QnA.pdf`, 20 pages (was 14), 113 questions plus the
+  rapid-fire table.
