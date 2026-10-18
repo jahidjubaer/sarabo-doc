@@ -182,3 +182,23 @@ Nothing in entries 3–4 was committed, pushed or deployed.
 - Pushed to `github.com/jahidjubaer/sarabo-client` and `sarabo-server` (`main`), signed in
   as jahidjubaer. GitHub Actions CI passed on both new commits.
 - This folder was pushed to `github.com/jahidjubaer/sarabo-doc`.
+
+### 7. Theme toggle now shows in the top bar on phones and tablets — 2026-10-18
+- Type: fix
+- Problem / goal: The light/dark theme button was only in the top bar on screens 1024 px or
+  wider. On phones and tablets it was hidden inside the ☰ menu, so it looked missing.
+- What was changed: The theme button is now in the top bar at every screen width, next to
+  the main action. The copy inside the ☰ menu was removed so it does not appear twice.
+- Files (client): `src/pages/Shared/NavBar/NavBar.jsx`
+- How it was tested: Playwright check of the homepage at 1440, 1100, 900 and 390 px: the
+  button is visible in the bar at all four (before the fix: hidden at 900 and 390). Phone
+  screenshot checked for overlap. Lint passed; Playwright **58 / 58** passed.
+- Before pushing, GitHub had 7 newer client commits from 2026-10-14 (warranty claims,
+  technician profile editing, inspection fee and others). The fix was rebased on top of them
+  (no force push) and re-tested on the combined code: lint passed, production build passed
+  (with an https API URL, as production requires), Playwright **58 / 58** (one earlier run
+  had two `/jobs` tests time out under load; they passed on their own and on the rerun).
+- Not covered: the phone bar for a signed-in user (bell + theme + action + account menu)
+  was not checked on a real phone.
+
+Committed as client `33368a7` (author and committer Jahid Hasan) and pushed to `github.com/jahidjubaer/sarabo-client` (`main`).
