@@ -782,3 +782,18 @@ Nothing in entries 3–4 was committed, pushed or deployed.
   production. Section 6 "Notifications and Reminders" no longer says "when enabled".
   Objective O8 in the evaluation table says both run in production.
 - Result: 109 pages, no undefined references.
+
+### 26. Viva Q&A practice sheet and demo script PDF — 2026-10-18
+
+- Asked for: a practice Q&A in Bangla or mixed (feature gaps, edge cases, code questions
+  such as "where is this API call, which folder and file"), and the demo script as a PDF.
+- `presentation/Sarabo_Viva_QnA.pdf` (14 pages, from `viva-qna.html`): quick facts; how a
+  request flows from a React page to MongoDB; both folder layouts; a code map for 18
+  features (client page/component/hook/api file, endpoint, server route, controller,
+  service/utils and the key rule); step-by-step "where is this code" answers; and likely
+  questions on design, gaps, edge cases, security, AI, testing and personal questions.
+  Every path, endpoint and constant was checked against the code (125 routes parsed from
+  `routes/*.js`, client calls from `src/api`, `src/hooks`, `src/pages`).
+- `presentation/Sarabo_Demo_Script.pdf` (5 pages, from `demo-script.html`): the story, the
+  checklist, the 5-minute run of show and the detailed version, each with a fallback plan.
+- Rendered with headless Chrome (Bangla in Nirmala UI).

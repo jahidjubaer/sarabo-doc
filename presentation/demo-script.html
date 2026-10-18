@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sarabo Live Demo Script</title>
+<style>
+  @page { size: A4; margin: 15mm 14mm; }
+  body { font-family: "Segoe UI", "Nirmala UI", sans-serif; font-size: 10.5pt; line-height: 1.5; color: #1a1a1a; }
+  h1 { font-size: 20pt; margin: 0 0 4px; }
+  h2 { font-size: 14pt; margin: 20px 0 8px; padding-bottom: 3px; border-bottom: 2px solid #1f6f5c; color: #12493d; page-break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 14px 0 4px; color: #12493d; page-break-after: avoid; }
+  p { margin: 4px 0 6px; }
+  code { font-family: Consolas, monospace; font-size: 9pt; background: #f1f4f3; padding: 0 3px; border-radius: 3px; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; font-size: 9.5pt; }
+  th, td { border: 1px solid #c9d3d0; padding: 5px 7px; vertical-align: top; text-align: left; }
+  th { background: #e5efec; }
+  tr { page-break-inside: avoid; }
+  .story { background: #f6f8f7; border-left: 4px solid #1f6f5c; padding: 8px 12px; margin: 8px 0; }
+  .tip { background: #fff6e5; border: 1px solid #f0d49b; padding: 6px 9px; margin: 8px 0; border-radius: 4px; }
+  .small { font-size: 9pt; color: #555; }
+  ul { margin: 2px 0 6px 18px; padding: 0; } li { margin: 2px 0; }
+  .say { font-style: italic; }
+  .pb { page-break-before: always; }
+  .chk li { list-style: "☐  "; }
+</style>
+</head>
+<body>
+
+<h1>Sarabo — Live Demo Script</h1>
+<p class="small">Part 1 is the 5-minute demo shown right after the 10 slides. Part 2 is the detailed 12–15 minute version, for rehearsal or extra time. Button names are exactly as they appear on screen.</p>
+
+<h2>The story (open the demo with it, 30 seconds)</h2>
+<p class="small"><i>This is a typical situation, not a real customer.</i></p>
+<div class="story">
+<p><b>Problem.</b> Rahim lives in Ambarkhana, Sylhet. His Samsung Galaxy A54 falls and the screen cracks: a green line, and touch stops working. He takes it to a shop. They say "about 2,500 taka", keep the phone for a week, then ask for 4,500. There is no written quote and no receipt. Ten days later the touch fails again. The shop says it is new damage, and Rahim cannot prove otherwise.</p>
+<p><b>Solution with Sarabo.</b> Rahim describes the problem in Banglish on his phone. A verified local technician offers a price before collecting the phone. Rahim pays a 200 taka visit fee. After inspection he sees an itemised quote of 4,000 taka, and the 200 he already paid is deducted. He tracks every step. When the touch fails again, the warranty covers a free re-repair.</p>
+</div>
+<p>Say: <span class="say">"Let me show you exactly that, live."</span></p>
+
+<table>
+<tr><th>Rahim's problem</th><th>What Sarabo does</th></tr>
+<tr><td>No price up front</td><td>Catalogue estimate (1,500–6,000 taka for this repair) shown before anything is booked; technicians send offers with their own estimate</td></tr>
+<tr><td>No visibility</td><td>A tracking code and a 4-step timeline (Request, Inspect, Approve, Repaired), plus notifications at every step</td></tr>
+<tr><td>Surprise bill</td><td>An itemised quote (labour 800 + parts 3,200 = 4,000) that he approves before any work; the 200 taka visit fee is deducted</td></tr>
+<tr><td>No proof</td><td>The technician records the phone's condition at pickup; the customer sees it and can dispute it</td></tr>
+<tr><td>No warranty</td><td>30 days: the same technician re-inspects free; a covered fault is re-repaired free or refunded by an admin</td></tr>
+<tr><td>Technician isn't paid</td><td>The customer pays online before the repair starts; the technician's 90% is held, then released when Rahim confirms he got the phone back</td></tr>
+</table>
+
+<h2>Before the session (do not skip)</h2>
+<ul class="chk">
+<li>Use the <b>local</b> app: <code>npm run dev</code> in <code>sarabo-server</code> (port 3000) and in <code>sarabo-client</code> (<code>http://localhost:5173</code>). It has the prepared data.</li>
+<li>If using the live site (<code>https://sarabo-client-six.vercel.app</code>): set the PC's DNS to 1.1.1.1 or 8.8.8.8 and run <code>ipconfig /flushdns</code> first; this ISP sometimes cannot reach Vercel.</li>
+<li>Three accounts in three separate browser windows (normal + two private windows, or separate Chrome profiles): <b>Customer</b>, <b>Technician</b> (approved, Sylhet, smartphone skills), <b>Admin</b>.</li>
+<li>One request already at <b>Quote ready</b> (a full repair takes too long to do live).</li>
+<li>The finished <b>Samsung Galaxy A54</b> request with the resolved warranty claim open in a tab.</li>
+<li>Stripe test card <code>4242 4242 4242 4242</code>, expiry 12/34, CVC 123.</li>
+<li>Browser zoom 125%. Close other tabs, turn off notifications, charge the laptop.</li>
+<li>Optional: a photo of a cracked phone screen on the desktop (for the AI photo check).</li>
+<li>Backup: the report's Chapter 7 screenshots, in case the internet fails.</li>
+</ul>
+<p><b>Limits to remember:</b> the AI support chat allows 8 questions per 10 minutes for a signed-out visitor, so don't test it repeatedly just before the demo. If Gemini is slow, fill the form by hand; everything works without AI.</p>
+
+<h2>Part 1 — 5-minute demo</h2>
+<table>
+<tr><th style="width:11%">Time</th><th style="width:12%">Window</th><th style="width:38%">Do</th><th>Say</th></tr>
+<tr><td>0:00–0:30</td><td>—</td><td>Tell the story above</td><td class="say">"This is Rahim's problem. Here is how Sarabo solves it."</td></tr>
+<tr><td>0:30–1:20</td><td>Customer</td><td><b>Create Request</b>: type <i>"Amar Samsung A54 er screen fete geche, touch kaj korche na"</i>, press <b>Fill the form for me</b>; pick Sylhet and a pickup slot; <b>Create request</b></td><td class="say">"He writes in Banglish. AI fills in the device and the repair. The price range comes from our catalogue, never from AI. If no technician covers his area, the request is refused instead of waiting forever."</td></tr>
+<tr><td>1:20–2:00</td><td>Technician</td><td><b>Find jobs</b>: open the new job; show the price guide; type a few words, press <b>Write it for me</b>; <b>Send application</b></td><td class="say">"Technicians see the problem but not Rahim's name or address. The price guide comes from real past offers."</td></tr>
+<tr><td>2:00–2:40</td><td>Customer</td><td>Open the request: the offer with its tags (<i>In your district</i>, <i>Usually replies in 2 min</i>); <b>Choose</b>, pay ৳200 with the test card</td><td class="say">"Offers are ranked by rating, reliability, price, distance and reply time. Paying the fee books the technician; if he doesn't come, it's refunded."</td></tr>
+<tr><td>2:40–3:30</td><td>Customer</td><td>Switch to the <b>prepared request</b>: itemised quote, <i>Inspection fee you already paid − ৳200</i>, <b>Approve and pay</b>; pay with the test card</td><td class="say">"Labour, parts, total, all in writing before any work. He pays only what is left. A PDF receipt is ready."</td></tr>
+<tr><td>3:30–4:00</td><td>Technician</td><td>On that request: <b>Start repair</b>, add one update, <b>Mark repair complete</b>, <b>Mark device returned</b></td><td class="say">"Every step is tracked. The technician's 90% unlocks only after Rahim confirms he got the phone back."</td></tr>
+<tr><td>4:00–4:30</td><td>Customer</td><td>Open the finished <b>Galaxy A54</b>: scroll to <b>Warranty</b>, show the resolved claim</td><td class="say">"Ten days later the touch failed again, exactly like Rahim's story. Here the same technician re-inspected free and fixed it. If he couldn't, an admin refunds."</td></tr>
+<tr><td>4:30–5:00</td><td>Admin</td><td><b>Overview</b> (the <i>Needs you</i> list), then <b>Reports</b> with the AI summary</td><td class="say">"The admin sees missed pickups and stuck repairs first. Nothing can wait forever. Thank you."</td></tr>
+</table>
+
+<h3>If something fails (5-minute version)</h3>
+<ul>
+<li><b>AI helper slow or off:</b> fill the form by hand. Say <span class="say">"AI is optional; the form works without it."</span></li>
+<li><b>Stripe page does not open:</b> show <b>Payment History</b> of a paid request and download its PDF receipt.</li>
+<li><b>Running late:</b> skip the technician repair steps (3:30–4:00) and go straight to the warranty.</li>
+<li><b>No internet:</b> use the Chapter 7 screenshots in the report PDF and tell the same story over them.</li>
+</ul>
+
+<h2 class="pb">Part 2 — Detailed demo (12–15 minutes)</h2>
+
+<h3>A. Public site (1 minute)</h3>
+<table>
+<tr><th style="width:42%">Do</th><th>Say</th></tr>
+<tr><td>Home page</td><td class="say">"Anyone can see services and prices without an account."</td></tr>
+<tr><td><b>Services</b></td><td class="say">"45 services across 8 device types. Every price is in taka and is an estimate; the final price comes after inspection."</td></tr>
+<tr><td><b>Service areas</b>: search <i>Ambarkhana</i></td><td class="say">"Rahim's area. The map zooms to the exact neighbourhood, not just the district."</td></tr>
+<tr><td><b>Ask Sarabo</b>: <i>"My phone screen is cracked, how much will it cost?"</i></td><td class="say">"The AI answer comes from our live catalogue: 1,500 to 6,000 taka, inspection fee 200. It never invents a price."</td></tr>
+</table>
+
+<h3>B. Customer creates the request (1.5 minutes)</h3>
+<table>
+<tr><th style="width:42%">Do</th><th>Say</th></tr>
+<tr><td><b>Create Request</b> → type <i>"Amar Samsung Galaxy A54 phone hat theke pore giye screen fete geche. Display e green line ashe ar touch kaj korche na."</i> → <b>Fill the form for me</b></td><td class="say">"Rahim writes in Banglish. Gemini fills in the device, brand, model and the right repair, and writes a clear English description. He can change anything, or press Undo."</td></tr>
+<tr><td>Region <b>Sylhet</b>, district <b>Sylhet</b>, address, then a pickup slot</td><td class="say">"He chooses a 2-hour pickup window. Friday is closed; each slot has limited capacity."</td></tr>
+<tr><td><b>Create request</b></td><td class="say">"If no approved technician in Sylhet can do this repair, the request is refused with an explanation instead of waiting forever. Admins see that refused demand, so they know where to recruit."</td></tr>
+<tr><td>Optional: <b>Choose photos</b> → <b>Upload</b></td><td class="say">"Photos are private. Only Rahim, the admin and the booked technician can see them, through short-lived links."</td></tr>
+</table>
+
+<h3>C. Technician sends an offer (1.5 minutes)</h3>
+<table>
+<tr><th style="width:42%">Do</th><th>Say</th></tr>
+<tr><td>Technician window → <b>Find jobs</b> → search <i>Galaxy A54</i></td><td class="say">"The technician sees jobs in his region that match his skills. He sees the problem, but not Rahim's name or address."</td></tr>
+<tr><td><b>Send offer</b></td><td class="say">"The price guide shows what technicians really offered for this repair recently. The inspection fee has a minimum: 100 taka for small repairs, 200 for bigger ones."</td></tr>
+<tr><td>Estimate 3,500–5,000; type <i>"likely display panel and touch, original screen available"</i> → <b>Write it for me</b> → <b>Send application</b></td><td class="say">"He types a few words and AI writes a polite note. It removes phone numbers, so contact stays on the platform."</td></tr>
+</table>
+
+<h3>D. Customer chooses and books (1.5 minutes)</h3>
+<table>
+<tr><th style="width:42%">Do</th><th>Say</th></tr>
+<tr><td>Customer window → <b>My Requests</b> → open the request</td><td class="say">"Rahim sees the offers side by side."</td></tr>
+<tr><td>Point at the tags</td><td class="say">"They are ranked by five things Sarabo already knows: rating, reliability, price, district and reply time. The tags say why: 12 repairs, no missed pickups; in your district; usually replies in 2 minutes."</td></tr>
+<tr><td><b>Choose</b> → <b>Pay ৳200 and book</b> → test card → <b>Pay</b></td><td class="say">"Paying the visit fee books the technician, all in one database step. If he doesn't come, it's a full refund. If Rahim cancels at least 2 hours before, it's also a full refund."</td></tr>
+</table>
+
+<h3>E. Pickup, inspection and quote (1.5 minutes)</h3>
+<table>
+<tr><th style="width:42%">Do</th><th>Say</th></tr>
+<tr><td>Technician → <b>Assigned jobs</b> → <b>Start pickup</b> → <b>Device received</b>; fill the condition</td><td class="say">"The technician records the phone's condition with Rahim: cracked screen, small scratch on the back, no SIM. This is what Rahim lacked at the shop: proof."</td></tr>
+<tr><td>Inspection form: findings, issue, <b>Repairable with parts</b> → <b>Submit inspection</b></td><td class="say">"If the phone can't be repaired, either side can close the request. It never gets stuck."</td></tr>
+<tr><td>Quote: labour 800, parts 3,200 → <b>Send quote</b></td><td class="say">"He sees the 10% commission and what he receives: 3,600."</td></tr>
+</table>
+
+<h3>F. Approve and pay (1 minute)</h3>
+<table>
+<tr><th style="width:42%">Do</th><th>Say</th></tr>
+<tr><td>Customer → the request (or the prepared one)</td><td class="say">"Labour, parts, total, all in writing. Nothing is charged until Rahim approves."</td></tr>
+<tr><td>Point at <i>Inspection fee you already paid − ৳200</i></td><td class="say">"He pays only what is left: 3,800."</td></tr>
+<tr><td><b>Approve and pay</b> → test card → payment success → <b>Download receipt (PDF)</b></td><td class="say">"Stripe's signed webhook is the single source of truth, so a payment is recorded exactly once, even if the page reloads."</td></tr>
+</table>
+
+<h3>G. Repair and hand-over (1 minute)</h3>
+<table>
+<tr><th style="width:42%">Do</th><th>Say</th></tr>
+<tr><td>Technician → <b>Start repair</b> → add an update → <b>Mark repair complete</b></td><td class="say">"Rahim sees each update."</td></tr>
+<tr><td><b>Mark device returned</b></td><td class="say">"If Rahim doesn't answer within 3 days, receipt is confirmed automatically. If he says he hasn't received it, an admin decides."</td></tr>
+<tr><td>Customer → <b>Confirm device received</b> → <b>Rate your technician</b> (5 stars)</td><td class="say">"The technician's money unlocks only now. The review is one per repair and can't be edited or faked."</td></tr>
+</table>
+
+<h3>H. Warranty (1 minute)</h3>
+<table>
+<tr><th style="width:42%">Do</th><th>Say</th></tr>
+<tr><td>Customer → the finished Galaxy A54 → <b>Warranty</b></td><td class="say">"This is the end of Rahim's story. Ten days later touch failed again."</td></tr>
+<tr><td>Show the claim: <i>A replaced part stopped working</i> → re-inspection → <i>Covered</i> → re-repair → <i>Working now</i></td><td class="say">"He reported it; the technician had 3 days to book a free visit; he agreed it was the part he fitted and replaced it free. If he hadn't, an admin could take over and refund. Every step has a deadline."</td></tr>
+</table>
+
+<h3>I. Technician wallet and Admin (1.5 minutes)</h3>
+<table>
+<tr><th style="width:42%">Do</th><th>Say</th></tr>
+<tr><td>Technician → <b>Wallet</b> → request a withdrawal to bKash</td><td class="say">"The balance is calculated from records, never stored as a number, so it can't drift."</td></tr>
+<tr><td>Admin → <b>Overview</b></td><td class="say">"The admin sees what needs action first: missed pickups, requests with no offers, stalled repairs, refunds, disputes."</td></tr>
+<tr><td><b>Withdrawals</b> → <b>Mark paid</b> with a TrxID</td><td class="say">"The admin sends the money with bKash Send Money, then records the TrxID. Sarabo has no bKash API, so this step is manual, and a TrxID can't be used twice."</td></tr>
+<tr><td><b>Reports</b> → AI summary, then scroll to the charts</td><td class="say">"Requests against finished repairs, demand by region, and when pickups happen. The AI summary only sees these totals; any sentence with a number that isn't in the real data is removed."</td></tr>
+<tr><td><b>Services &amp; prices</b> → <b>Edit</b> a service</td><td class="say">"Changing a price creates a new version; requests already made keep their old price."</td></tr>
+</table>
+<p><b>Close:</b> <span class="say">"So Rahim gets a fair, written price, tracking and a warranty, and the technician gets steady work and guaranteed payment. Thank you."</span></p>
+
+<h3>If something fails (detailed version)</h3>
+<table>
+<tr><th style="width:38%">Problem</th><th>What to do</th></tr>
+<tr><td>AI helper slow or says unavailable</td><td>Fill the form by hand: <span class="say">"AI is optional; the form works without it."</span></td></tr>
+<tr><td>Stripe page does not open</td><td>Show <b>Payment History</b> of a paid request and download its PDF receipt</td></tr>
+<tr><td>"No technician available" when creating</td><td>Check the technician is approved, in Sylhet, with smartphone skills and not busy; or use the prepared request</td></tr>
+<tr><td>Site does not load</td><td>Switch to the local app, or show the Chapter 7 screenshots in the report</td></tr>
+<tr><td>Running late</td><td>Skip Part A and Part I; always keep Part H (warranty), because it ends the story</td></tr>
+</table>
+
+<div class="tip"><b>Tip:</b> rehearse Part 1 at least twice with a timer. Keep the Q&amp;A practice sheet (<code>Sarabo_Viva_QnA.pdf</code>) and VS Code open with both repositories, so you can jump to a file with <b>Ctrl+P</b> if the examiner asks to see code.</div>
+
+</body>
+</html>

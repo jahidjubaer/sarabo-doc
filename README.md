@@ -10,6 +10,8 @@ Author: Jahid Hasan (222-115-116, Batch 57 C). Supervisor: Shrabanti Chowdhury.
 | **[presentation/Sarabo_Presentation.pptx](presentation/Sarabo_Presentation.pptx)** | 16 slides (about 8 minutes) with short points, large text, zoomed screenshots and an ER diagram (slide 5); the speaker script is in each slide's notes |
 | [presentation/demo-script.md](presentation/demo-script.md) | 5-minute live demo, timed, told as one real-life story (Rahim's cracked phone) |
 | [presentation/demo-script-detailed.md](presentation/demo-script-detailed.md) | Longer demo (12-15 min): every role and feature, a fallback plan, and likely questions with short answers |
+| **[presentation/Sarabo_Demo_Script.pdf](presentation/Sarabo_Demo_Script.pdf)** | Both demo scripts in one PDF (5-minute and detailed), from `presentation/demo-script.html` |
+| **[presentation/Sarabo_Viva_QnA.pdf](presentation/Sarabo_Viva_QnA.pdf)** | Viva practice in Bangla/mixed: quick facts, code map (client file → API → route → controller → service) for every feature, and likely questions on design, gaps, edge cases, security, AI and testing; from `presentation/viva-qna.html` |
 | `presentation/build_slides.py`, `make_crops.py` | Rebuild the PPTX: `python make_crops.py` (cuts the slide screenshots from `report/img/screens`), then `python build_slides.py` |
 | [01-project-overview.md](01-project-overview.md) | What Sarabo is, its users, features, architecture and tech stack |
 | [02-development-history.md](02-development-history.md) | How the project was built, phase by phase |

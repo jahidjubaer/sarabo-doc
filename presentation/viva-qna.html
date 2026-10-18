@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<title>Sarabo Viva Q&amp;A Practice</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm 16mm 14mm; }
+  body { font-family: "Nirmala UI", "Shonar Bangla", "Segoe UI", sans-serif; font-size: 10.5pt; line-height: 1.55; color: #1a1a1a; }
+  h1 { font-size: 20pt; margin: 0 0 4px; }
+  h2 { font-size: 14.5pt; margin: 22px 0 8px; padding-bottom: 3px; border-bottom: 2px solid #1f6f5c; color: #12493d; page-break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 14px 0 4px; color: #12493d; page-break-after: avoid; }
+  p { margin: 4px 0 6px; }
+  code, .mono { font-family: Consolas, "Cascadia Mono", monospace; font-size: 9pt; background: #f1f4f3; padding: 0 3px; border-radius: 3px; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; font-size: 9.2pt; page-break-inside: auto; }
+  th, td { border: 1px solid #c9d3d0; padding: 4px 6px; vertical-align: top; text-align: left; }
+  th { background: #e5efec; }
+  tr { page-break-inside: avoid; }
+  .q { margin: 10px 0 2px; font-weight: 700; page-break-after: avoid; }
+  .q::before { content: "প্রশ্ন: "; color: #b0531c; }
+  .a { margin: 0 0 8px 0; padding-left: 10px; border-left: 3px solid #d7e5e1; }
+  .a::before { content: "উত্তর: "; font-weight: 700; color: #1f6f5c; }
+  .flow { font-family: Consolas, monospace; font-size: 8.8pt; background: #f6f8f7; border: 1px solid #dde5e2; padding: 6px 8px; white-space: pre-wrap; margin: 4px 0 8px; page-break-inside: avoid; }
+  .tip { background: #fff6e5; border: 1px solid #f0d49b; padding: 6px 9px; margin: 8px 0; border-radius: 4px; }
+  .small { font-size: 9pt; color: #555; }
+  ul { margin: 2px 0 6px 18px; padding: 0; }
+  li { margin: 1px 0; }
+  .pb { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<h1>Sarabo — Viva / Q&amp;A Practice</h1>
+<p class="small">নিজের প্র্যাকটিসের জন্য। Presentation English-এ, Q&amp;A বাংলা/মিক্সে। সব file path আসল code থেকে মিলিয়ে লেখা (server: <code>sarabo-server/</code>, client: <code>sarabo-client/src/</code>)। ১৮ অক্টোবর ২০২৬।</p>
+
+<div class="tip"><b>উত্তর দেওয়ার নিয়ম:</b> (১) আগে এক লাইনে মূল কথা, (২) তারপর "কোথায় আছে" — client file → API → server route → controller → service, (৩) একটা edge case বলে শেষ। না জানলে বলো: "এটা এখন নেই, limitation-এ লেখা আছে, future work-এ রেখেছি" — বানিয়ে বলবে না।</div>
+
+<h2>১. মুখস্থ রাখার মতো সংখ্যা (Quick facts)</h2>
+<table>
+<tr><th>বিষয়</th><th>মান</th><th>কোথায় (code)</th></tr>
+<tr><td>Roles</td><td>Customer, Technician, Admin (DB-তে <code>user</code>, <code>rider</code>, <code>admin</code>)</td><td><code>middleware/auth.js</code></td></tr>
+<tr><td>Request states</td><td>14টা (pending-pickup … repair_completed, parcel_delivered, cancelled)</td><td><code>utils/repairRequestStatus.js</code></td></tr>
+<tr><td>Services</td><td>45টা service, 8 ধরনের device</td><td><code>service_definitions</code> collection</td></tr>
+<tr><td>Commission</td><td>Technician 90%, Sarabo 10% — পুরো quote total-এর উপর, পূর্ণ টাকায়</td><td><code>utils/settlement.js</code></td></tr>
+<tr><td>Minimum inspection fee</td><td>100 BDT; estimate-এর max 1,000-এর বেশি হলে 200</td><td><code>utils/inspectionFee.js</code> → <code>minimumInspectionFee()</code></td></tr>
+<tr><td>Pickup slots</td><td>দিনে ৪টা ২-ঘণ্টার window (10:00–18:00), শুক্রবার বন্ধ, ৭ দিন আগে পর্যন্ত, কমপক্ষে ১ ঘণ্টা আগে, প্রতি region-এ slot প্রতি ৩ জন</td><td><code>utils/pickupSlots.js</code></td></tr>
+<tr><td>Offer ranking weights</td><td>Rating 30%, reliability 25%, price 20%, district 15%, reply time 10%</td><td><code>services/offerRanking.js</code></td></tr>
+<tr><td>Warranty</td><td>30 দিন; প্রতি repair-এ max 2 claim, একসাথে 1টা খোলা; book 3 দিনে, decide 3 দিনে, re-repair 7 দিনে; photo max 4</td><td><code>utils/warranty.js</code></td></tr>
+<tr><td>Auto deadlines</td><td>Receipt auto-confirm 3 দিন; unpaid approved quote close 3 দিন; declined quote auto close 3 দিন</td><td><code>services/receiptConfirmation.js</code>, <code>requestClosure.js</code>, <code>declinedQuoteClose.js</code></td></tr>
+<tr><td>Cancel booking</td><td>Pickup-এর ≥2 ঘণ্টা আগে cancel = fee ফেরত; পরে = fee রাখা হয় (90/10)</td><td><code>controllers/inspectionFeeController.js</code></td></tr>
+<tr><td>Damage photos</td><td>Max 3টা, JPEG/PNG/WebP, 8 MB; private bucket, short-lived signed URL</td><td><code>utils/damageUpload.js</code>, <code>services/damageStorageService.js</code></td></tr>
+<tr><td>Tracking code</td><td>128-bit random (16 bytes, base64url), যেমন <code>SRB-eYVvd7…</code></td><td><code>utils/trackingId.js</code> → <code>generateSecureTrackingId()</code></td></tr>
+<tr><td>Turned-away demand</td><td>Customer email hash করে, 180 দিন রাখা হয়</td><td><code>services/technicianMatchGate.js</code></td></tr>
+<tr><td>Cron</td><td>প্রতিদিন 12:00 UTC (বাংলাদেশ 18:00), <code>GET /cron/pickup-reminders</code></td><td><code>vercel.json</code>, <code>controllers/pickupReminderController.js</code></td></tr>
+<tr><td>Notification types</td><td>47টা</td><td><code>utils/notificationEvents.js</code></td></tr>
+<tr><td>API</td><td>125টা route, 25টা route file</td><td><code>routes/*.js</code></td></tr>
+<tr><td>Tests</td><td>2,761 server test (real HTTP + real MongoDB replica set), 58 Playwright browser test, CI প্রতিটা push-এ</td><td><code>tests/</code>, <code>test-all.js</code>, <code>.github/workflows</code></td></tr>
+<tr><td>Hosting</td><td>Client ও API দুটোই Vercel-এ; API Mumbai region (<code>bom1</code>), MongoDB Atlas-এর পাশে</td><td><code>vercel.json</code></td></tr>
+<tr><td>AI</td><td>Google Gemini: <code>gemini-3.5-flash-lite</code>, fallback <code>gemini-3.1-flash-lite</code></td><td><code>services/aiProviders/</code></td></tr>
+</table>
+
+<h2>২. Code-এর গঠন — একটা request কীভাবে চলে</h2>
+<p>যেকোনো feature-এর "code কোথায়" প্রশ্নে এই chain-টা বলবে:</p>
+<div class="flow">Browser (React page / component)
+  → hook (TanStack Query, যেমন hooks/useJobPortal.js)
+  → api/*.js function (axios call)
+  → hooks/useAxiosSecure.jsx  (Firebase ID token → "Authorization: Bearer ...")
+  → Express route  (server routes/*.js)
+  → middleware: verifyFBToken → ensureDatabaseReady → verifyAdmin / verifyTechnician / verifyEmailVerified
+  → controller method  (controllers/*Controller.js — role + state check)
+  → service / utils  (services/*.js — business rule, transaction)
+  → MongoDB (collections) / Stripe / Supabase / Gemini / Gmail</div>
+
+<h3>Server folder (<code>sarabo-server/</code>)</h3>
+<table>
+<tr><th>Folder</th><th>কী থাকে</th></tr>
+<tr><td><code>index.js</code></td><td>Express app তৈরি, CORS, middleware, সব route register</td></tr>
+<tr><td><code>routes/</code></td><td>শুধু URL → middleware → controller method mapping (25 file)</td></tr>
+<tr><td><code>middleware/</code></td><td><code>auth.js</code> (token, role, email verified), <code>database.js</code>, <code>requestId.js</code>, <code>logging.js</code>, <code>supportRateLimit.js</code>, <code>mongoRateLimitStore.js</code></td></tr>
+<tr><td><code>controllers/</code></td><td>প্রতিটা domain-এর state rule; <code>controllers/index.js</code> সব controller বানিয়ে key দেয় (<code>repairRequest</code>, <code>jobPortal</code>, <code>quote</code> …)</td></tr>
+<tr><td><code>services/</code></td><td>Shared logic: booking, refund, settlement, matching, AI, email, notification</td></tr>
+<tr><td><code>utils/</code></td><td>Pure rule/validation: status list, quote, settlement হিসাব, pickup slot, warranty, tracking id</td></tr>
+<tr><td><code>config/</code></td><td>Database, Firebase Admin, Stripe, Supabase, AI, email, CORS config</td></tr>
+<tr><td><code>models/</code>, <code>data/</code>, <code>scripts/</code></td><td>Model helper, seed data (catalogue), migration/seed script (dry-run আগে)</td></tr>
+<tr><td><code>tests/</code></td><td>Integration test suites (fake Stripe/AI/storage)</td></tr>
+</table>
+
+<h3>Client folder (<code>sarabo-client/src/</code>)</h3>
+<table>
+<tr><th>Folder</th><th>কী থাকে</th></tr>
+<tr><td><code>routes/router.jsx</code></td><td>সব page route; guard: <code>PrivateRoute</code>, <code>CustomerRoute</code>, <code>TechnicianRoute</code>, <code>AdminRoute</code></td></tr>
+<tr><td><code>pages/</code></td><td>Public page (Home, Services, ServiceAreas, Jobs, TrackRequest) আর <code>pages/Dashboard/*</code></td></tr>
+<tr><td><code>components/</code></td><td>Feature অনুযায়ী: <code>repair-request</code>, <code>technician</code>, <code>customer</code>, <code>quote</code>, <code>inspection</code>, <code>repair</code>, <code>warranty</code>, <code>workflow</code>, <code>spine</code>, <code>admin</code>, <code>support</code> …</td></tr>
+<tr><td><code>api/</code></td><td>প্রতিটা server endpoint-এর axios function (19 file)</td></tr>
+<tr><td><code>hooks/</code></td><td>Data hook (useQuery/useMutation), <code>useAuth</code>, <code>useRole</code>, <code>useAxiosSecure</code></td></tr>
+<tr><td><code>contexts/AuthContext</code>, <code>firebase/firebase.init.js</code></td><td>Firebase login state</td></tr>
+<tr><td><code>config/</code>, <code>utils/</code></td><td>Navigation, status label, presentation helper</td></tr>
+</table>
+
+<h2>৩. Feature অনুযায়ী Code Map</h2>
+<p class="small">Format: Client file → API → Server (route → controller → service/utils) → মূল logic।</p>
+
+<h3>৩.১ Login, role আর route guard</h3>
+<div class="flow">Client: pages/Auth/Login/Login.jsx, Register/Register.jsx, SocialLogin/SocialLogin.jsx (Google)
+        contexts/AuthContext + firebase/firebase.init.js
+        hooks/useRole.jsx → GET /users/me/role
+        routes/AdminRoute.jsx, TechnicianRoute.jsx, CustomerRoute.jsx
+API:    POST /users (প্রথম login-এ user তৈরি), GET /users/me/role
+Server: routes/users.js → controllers/userController.js
+        middleware/auth.js → verifyFBToken (admin.auth().verifyIdToken), verifyAdmin, verifyTechnician, verifyEmailVerified</div>
+<p><b>Logic:</b> Login Firebase করে; প্রতিটা call-এ <code>useAxiosSecure.jsx</code> interceptor <code>getIdToken()</code> দিয়ে token লাগায়, 401 হলে token refresh করে একবার retry। Server token verify করে email বের করে, DB থেকে role দেখে। Role ঠিক না হলে 403। Client guard শুধু দেখানোর জন্য — আসল নিরাপত্তা server-এ।</p>
+
+<h3>৩.২ Repair request তৈরি (region gate, pickup slot)</h3>
+<div class="flow">Client: components/repair-request/RepairRequestV2Form.jsx (form)
+        components/repair-request/ServiceDefinitionSelector.jsx, EstimateCard.jsx
+        components/pickup/PickupSlotPicker.jsx  (hooks/usePickupSlots.js → GET /pickup-slots)
+        hooks/useServiceAvailability.js → GET /service-availability (submit-এর আগে warning)
+        api/repairRequests.js → createRepairRequestV2()
+API:    POST /repair-requests
+Server: routes/repairRequests.js → repairRequestController.createRepairRequest() → createRepairRequestV2()
+        services/technicianMatchGate.js → hasTechnicianFor(), recordTurnedAway()
+        utils/pickupSlots.js + pickupSlotController.checkSlot()
+        utils/trackingId.js → generateSecureTrackingId()</div>
+<p><b>Logic:</b> Validate → service definition load → region-এ ওই device+repair+level-এর approved technician আছে কি না দেখে, না থাকলে <code>409 NO_TECHNICIAN_AVAILABLE</code> আর turned-away count (hash করা) → slot ভরা হলে <code>409 PICKUP_SLOT_FULL</code> → price snapshot রেখে document save, tracking code, notification + email, আর job board-এ post (<code>services/jobAnnouncements.js</code>)। Request তৈরিতে টাকা লাগে না।</p>
+
+<h3>৩.৩ AI request helper (Banglish → form)</h3>
+<div class="flow">Client: components/repair-request/AiRequestHelper.jsx, api/aiHelper.js, hooks/useAiStatus.js
+API:    GET /ai/status, POST /ai/request-draft
+Server: routes/aiRequestDraft.js → controllers/aiRequestDraftController.js
+        services/aiRequestDraftService.js (buildCatalogue, validateDraft)
+        services/aiProviders/geminiRequestDraftProvider.js, services/aiHelperCall.js (timeout)</div>
+<p><b>Logic:</b> Live catalogue-এর id list Gemini-কে দেওয়া হয়; উত্তরে যে service id আসে সেটা catalogue-এ না থাকলে বাতিল (<code>validateDraft</code>)। AI দাম ঠিক করে না — দাম catalogue থেকে। Customer সব বদলাতে পারে, Undo আছে। Switch: <code>AI_REQUEST_HELPER_ENABLED</code>।</p>
+
+<h3>৩.৪ Damage photo upload</h3>
+<div class="flow">Client: components/damage-images/DamageImageManager.jsx, DamageImagePicker.jsx, PostCreationDamageStep.jsx
+        api/damageImages.js, hooks/useDamageImages.js, useDamageImageMutations.js
+API:    POST /repair-requests/:id/damage-images/upload-session
+        (browser সরাসরি Supabase-এ PUT করে signed URL দিয়ে)
+        POST /repair-requests/:id/damage-images/finalize
+        GET  /repair-requests/:id/damage-images,  DELETE …/:imageId
+Server: routes/damageUploads.js → controllers/damageUploadController.js
+        services/damageStorageService.js, services/supabaseBucketAdapter.js, utils/damageUpload.js</div>
+<p><b>Logic:</b> Server আগে type/size check করে upload session দেয় (20 মিনিট)। Finalize-এ storage থেকে আসল object-এর type আর size আবার verify করে (<code>storage.verifyObject</code>), তারপর transaction-এ attach (max 3)। দেখার সময় শুধু owner, admin আর booked technician কয়েক মিনিটের signed URL পায়।</p>
+
+<h3>৩.৫ Job board আর offer পাঠানো</h3>
+<div class="flow">Client: pages/Jobs/Jobs.jsx, components/technician/JobCard.jsx, TechnicianJobFilters.jsx
+        components/technician/JobApplicationSheet.jsx (offer form)
+        hooks/useJobPortal.js, api/jobPortal.js
+API:    GET /jobs (public, safe summary)            GET /technician/job-portal (technician)
+        GET /repair-requests/:id/applications/price-guide
+        POST /repair-requests/:id/applications/ai-note
+        POST /repair-requests/:id/applications      POST …/applications/mine/withdraw
+Server: routes/jobPortal.js → controllers/jobPortalController.js
+        utils/jobPortal.js (offer validation, fee range), services/offerPriceGuide.js,
+        services/aiOfferNoteService.js (removeContactDetails), services/assignmentEligibility.js</div>
+<p><b>Logic:</b> Public board-এ customer-এর নাম/ঠিকানা নেই। Technician শুধু নিজের region-এর, নিজের skill-এর job-এ offer দিতে পারে। Fee minimum থেকে catalogue fee-র মধ্যে হতে হবে। Price guide = একই repair-এর recent offer-এর মাঝের অর্ধেক; ৩টার কম হলে catalogue দাম। AI note থেকে phone number (বাংলা সংখ্যাসহ), email, link সরানো হয়।</p>
+
+<h3>৩.৬ Offer ranking (Smarter matching)</h3>
+<div class="flow">Client: components/customer/TechnicianApplications.jsx, components/technician/OfferCard.jsx
+API:    GET /repair-requests/:id/applications
+Server: jobPortalController.listForRequest() → services/offerRanking.js → rankOffers()</div>
+<p><b>Logic:</b> ৫টা factor 0–1 score: rating (3 star-এর দিকে smooth, যাতে ১টা 5-star review ৪০টা 4.8-কে না ছাড়ায়), reliability <code>(completed+1)/(completed+noShows+2)</code>, price (অন্য offer-এর তুলনায়), district (একই হলে 1, নাহলে 0.4), reply time (median)। নতুন technician-এর neutral 0.5 — শাস্তিও না, বোনাসও না। Reason tag তখনই দেখায় যখন তথ্য যথেষ্ট শক্ত। Customer নিজেই বেছে নেয়।</p>
+
+<h3>৩.৭ Offer choose + inspection fee payment + booking</h3>
+<div class="flow">Client: TechnicianApplications.jsx → "Choose" → ConfirmDialog → api/jobPortal.js acceptApplication()
+API:    POST /repair-requests/:id/applications/:applicationId/accept  → Stripe Checkout URL
+        POST /stripe-webhook  (Stripe → server)
+Server: jobPortalController.accept() → services/checkoutSessionManager.js (একটাই খোলা checkout)
+        paymentController.handleStripeWebhook() → stripe.webhooks.constructEvent (signature)
+        services/paymentProcessor.js → services/jobBooking.js → bookApplication() (transaction)
+        services/inspectionFeeRefunds.js (book না হলে refund)</div>
+<p><b>Logic:</b> <code>bookApplication</code> একটা MongoDB transaction-এ: offer এখনো <code>pending</code>? technician অন্য active job-এ busy না? request এখনো <code>pending-pickup</code>? → request <code>driver_assigned</code>, technician <code>in_delivery</code>, এই offer <code>accepted</code>, বাকি সব <code>not_chosen</code>। কোনো শর্ত ভাঙলে কিছুই হয় না, fee নিজে থেকে refund (idempotency key <code>inspection-refund-&lt;sessionId&gt;</code>)।</p>
+
+<h3>৩.৮ Pickup, condition record, inspection</h3>
+<div class="flow">Client: pages/Dashboard/AssignedJobs/AssignedJobs.jsx, hooks/useTechnicianJobs.js
+        components/technician/TechnicianRequestDetailsView.jsx
+        components/inspection/InspectionForm.jsx, DetectedIssuesEditor.jsx
+API:    PATCH /repair-requests/:id/status  (Start pickup → rider_arriving; Device received → parcel_picked_up + pickupCondition)
+        POST /repair-requests/:id/inspection
+        POST /repair-requests/:id/pickup-condition/dispute (customer), …/customer-not-available (technician)
+Server: repairRequestController.updateRepairRequestStatus() (utils/repairRequestStatus.js → isValidTransition)
+        controllers/inspectionController.js + utils/inspection.js
+        controllers/workflowController.js</div>
+<p><b>Logic:</b> Generic status PATCH শুধু ছোট কয়েকটা transition দেয় (<code>ALLOWED_TRANSITIONS</code>); inspection, quote, payment-এর state শুধু নিজের endpoint দিয়ে বদলায়। Inspection-এ <code>not_repairable</code>/<code>not_economical</code> হলে যেকোনো পক্ষ request close করতে পারে।</p>
+
+<h3>৩.৯ Quote, approve আর repair payment</h3>
+<div class="flow">Client: components/quote/QuoteForm.jsx (technician), QuoteSection.jsx, QuoteDecisionActions.jsx (customer)
+        components/payment/V2PaymentSection.jsx, api/quotes.js, api/payments.js
+        pages/Dashboard/Payment/PaymentSuccess.jsx, components/payments/ReceiptDownloadButton.jsx
+API:    POST /repair-requests/:id/quote,  POST …/quote/decision,  POST …/quote/revise
+        POST /repair-requests/:id/checkout-session → Stripe → POST /stripe-webhook
+        GET /payments/:transactionId/receipt.pdf
+Server: controllers/quoteController.js + utils/quote.js (validateQuoteSubmission)
+        controllers/paymentController.js, services/paymentEligibility.js, services/paymentProcessor.js
+        services/paymentReceipt.js (pdfkit)</div>
+<p><b>Logic:</b> Quote = labour + parts + additional; total server হিসাব করে। Approve করলে বাকি = total − আগে দেওয়া fee (4,000 − 200 = 3,800)। Webhook-এ payment record হয় একবারই; একই transaction-এ settlement snapshot freeze (<code>buildSettlementDocument</code>)। Quote decline হলে একই technician revise করে নতুন quote দিতে পারে (<code>POST …/quote/revise</code>, পুরনোটা archive হয়), নাহলে close।</p>
+
+<h3>৩.১০ Repair, return, receipt confirm</h3>
+<div class="flow">Client: components/repair/RepairProgressForm.jsx, RepairCompletionForm.jsx, ReceiptConfirmationSection.jsx
+        components/workflow/RequestWorkflowActions.jsx (mark-returned, receipt-dispute, cannot-complete …)
+API:    POST /repair-requests/:id/repair/start | progress | complete
+        POST /repair-requests/:id/mark-returned (technician)
+        POST /repair-requests/:id/confirm-receipt (customer)   POST …/receipt-dispute
+Server: controllers/repairController.js, controllers/workflowController.js
+        services/receiptConfirmation.js → confirmReceiptOnce()</div>
+<p><b>Logic:</b> Customer confirm করলে (বা ৩ দিন পর cron auto-confirm, বা admin) settlement <code>pending → available</code>, warranty শুরু। <code>confirmReceiptOnce</code> একবারই কাজ করে — দুইবার চাপলেও double হয় না।</p>
+
+<h3>৩.১১ Wallet আর bKash withdrawal</h3>
+<div class="flow">Client: pages/Dashboard/Wallet/Wallet.jsx, hooks/useTechnicianWallet.js
+        pages/Dashboard/WithdrawalRequests/WithdrawalRequests.jsx (admin, Mark paid dialog)
+API:    GET /technician/wallet, POST /technician/withdrawals
+        GET /admin/withdrawals, POST /admin/withdrawals/:id/mark-paid | reject
+Server: routes/wallet.js → controllers/walletController.js → utils/settlement.js → calculateWallet()</div>
+<p><b>Logic:</b> Balance DB-তে রাখা হয় না — প্রতিবার settlement আর withdrawal থেকে হিসাব হয়, তাই কখনো ভুল জমে না। একসাথে একটাই খোলা withdrawal (unique partial index)। Mark paid-এ bKash TrxID লাগে (8–12 অক্ষর), একই TrxID আবার দিলে <code>409 BKASH_TRX_ID_ALREADY_USED</code>।</p>
+
+<h3>৩.১২ Warranty</h3>
+<div class="flow">Client: components/warranty/CustomerWarrantySection.jsx, WarrantyClaimCard.jsx
+        pages/Dashboard/WarrantyClaims/WarrantyClaims.jsx (technician + admin), api/warranty.js
+API:    POST /repair-requests/:id/warranty-claims (customer)
+        POST /warranty-claims/:claimId/schedule | decision | rerepair (technician)
+        POST /warranty-claims/:claimId/confirm (customer "Working now")
+        POST /admin/warranty-claims/:claimId/review | decision | cannot-fix | refund
+Server: routes/warranty.js → controllers/warrantyController.js
+        utils/warranty.js (window, deadline, validation), services/warrantyRefunds.js, services/refundParts.js</div>
+<p><b>Logic:</b> প্রতিটা step একটা guarded update — আগের step না হলে পরেরটা হয় না, দুইজন একসাথে চাপলে একজনই সফল। Deadline মিস হলে claim overdue, admin take over। Refund = repair payment + fee, Stripe-এ প্রতিটা অংশের নিজস্ব idempotency key; settlement <code>reversed</code>, আগে তোলা টাকা পরের আয় থেকে কাটা হয়।</p>
+
+<h3>৩.১৩ Daily cron (reminder + deadline)</h3>
+<div class="flow">vercel.json → "crons": [{ "path": "/cron/pickup-reminders", "schedule": "0 12 * * *" }]
+Server: routes/pickupSlots.js → controllers/pickupReminderController.js → sendReminders()
+        secret check (CRON_SECRET), remindInApp() + email
+        runWorkflowJobs(): closeUnpaidApprovedQuotes, receipt auto-confirm,
+                           warranty.alertOverdueClaims(), workflow.alertStalled()
+        closeStaleDeclinedRequests() (services/declinedQuoteClose.js)</div>
+<p><b>Logic:</b> প্রতিটা job আলাদা <code>attempt()</code>-এ চলে — একটা fail করলে বাকিগুলো থামে না। Reminder এক request + slot-এ একবারই (de-duplication key)। Live site-এ email + cron দুটোই চালু।</p>
+
+<h3>৩.১৪ Public tracking</h3>
+<div class="flow">Client: pages/TrackRequest/TrackRequest.jsx → GET /public/trackings/:trackingCode
+Server: routes/publicTracking.js → controllers/trackingController.js → getPublicTracking()</div>
+<p><b>Logic:</b> শুধু stage, status আর সময় দেখায়; নাম, email, ঠিকানা, payment কিছুই না। Code 128-bit random, তাই অনুমান করা কার্যত অসম্ভব।</p>
+
+<h3>৩.১৫ AI support chat</h3>
+<div class="flow">Client: components/support/SupportWidget.jsx, SupportSheet.jsx, hooks/useSupportChat.js, api/support.js
+API:    POST /support/chat  (login ছাড়াও; rate limit)
+Server: routes/support.js → controllers/supportController.js → services/aiSupportService.js
+        services/supportKnowledgeService.js (live catalogue থেকে prompt)
+        services/aiProviders/geminiSupportProvider.js (fallback model)
+        middleware/supportRateLimit.js + middleware/mongoRateLimitStore.js</div>
+<p><b>Logic:</b> Prompt-এ live catalogue থাকে, তাই দাম সবসময় এখনকার। Follow-up button fixed list থেকে (<code>utils/supportActions.js</code>)। Signed-out user 10 মিনিটে 8টা প্রশ্ন; limit MongoDB-তে রাখা, তাই serverless instance বদলালেও কাজ করে।</p>
+
+<h3>৩.১৬ Admin attention, reports, AI summary</h3>
+<div class="flow">Client: components/admin/AdminOverview.jsx, hooks/useAdminAttention.js → GET /admin/attention
+        pages/Dashboard/Reports/Reports.jsx, components/admin/reports/RequestsTrendChart.jsx,
+        components/admin/AiReportSummary.jsx → GET/POST /admin/reports/ai-summary
+Server: controllers/adminAttentionController.js
+        controllers/adminReportController.js → buildReport(days)  (overview, daily, regions, breakdowns, workload, inspectionFees)
+        controllers/adminReportSummaryController.js → services/aiReportSummaryService.js (onlyKnownNumbers)</div>
+<p><b>Logic:</b> AI summary শুধু aggregate সংখ্যা পায়; উত্তরের কোনো sentence-এ এমন সংখ্যা থাকলে যা data-তে নেই, সেই sentence বাদ (<code>onlyKnownNumbers</code>)। শেষ summary period অনুযায়ী save থাকে (<code>ai_report_summaries</code>)।</p>
+
+<h3>৩.১৭ Catalogue, technician approval, users</h3>
+<div class="flow">Catalogue: pages/Dashboard/ServiceCatalogue/ServiceCatalogue.jsx, components/admin/ServiceEditor.jsx
+           → /admin/service-definitions → controllers/adminServiceDefinitionController.js (pricingRule.version++)
+Technician: pages/BecomeTechnician/BecomeTechnician.jsx → POST /technicians
+           pages/Dashboard/ApproveTechnicians/ApproveTechnicians.jsx → PATCH /technicians/:id,
+           GET /technicians/:id/final-payout → services/technicianRemovalPayout.js
+           Profile: components/technician/TechnicianDetailsEditor.jsx → PATCH /technicians/me
+Users:     pages/Dashboard/UsersManagement/UsersManagement.jsx → PATCH /users/:id/role (admin only)
+Reviews:   components/feedback/customer/ReviewDialog.jsx → POST /repair-requests/:id/review
+           components/feedback/admin/ModerationDialog.jsx → PATCH /admin/technician-reviews/:id/visibility
+           → controllers/feedbackController.js, utils/feedback.js</div>
+
+<h3>৩.১৮ Service spine (৪ ধাপের progress bar) আর request page</h3>
+<div class="flow">pages/Dashboard/RequestDetails/RequestDetails.jsx → role দেখে
+   CustomerRequestDetailsView / TechnicianRequestDetailsView / AdminRequestDetailsView
+components/spine/ServiceSpine.jsx (Request → Inspect → Approve → Repaired)
+components/workspace/NextStepPanel.jsx ("Your next step")</div>
+
+<h2>৪. "এই code কোথায়?" — ধাপে ধাপে বলার practice</h2>
+
+<p class="q">Customer "Create request" চাপলে কী কী হয়? File ধরে বলো।</p>
+<p class="a"><code>RepairRequestV2Form.jsx</code> form validate করে <code>api/repairRequests.js</code>-এর <code>createRepairRequestV2()</code> ডাকে → <code>POST /repair-requests</code>। <code>useAxiosSecure</code> token লাগায়। Server-এ <code>routes/repairRequests.js</code>: <code>verifyFBToken</code>, <code>verifyEmailVerified</code> → <code>repairRequestController.createRepairRequest()</code> → v2 হলে <code>createRepairRequestV2()</code>। সেখানে <code>hasTechnicianFor()</code> (region gate), <code>checkSlot()</code> (slot capacity), price snapshot, <code>generateSecureTrackingId()</code>, insert, তারপর notification/email/job announcement। Response-এ request id আর tracking code; client "Request created" দেখায় (photo add করার option)।</p>
+
+<p class="q">Technician offer পাঠানোর API call কোথা থেকে যায়?</p>
+<p class="a"><code>components/technician/JobApplicationSheet.jsx</code> → <code>api/jobPortal.js</code> → <code>POST /repair-requests/:id/applications</code> → <code>routes/jobPortal.js</code> (<code>verifyFBToken</code>, <code>verifyTechnician</code>) → <code>jobPortalController.apply()</code>। Validation <code>utils/jobPortal.js</code>-এ (estimate range, fee minimum থেকে catalogue fee)।</p>
+
+<p class="q">Payment "paid" কোথায় হয়? Success page-এ?</p>
+<p class="a">না। Success page শুধু দেখায়। আসল "paid" হয় <code>POST /stripe-webhook</code>-এ: <code>routes/paymentWebhook.js</code> raw body নেয়, <code>paymentController.handleStripeWebhook()</code> <code>stripe.webhooks.constructEvent()</code> দিয়ে signature verify করে, তারপর <code>services/paymentProcessor.js</code> transaction-এ payment row, request status আর settlement লেখে। একই event দুইবার এলে দ্বিতীয়বার কিছু হয় না (idempotent)।</p>
+
+<p class="q">Commission হিসাবের code দেখাও।</p>
+<p class="a"><code>utils/settlement.js</code>। Base = <code>partsAmount + laborAmount + additionalCharges</code> (= quote total)। Commission = integer ratio 10/100, আর technician-এর অংশ = subtotal − commission (বিয়োগ করে, আলাদা % নয়), তাই সবসময় <code>commission + receivable = subtotal</code>। Parts/labour কীভাবে ভাগ করল তাতে কারো টাকা বদলায় না।</p>
+
+<p class="q">Double booking কীভাবে আটকানো হয়েছে, code-এ কোথায়?</p>
+<p class="a"><code>services/jobBooking.js</code> → <code>bookApplication()</code>। Transaction-এর ভেতরে technician-এর অন্য active request আছে কি না দেখে (<code>ACTIVE_STATUSES</code>), request update-এর filter-এ <code>deliveryStatus: 'pending-pickup'</code> আর <code>technicianId</code> নেই এমন শর্ত, technician update-এ <code>workStatus: 'available'</code> শর্ত। দুইজন একসাথে চাপলে একজনের update match করে না → সব rollback।</p>
+
+<p class="q">Role check কোথায়? Client-এ লুকিয়ে রাখলেই কি যথেষ্ট?</p>
+<p class="a">না। Client guard (<code>routes/AdminRoute.jsx</code> ইত্যাদি) শুধু UI। Server-এ <code>middleware/auth.js</code>: <code>verifyAdmin</code> (role !== 'admin' → 403), <code>verifyTechnician</code> (role !== 'rider' → 403)। তার উপর controller দেখে এই request-এর owner/assigned technician কি না, আর বর্তমান state-এ এই কাজ চলে কি না।</p>
+
+<p class="q">Pickup slot-এর নিয়ম কোথায়?</p>
+<p class="a"><code>utils/pickupSlots.js</code>: <code>PICKUP_SLOTS</code> (৪টা), <code>CLOSED_WEEKDAYS = [5]</code> (শুক্রবার), <code>BOOKING_WINDOW_DAYS = 7</code>, <code>MIN_LEAD_MINUTES = 60</code>, <code>DEFAULT_SLOT_CAPACITY = 3</code>, সময় <code>Asia/Dhaka</code>। Availability দেখায় <code>GET /pickup-slots</code> (<code>pickupSlotController</code>), reschedule <code>PATCH /repair-requests/:id/pickup-slot</code>।</p>
+
+<p class="q">AI summary যে ভুল সংখ্যা বলে না, তার code?</p>
+<p class="a"><code>services/aiReportSummaryService.js</code>: <code>buildSummaryFacts()</code> শুধু aggregate বানায়; <code>allowedNumbers()</code> সেই facts-এর সব সংখ্যার set; <code>onlyKnownNumbers()</code> প্রতিটা sentence-এর সংখ্যা চেক করে, অজানা হলে বাদ (ছোট সংখ্যা ≤10 আর 24/30/90 context হিসেবে চলে)।</p>
+
+<p class="q">Status কোথায় define করা? "parcel", "rider" কেন?</p>
+<p class="a"><code>utils/repairRequestStatus.js</code>। প্রজেক্ট একটা parcel-delivery codebase থেকে শুরু হয়েছিল; data নষ্ট না করার জন্য stored value (<code>rider</code>, <code>parcel_picked_up</code>, <code>deliveryStatus</code>) রেখে দিয়েছি — এটা internal contract। User সবসময় repair শব্দ দেখে (Technician, Device collected)। পরিকল্পিত migration future work-এ আছে।</p>
+
+<h2>৫. সম্ভাব্য প্রশ্ন — General / Design</h2>
+
+<p class="q">এটা কি শুধু একটা CRUD app না?</p>
+<p class="a">না। Repair একটা case যেটার 14টা state; প্রতিটা action-এ server role + current state চেক করে। টাকা আর assignment বদলানোর সব কাজ MongoDB transaction-এ, deadline আছে যাতে কিছু আটকে না থাকে, আর payment webhook-ভিত্তিক।</p>
+
+<p class="q">MongoDB কেন, SQL কেন না?</p>
+<p class="a">একটা repair request নিজের quote, inspection, history, settlement নিয়ে একটা document — document database-এ মানায়। আলাদা collection-এর মধ্যে consistency রাখতে MongoDB multi-document transaction (replica set) ব্যবহার করেছি। Relational হলেও করা যেত; এটা trade-off, ভুল-সঠিক না।</p>
+
+<p class="q">Firebase Auth কেন? নিজে JWT বানালে না কেন?</p>
+<p class="a">Password রাখা, email verification, Google login, token refresh — নিরাপদভাবে নিজে বানানো ঝুঁকিপূর্ণ। Firebase ID token server-এ Firebase Admin দিয়ে verify করি; role নিজের DB-তে।</p>
+
+<p class="q">Serverless (Vercel) কেন? সমস্যা কী?</p>
+<p class="a">Free, push করলেই deploy, scale নিজে থেকে। সমস্যা cold start — প্রথম request ধীর। API Mumbai region-এ সরিয়ে (DB-র পাশে) cold 10.7s → 2.9s, warm 0.75s → 0.2s হয়েছে। Rate limit memory-তে রাখা যায় না বলে MongoDB store।</p>
+
+<p class="q">Frontend-এ state কীভাবে manage করেছ?</p>
+<p class="a">Server data TanStack Query দিয়ে (cache, refetch, mutation-এর পর invalidate; key গুলো <code>hooks/*Keys.js</code>-এ)। Form-এ react-hook-form। Global client state কম — login Firebase context-এ।</p>
+
+<p class="q">ER diagram বুঝিয়ে বলো।</p>
+<p class="a">User অনেক repair request করে, technician-ও হতে পারে (technicians collection)। প্রতিটা request একটা service definition দিয়ে priced, অনেক job application (offer) পায়, তার payment rows, একটা review, সর্বোচ্চ ২টা warranty claim। Quote আর inspection request-এর ভেতরেই embedded। Withdrawal technician-এর সাথে।</p>
+
+<p class="q">তুমি নিজে কী করেছ?</p>
+<p class="a">পুরো project আমার: requirement, design, server আর client code, test, deploy, report। AI tool সাহায্য হিসেবে ব্যবহার করেছি, কিন্তু প্রতিটা feature-এর rule আর code আমি বুঝি — যেকোনো file খুলে বোঝাতে পারব।</p>
+
+<h2>৬. Feature gap (কী নেই, কেন নেই)</h2>
+
+<p class="q">Stripe তো বাংলাদেশে চলে না। তাহলে?</p>
+<p class="a">ঠিক, তাই test mode-এ। Payment code একটা service-এর পিছনে (<code>paymentController</code> + <code>paymentProcessor</code>), তাই SSLCOMMERZ বা bKash Payment Gateway বসানো যাবে — future work-এ লেখা।</p>
+
+<p class="q">bKash payout automatic না কেন?</p>
+<p class="a">bKash disbursement API-র জন্য merchant account লাগে (খরচ ও approval)। তাই admin bKash Send Money দিয়ে পাঠায় আর TrxID record করে। Wallet হিসাব পুরোপুরি automatic আর exact।</p>
+
+<p class="q">Technician-এর live location নেই কেন?</p>
+<p class="a">Scope-এর বাইরে রেখেছি; এখন district/region দিয়ে matching। Future work-এ আছে।</p>
+
+<p class="q">SMS notification নেই কেন? বাংলাদেশে তো SMS বেশি চলে।</p>
+<p class="a">ঠিক, কিন্তু SMS gateway paid। এখন in-app + email (47 ধরনের notification)। Future work-এ SMS আছে।</p>
+
+<p class="q">পুরো Bangla interface নেই কেন?</p>
+<p class="a">AI helper বাংলা/Banglish ইনপুট বোঝে, offer note বাংলায় লিখতে পারে; কিন্তু পুরো UI localisation করিনি — future work।</p>
+
+<p class="q">একজন technician একসাথে একটাই job কেন?</p>
+<p class="a">Double booking আর pickup সংঘর্ষ আটকাতে। এটা limitation — ছোট অনেক job-এর জন্য daily capacity model future work।</p>
+
+<p class="q">Cash payment নেই কেন?</p>
+<p class="a">Cash দিলে platform-এর ১০% আর হিসাব রাখা কঠিন। Future work: hand-over-এ cash, তারপর wallet থেকে platform share কাটা।</p>
+
+<p class="q">Load test বা security audit হয়েছে?</p>
+<p class="a">না — limitation-এ সৎভাবে লেখা। Automated test আছে 2,761টা, কিন্তু real user আর load test হয়নি।</p>
+
+<p class="q">Signed-in page-এর browser test নেই কেন?</p>
+<p class="a">Sign-in-এর জন্য আসল Firebase account লাগে। Signed-in screen-এর পিছনের প্রতিটা endpoint server test-এ আছে, আর হাতে walkthrough করেছি (Chapter 7-এর screenshot)।</p>
+
+<h2>৭. Edge case প্রশ্ন</h2>
+
+<p class="q">Technician fee নিয়ে এলোই না (no-show)?</p>
+<p class="a">Admin "missed pickup" থেকে withdraw করে (<code>POST /admin/repair-requests/:id/missed-pickup/withdraw</code>, <code>missedPickupController</code>) → fee পুরো refund, ওই offer <code>no_show</code>, job আবার open। No-show reliability score কমায়।</p>
+
+<p class="q">Customer বাসায় ছিল না?</p>
+<p class="a">Technician নোটসহ "Customer wasn't available" চাপে (<code>POST …/customer-not-available</code>, <code>workflowController.customerNotAvailable()</code>)। Request-এ <code>pickupRescheduleRequestedAt</code> বসে, customer-কে নতুন pickup সময় বেছে নিতে বলা হয়। Technician-ই না এলে সেটা আলাদা — admin-এর missed-pickup flow (<code>ask-new-time</code> বা withdraw)।</p>
+
+<p class="q">একই সময়ে দুইজন customer slot-এর শেষ জায়গা নিলে?</p>
+<p class="a">Capacity check হয়, কিন্তু lock নেই — একই সেকেন্ডে দুইজন পেতে পারে। এটা limitation-এ লেখা; এখনকার scale-এ ঠিক আছে, busy হলে atomic counter লাগবে।</p>
+
+<p class="q">Payment দিয়ে দিল, কিন্তু ঠিক তখন অন্য offer বেছে নেওয়া হয়েছে / request cancel?</p>
+<p class="a">Webhook-এ <code>bookApplication()</code> <code>JOB_NOT_OPEN</code> বা <code>TECHNICIAN_BUSY</code> ফেরত দেয় → কিছু book হয় না → fee নিজে থেকে refund। Cancel-এর পরে দেরিতে আসা payment-ও refund হয়।</p>
+
+<p class="q">Stripe refund fail করলে?</p>
+<p class="a">Refund "pending" থাকে, admin attention list-এ "Refund waiting" দেখায়, admin retry করে (<code>POST /admin/repair-requests/:id/inspection-fee/retry-refund</code>)। Idempotency key থাকায় retry-তে double refund হয় না।</p>
+
+<p class="q">Customer quote approve করল কিন্তু টাকা দিল না?</p>
+<p class="a">৩ দিন পর cron বন্ধ করে দেয় (<code>closeUnpaidApprovedQuotes</code>)। Customer নিজেও cancel-unpaid করতে পারে।</p>
+
+<p class="q">Customer quote decline করল, তারপর কিছুই করল না?</p>
+<p class="a">Technician revise করে নতুন quote দিতে পারে; নয়তো ৩ দিন পর auto close (<code>declinedQuoteClose.js</code>), fee রাখা হয় (technician ৯০%)।</p>
+
+<p class="q">Phone repair করা যাবে না?</p>
+<p class="a">Inspection-এ "Not repairable / Not economical" → <code>POST …/close-not-repairable</code>; fee রাখা হয় কারণ technician পরিদর্শন করেছে।</p>
+
+<p class="q">Repair শুরু করে technician শেষ করতে পারল না?</p>
+<p class="a">"Can't finish this repair" (<code>POST …/repair/cannot-complete</code>) → admin-এর কাছে যায় → admin cancel-paid-repair দিয়ে refund করে, device ফেরতের confirm আলাদা step।</p>
+
+<p class="q">Customer বলছে phone ফেরত পায়নি?</p>
+<p class="a">"I haven't received it" → <code>receipt-dispute</code>, admin সিদ্ধান্ত দেয়। ততক্ষণ technician-এর টাকা pending থাকে।</p>
+
+<p class="q">Customer confirm-ই করে না?</p>
+<p class="a">Technician "returned" mark করার ৩ দিন পর auto confirm (<code>receiptConfirmation.js</code>, method <code>'auto'</code>)।</p>
+
+<p class="q">Warranty-র অপব্যবহার — নতুন করে ফেলে দিয়ে claim করলে?</p>
+<p class="a">Covered শুধু একই fault ফিরে এলে বা লাগানো part নষ্ট হলে। Technician free re-inspection-এ দেখে "Not covered" (new damage, water, drop) দিতে পারে কারণসহ; customer admin review চাইতে পারে। Pickup condition record এখানে প্রমাণ।</p>
+
+<p class="q">Technician warranty claim ignore করলে?</p>
+<p class="a">প্রতিটা step-এর deadline (book 3 দিন, decide 3 দিন, re-repair 7 দিন)। মিস হলে overdue → admin take over → দরকারে refund।</p>
+
+<p class="q">Warranty refund-এর আগে technician টাকা তুলে নিলে?</p>
+<p class="a">Settlement <code>reversed</code> হয়; আগে তোলা টাকা "owed" হিসেবে দেখায় আর পরের আয় থেকে কাটা হয় (<code>calculateWallet</code>)।</p>
+
+<p class="q">Admin technician remove করল, কিন্তু তার wallet-এ টাকা আছে?</p>
+<p class="a">Remove-এর সময় একই transaction-এ পুরো available balance bKash withdrawal হিসেবে queue হয় (<code>services/technicianRemovalPayout.js</code>); আগে preview দেখায় (<code>GET /technicians/:id/final-payout</code>)। Open warranty claim থাকলে remove করা যায় না।</p>
+
+<p class="q">Request চলাকালীন admin দাম বদলালে?</p>
+<p class="a">পুরনো request-এ price snapshot থাকে; নতুন দাম শুধু নতুন request-এ (<code>pricingRule.version</code>)।</p>
+
+<p class="q">Region-এ কোনো technician নেই?</p>
+<p class="a">Request নেওয়াই হয় না (409, কারণসহ), customer অপেক্ষায় পড়ে থাকে না; turned-away count admin report-এ দেখায় — কোথায় technician লাগবে।</p>
+
+<p class="q">AI বন্ধ / ধীর / quota শেষ?</p>
+<p class="a">সব AI optional। Timeout আছে (<code>aiHelperCall.js</code>), support chat-এ fallback model; বন্ধ হলে form হাতে পূরণ করা যায়, বাকি app স্বাভাবিক।</p>
+
+<p class="q">Webhook দেরিতে এলো, customer page reload করল?</p>
+<p class="a">Page শুধু দেখায়; webhook এলে state বদলায়। দুইবার এলেও একবার record।</p>
+
+<p class="q">Customer দুইবার checkout খুললে?</p>
+<p class="a"><code>services/checkoutSessionManager.js</code> একটা request-এ একটাই খোলা checkout রাখে (claim + TTL), Stripe create-এ idempotency key।</p>
+
+<h2>৮. Security প্রশ্ন</h2>
+
+<p class="q">কেউ অন্যের request id দিয়ে data দেখতে পারবে?</p>
+<p class="a">না। Controller দেখে caller owner, assigned technician বা admin কি না; নাহলে 403/404। Public tracking-এ কোনো personal data নেই।</p>
+
+<p class="q">Tracking code অনুমান করা যাবে?</p>
+<p class="a">128-bit random (<code>crypto.randomBytes(16)</code>) — কার্যত অসম্ভব। আর দেখালেও শুধু stage দেখায়।</p>
+
+<p class="q">Photo-র link share করলে?</p>
+<p class="a">Bucket private; link কয়েক মিনিটের signed URL, তারপর অকেজো। Upload-এর পর আসল type ও size আবার verify করা হয়।</p>
+
+<p class="q">NoSQL injection?</p>
+<p class="a">Input-এর type/shape validate করা হয় (<code>utils/*</code> validator), search text escape (<code>utils/searchSanitize.js</code>), ObjectId parse-এর আগে চেক।</p>
+
+<p class="q">Secret কোথায়?</p>
+<p class="a">শুধু server environment variable-এ (Vercel); repo বা browser-এ না। <code>.env.example</code>-এ শুধু নাম। Log-এ request body লেখা হয় না (<code>utils/safeLogger.js</code>)।</p>
+
+<p class="q">CORS আর rate limit?</p>
+<p class="a"><code>config/cors.js</code>-এ allow-list (production-এ শুধু Vercel client)। AI chat-এ per-IP/per-user আর site-wide limit, MongoDB-তে রাখা।</p>
+
+<p class="q">Cron URL কেউ নিজে call করলে?</p>
+<p class="a">Secret (<code>CRON_SECRET</code>) না মিললে কিছু চলে না; secret ছাড়া configure না থাকলে 503।</p>
+
+<p class="q">Email verify না করে কেউ request বা payment করতে পারবে?</p>
+<p class="a">না — <code>verifyEmailVerified</code> middleware 403 দেয় (create request, payment, review, warranty claim-এ)।</p>
+
+<h2>৯. AI প্রশ্ন</h2>
+
+<p class="q">AI কি দাম বানিয়ে বলতে পারে?</p>
+<p class="a">না। কোনো AI feature দাম সেট করে না। Support chat-এর দাম live catalogue থেকে prompt-এ যায়; request helper শুধু catalogue id বেছে নেয়, server আবার চেক করে।</p>
+
+<p class="q">Customer-এর personal data AI-তে যায়?</p>
+<p class="a">নাম, email, card কিছু পাঠানো হয় না। Request helper-এ শুধু customer-এর লেখা আর (দিলে) photo — form-এ সতর্কবার্তা আছে। Report summary শুধু aggregate সংখ্যা।</p>
+
+<p class="q">AI ভুল উত্তর দিলে?</p>
+<p class="a">Output schema validate হয়; ভুল হলে বাদ। Helper-এর সব suggestion customer বদলাতে পারে, Undo আছে। AI ছাড়াই সব কাজ করা যায়।</p>
+
+<p class="q">AI কত দ্রুত? আগে fail করত কেন?</p>
+<p class="a">আগের model ধীর ছিল, timeout হতো। এখন <code>gemini-3.5-flash-lite</code>, fail করলে fallback model; live-এ 1.4–1.9s।</p>
+
+<h2>১০. Testing আর deployment</h2>
+
+<p class="q">কীভাবে test করেছ?</p>
+<p class="a">2,761 server test, real HTTP দিয়ে, real MongoDB replica set-এ (transaction চালাতে), Stripe/AI/storage fake। Race test-ও আছে (দুই admin একসাথে assign)। Client-এ 58 Playwright browser test (desktop + mobile)। GitHub Actions প্রতিটা push-এ; সব pass হলে তবেই main-এ push।</p>
+
+<p class="q">Test DB আর production DB আলাদা?</p>
+<p class="a">হ্যাঁ। Test throwaway/in-memory MongoDB-তে চলে, কখনো আসল credential দিয়ে না। Production server secret আর https origin ছাড়া start-ই হয় না।</p>
+
+<p class="q">Migration কীভাবে করেছ (যেমন minimum fee)?</p>
+<p class="a">Script আগে dry-run (কী বদলাবে দেখায়), তারপর confirm flag দিয়ে চালানো; production guard আছে। Minimum fee migration production আর local দুটোতেই চালানো হয়েছে।</p>
+
+<h2>১১. কঠিন / ব্যক্তিগত প্রশ্ন</h2>
+
+<p class="q">সবচেয়ে কঠিন অংশ কী ছিল?</p>
+<p class="a">টাকা আর state একসাথে ঠিক রাখা — payment, booking, refund, settlement যেন কখনো অর্ধেক না হয়। এর জন্য transaction, webhook-as-truth আর idempotency key। আর "কোনো request আটকে থাকবে না" — প্রতিটা waiting state-এ deadline বা admin alert।</p>
+
+<p class="q">আবার শুরু করলে কী বদলাতে?</p>
+<p class="a">শুরু থেকেই repair domain-এর নাম (parcel/rider legacy না রেখে), local payment gateway, আর slot capacity-র জন্য atomic counter।</p>
+
+<p class="q">এটা কি আসলে চালু করা যাবে?</p>
+<p class="a">Technically deploy করা আছে, live। বাস্তবে চালুর আগে লাগবে: local payment gateway, আসল দাম (repair shop-এর সাথে ঠিক করা), technician verification প্রক্রিয়া, আর load/security test।</p>
+
+<p class="q">Business model কী?</p>
+<p class="a">প্রতিটা repair-এ ১০% commission (kept inspection fee-তেও একই ভাগ)। Customer বাড়তি কিছু দেয় না।</p>
+
+<p class="q">অন্য platform থেকে আলাদা কীভাবে?</p>
+<p class="a">Inspection-এর পর itemised quote, approve-এর আগে চার্জ নেই, condition record, 30-দিনের warranty workflow, region-ভিত্তিক matching আর ranking, আর technician-এর guaranteed payment (আগে online payment, receipt confirm-এ release)।</p>
+
+<div class="tip"><b>শেষ টিপস:</b> Demo-র আগে <code>RepairRequestV2Form.jsx</code>, <code>jobBooking.js</code>, <code>settlement.js</code>, <code>offerRanking.js</code>, <code>paymentController.js</code> (webhook অংশ) আর <code>middleware/auth.js</code> একবার খুলে দেখে নাও — "code দেখাও" বললে এগুলোই সবচেয়ে বেশি চাওয়া হয়। VS Code-এ <b>Ctrl+P</b> দিয়ে file নাম লিখে দ্রুত খোলো, <b>Ctrl+Shift+F</b> দিয়ে route path (যেমন <code>/applications</code>) খুঁজে দেখাও।</div>
+
+</body>
+</html>
