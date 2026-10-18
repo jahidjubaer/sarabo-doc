@@ -25,6 +25,10 @@
   ul { margin: 2px 0 6px 18px; padding: 0; }
   li { margin: 1px 0; }
   .pb { page-break-before: always; }
+  pre.code { font-family: Consolas, "Cascadia Mono", monospace; font-size: 8.4pt; line-height: 1.4; background: #f6f8f7; border: 1px solid #dde5e2; border-left: 4px solid #1f6f5c; padding: 6px 9px; margin: 4px 0 6px; white-space: pre-wrap; page-break-inside: avoid; }
+  .file { page-break-after: avoid; font-family: Consolas, monospace; font-size: 8.6pt; color: #12493d; font-weight: 700; margin: 8px 0 0; }
+  .what { margin: 2px 0 10px; padding: 4px 9px; background: #fbf3ee; border-left: 3px solid #e2a37f; font-size: 9.8pt; }
+  .what::before { content: "যদি জিজ্ঞেস করে: "; font-weight: 700; color: #b0531c; }
 </style>
 </head>
 <body>
@@ -668,6 +672,431 @@ components/workspace/NextStepPanel.jsx ("Your next step")</div>
 <tr><td>Warranty কখন শুরু?</td><td>Receipt confirm হলে, 30 দিন</td></tr>
 <tr><td>Signed-out AI chat limit?</td><td>10 মিনিটে 8টা প্রশ্ন</td></tr>
 </table>
+
+<h2>২১. Code দেখে ব্যাখ্যা করো (আসল code-এর অংশ)</h2>
+<p class="small">নিচের code তোমার file থেকে নেওয়া; লম্বা comment আর কিছু লাইন বাদ দিয়ে ছোট করা (<code>…</code> মানে বাদ দেওয়া অংশ)। Examiner স্ক্রিনে file খুলে বলতে পারে "এটা বোঝাও" — তখন এভাবে লাইন ধরে বলবে।</p>
+
+<p class="q">Login token কীভাবে প্রতিটা API call-এ যায়? এই code বোঝাও।</p>
+<p class="file">sarabo-client/src/hooks/useAxiosSecure.jsx</p>
+<pre class="code">const axiosSecure = axios.create({ baseURL: API_BASE_URL })
+
+axiosSecure.interceptors.request.use(async config =&gt; {
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+        const token = await currentUser.getIdToken();
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+})
+
+axiosSecure.interceptors.response.use((response) =&gt; response, async (error) =&gt; {
+    const statusCode = error.response?.status ?? error.status;
+    const originalRequest = error.config;
+    if (statusCode === 401 &amp;&amp; auth.currentUser &amp;&amp; originalRequest &amp;&amp; !originalRequest._retry) {
+        originalRequest._retry = true;
+        const freshToken = await auth.currentUser.getIdToken(true);
+        originalRequest.headers.Authorization = `Bearer ${freshToken}`;
+        return await axiosSecure(originalRequest);
+    }
+    if (statusCode === 401 &amp;&amp; !isHandlingSessionExpiry) { … logOut() → navigate('/login') }
+    return Promise.reject(error);
+})</pre>
+<p class="a">একটা axios instance, base URL সহ। <b>Request interceptor</b> প্রতিটা call পাঠানোর আগে Firebase থেকে ID token নিয়ে <code>Authorization: Bearer …</code> header বসায় — তাই component-এ token নিয়ে ভাবতে হয় না। <b>Response interceptor</b>: 401 এলে (token মেয়াদ শেষ) <code>getIdToken(true)</code> দিয়ে জোর করে নতুন token নিয়ে <b>একবার</b> আবার পাঠায়; <code>_retry</code> flag অসীম loop আটকায়। তারপরও 401 হলে logout করে login page-এ পাঠায়; <code>isHandlingSessionExpiry</code> একসাথে অনেক call fail হলে বারবার logout হওয়া আটকায়। <code>useEffect</code>-এর cleanup-এ interceptor <code>eject</code> করা হয়, যাতে duplicate না হয়।</p>
+<p class="what"><code>_retry</code> না থাকলে? — Token সত্যিই invalid হলে একই request বারবার পাঠাতে থাকত (infinite loop)।</p>
+
+<p class="q">Server-এ token verify কীভাবে হয়?</p>
+<p class="file">sarabo-server/middleware/auth.js</p>
+<pre class="code">const verifyFBToken = async (req, res, next) =&gt; {
+    const token = req.headers.authorization;
+    if (!token) {
+        return res.status(401).send({ message: 'unauthorized access', code: 'AUTHENTICATION_REQUIRED' })
+    }
+    try {
+        const idToken = token.split(' ')[1];
+        const decoded = await admin.auth().verifyIdToken(idToken);
+        req.decoded_email = decoded.email;
+        req.decoded_email_verified = decoded.email_verified === true;
+        next();
+    }
+    catch (err) {
+        return res.status(401).send({ message: 'unauthorized access', code: 'AUTHENTICATION_REQUIRED' })
+    }
+}</pre>
+<p class="a">Header না থাকলে 401। "Bearer xyz" থেকে <code>split(' ')[1]</code> দিয়ে শুধু token। <code>verifyIdToken</code> Google-এর key দিয়ে signature আর মেয়াদ চেক করে — নকল বা পুরনো token হলে throw → catch → 401। ঠিক হলে email আর <code>email_verified</code> <code>req</code>-এ রেখে <code>next()</code>, পরের middleware/controller এগুলো ব্যবহার করে। <code>=== true</code> লেখা হয়েছে যাতে claim না থাকলে সেটা "verified না" ধরা হয়।</p>
+<p class="what">Client যদি body-তে নিজের email পাঠায়? — ব্যবহারই হয় না। Server email নেয় শুধু verified token থেকে (<code>req.decoded_email</code>), তাই অন্যের নামে কাজ করা যায় না।</p>
+
+<p class="q">Role check middleware বোঝাও।</p>
+<p class="file">sarabo-server/middleware/auth.js</p>
+<pre class="code">const verifyAdmin = async (req, res, next) =&gt; {
+    const { users: userCollection } = req.collections;
+    const email = req.decoded_email;
+    const user = await userCollection.findOne({ email });
+    if (!user || user.role !== 'admin') {
+        return res.status(403).send({ message: 'forbidden access', code: 'FORBIDDEN' });
+    }
+    next();
+}
+// verifyTechnician একই রকম, শুধু: user.role !== 'rider'</pre>
+<p class="a"><code>verifyFBToken</code>-এর পরে চলে (তাই <code>req.decoded_email</code> আছে)। Role token-এ না, <b>DB-তে</b> দেখা হয় — তাই admin কারো role বদলালে সাথে সাথে কার্যকর। Login আছে কিন্তু অনুমতি নেই, তাই 401 না, 403।</p>
+<p class="what">Route-এ এর ক্রম কেমন? — <code>app.get('/admin/reports', verifyFBToken, ensureDatabaseReady, verifyAdmin, handler)</code>। Express বাম থেকে ডানে চালায়; আগেরটা fail করলে পরেরগুলো চলেই না।</p>
+
+<p class="q">Client-এ admin page কীভাবে আটকানো হয়?</p>
+<p class="file">sarabo-client/src/routes/AdminRoute.jsx</p>
+<pre class="code">const AdminRoute = ({ children }) =&gt; {
+    const { user, loading } = useAuth();
+    const location = useLocation();
+    const { role, roleLoading, isError } = useRole()
+
+    if (loading || roleLoading) return &lt;Loading&gt;&lt;/Loading&gt;
+    if (!user) return &lt;Navigate state={location.pathname} to="/login"&gt;&lt;/Navigate&gt;
+    if (isError) return &lt;RoleError&gt;&lt;/RoleError&gt;
+    if (role !== 'admin') return &lt;Forbidden&gt;&lt;/Forbidden&gt;
+    return children;
+};</pre>
+<p class="a">একটা wrapper component। আগে login আর role load হওয়া পর্যন্ত Loading (নইলে এক মুহূর্তের জন্য ভুল page দেখাত)। Login না থাকলে login page-এ পাঠায়, আর <code>state</code>-এ বর্তমান path রাখে যাতে login-এর পর এখানে ফেরত আসে। Role admin না হলে Forbidden page। <code>useRole</code> server থেকে <code>GET /users/me/role</code> আনে।</p>
+<p class="what">কেউ browser-এ code বদলে এটা bypass করলে? — page খুলবে, কিন্তু data আসবে না, কারণ প্রতিটা admin API-তে server <code>verifyAdmin</code> চালায়। Client guard শুধু UX।</p>
+
+<p class="q">Webhook কেন সব route-এর আগে register? এই অংশ বোঝাও।</p>
+<p class="file">sarabo-server/index.js</p>
+<pre class="code">// The Stripe webhook route must be registered before express.json() below -
+// it needs express.raw() to keep the exact request bytes for signature verification …
+registerPaymentWebhookRoute(app, controllers);
+
+app.use('/ai/request-draft', express.json({ limit: '2.5mb' }));
+app.use(express.json());
+app.use(cors(corsOptions));</pre>
+<p class="a">Stripe signature হিসাব হয় body-র <b>হুবহু byte</b>-এর উপর। <code>express.json()</code> body পড়ে object বানিয়ে ফেললে আসল byte আর ফেরত পাওয়া যায় না, তাই webhook route আগে, <code>express.raw()</code> দিয়ে। AI request-draft-এ photo (base64) থাকে, তাই ওই path-এর limit 2.5 MB; বাকি সব default 100 kB। তারপর CORS।</p>
+<p class="what">ক্রম উল্টে দিলে? — প্রতিটা webhook "invalid signature" দিয়ে 400 পেত, কোনো payment record হতো না।</p>
+
+<p class="q">Webhook handler লাইন ধরে বোঝাও।</p>
+<p class="file">sarabo-server/controllers/paymentController.js → handleStripeWebhook()</p>
+<pre class="code">const signature = req.headers['stripe-signature'];
+if (!signature) return res.status(400).send({ message: 'missing stripe-signature header' });
+if (!process.env.STRIPE_WEBHOOK_SECRET) return res.status(500).send({ message: 'webhook not configured' });
+
+let event;
+try {
+    event = stripe.webhooks.constructEvent(req.body, signature, process.env.STRIPE_WEBHOOK_SECRET);
+} catch (err) {
+    return res.status(400).send({ message: 'invalid signature' });
+}
+
+if (event.type !== 'checkout.session.completed') {
+    return res.status(200).send({ received: true, ignored: true, type: event.type });
+}
+
+const session = event.data.object;
+const result = await this.processCheckoutSession({ session, source: 'webhook' });
+return res.status(200).send({ received: true, result: result.code });
+// error হলে 500 → Stripe পরে আবার পাঠায়</pre>
+<p class="a">Header-এ signature না থাকলে 400। <code>constructEvent</code> secret দিয়ে signature মিলিয়ে দেখে request সত্যিই Stripe-এর কিনা — কেউ নকল "paid" event পাঠালে এখানেই আটকায়। শুধু <code>checkout.session.completed</code> নিয়ে কাজ; অন্য event-এ 200 দিয়ে উপেক্ষা (নইলে Stripe বারবার পাঠাত)। তারপর <code>processCheckoutSession</code> (<code>services/paymentProcessor.js</code>) transaction-এ কাজ করে। Processing-এ error হলে 500 দিই, যাতে Stripe আবার চেষ্টা করে — আর idempotent বলে আবার এলে double হয় না।</p>
+<p class="what">Same event দুবার এলে? — <code>payments.sessionId</code>-এ unique index আর processor-এর state চেক — দ্বিতীয়বার "already processed" ফল দেয়, কিছু বদলায় না।</p>
+
+<p class="q">Commission হিসাবের function বোঝাও।</p>
+<p class="file">sarabo-server/utils/settlement.js</p>
+<pre class="code">function commissionFor(repairSubtotal) {
+    return Math.round((repairSubtotal * COMMISSION_NUMERATOR) / COMMISSION_DENOMINATOR);  // 10 / 100
+}
+
+function calculateSettlement(quote) {
+    const parts = readLine(quote, 'partsAmount');
+    const labor = readLine(quote, 'laborAmount');
+    const additional = readLine(quote, 'additionalCharges');
+    if (!parts.valid || !labor.valid || !additional.valid) {
+        return { valid: false, code: 'INVALID_QUOTE_AMOUNT', … };
+    }
+    const repairSubtotal = parts.amount + labor.amount + additional.amount;
+    if (quote.totalAmount !== undefined &amp;&amp; quote.totalAmount !== null &amp;&amp; quote.totalAmount !== repairSubtotal) {
+        return { valid: false, code: 'QUOTE_TOTAL_MISMATCH', … };
+    }
+    const platformCommission = commissionFor(repairSubtotal);
+    const technicianReceivable = repairSubtotal - platformCommission;
+    return { valid: true, settlement: { …, repairSubtotal, platformCommission, technicianReceivable, currency: 'BDT' } };
+}</pre>
+<p class="a"><code>readLine</code> প্রতিটা line item পূর্ণ টাকা আর ঋণাত্মক না কিনা দেখে (additional না থাকলে 0)। Subtotal = তিনটার যোগফল; quote-এ লেখা total এর সাথে না মিললে বাতিল — client বানানো total কাজে লাগে না। Commission = subtotal × 10 / 100, round। Technician-এর অংশ <b>বিয়োগ</b> করে বের করা, আলাদা 90% গুণ করে না — তাই <code>commission + receivable</code> সবসময় ঠিক subtotal, এক টাকাও হারায় না। Function pure (DB নেই), তাই test সহজ।</p>
+<p class="what">4,005 টাকা হলে? — commission = round(400.5) = 401, technician = 4,005 − 401 = 3,604; যোগ = 4,005।</p>
+
+<p class="q">Wallet balance কীভাবে হিসাব হয়?</p>
+<p class="file">sarabo-server/utils/settlement.js → calculateWallet()</p>
+<pre class="code">for (const repairRequest of repairRequests) {
+    const settlement = repairRequest.technicianSettlement;
+    if (!settlement) continue;
+    if (settlement.status === SETTLEMENT_REVERSED) continue;      // warranty refund হলে বাদ
+    lifetimeReceivable += settlement.technicianReceivable;
+    if (settlement.status === SETTLEMENT_AVAILABLE) grossAvailableBalance += settlement.technicianReceivable;
+    else pendingBalance += settlement.technicianReceivable;
+}
+// … একই ভাবে inspectionFeeSettlement (রাখা fee-র 90%)
+for (const withdrawal of withdrawals) {
+    if (withdrawal.status === WITHDRAWAL_REQUESTED) reservedBalance += withdrawal.amount;
+    else if (withdrawal.status === WITHDRAWAL_PAID) withdrawnBalance += withdrawal.amount;
+}
+const availableBalance = Math.max(0, grossAvailableBalance - reservedBalance - withdrawnBalance);
+const owedBalance     = Math.max(0, reservedBalance + withdrawnBalance - grossAvailableBalance);</pre>
+<p class="a">প্রতিটা repair-এর settlement দেখে: <code>available</code> (customer receipt confirm করেছে) হলে তোলা যায়, নাহলে pending। Reversed (warranty refund) গোনা হয় না। Withdrawal-এর মধ্যে requested = আটকে রাখা, paid = তোলা হয়ে গেছে। Available = আয় − আটকে রাখা − তোলা; ঋণাত্মক হলে 0 আর বাকিটা <code>owed</code> (পরের আয় থেকে কাটবে)। কোনো সংখ্যা save হয় না — প্রতিবার record থেকে।</p>
+<p class="what">Owed কখন হয়? — Technician 3,600 তুলে নিল, তারপর warranty-তে refund হলো → settlement reversed → আয় কমে গেল কিন্তু তোলা টাকা আছে → owed 3,600।</p>
+
+<p class="q">Double booking আটকানোর code বোঝাও।</p>
+<p class="file">sarabo-server/services/jobBooking.js → bookApplication()  (transaction-এর ভেতরে চলে)</p>
+<pre class="code">const current = await collections.jobApplications.findOne({ _id: application._id }, { session, projection: { status: 1 } });
+if (!current || current.status !== 'pending') return 'JOB_NOT_OPEN';
+
+const busy = await collections.repairRequests.findOne(
+    { technicianId: application.technicianId, deliveryStatus: { $in: ACTIVE_STATUSES }, _id: { $ne: request._id } },
+    { session });
+if (busy) return 'TECHNICIAN_BUSY';
+
+const requestUpdate = await collections.repairRequests.updateOne(
+    { _id: request._id, deliveryStatus: 'pending-pickup', technicianId: { $exists: false } },
+    { $set: { deliveryStatus: 'driver_assigned', technicianId: …, acceptedApplication: { … } }, $push: { assignmentHistory: … } },
+    { session });
+if (requestUpdate.matchedCount === 0) return 'JOB_NOT_OPEN';
+
+const technicianUpdate = await collections.technicians.updateOne(
+    { _id: technician._id, status: 'approved', workStatus: 'available' },
+    { $set: { workStatus: 'in_delivery' } }, { session });
+if (technicianUpdate.matchedCount === 0) throw … 'TECHNICIAN_BUSY';
+
+await collections.jobApplications.updateOne({ _id: application._id, status: 'pending' }, { $set: { status: 'accepted' } }, { session });
+await collections.jobApplications.updateMany({ requestId, _id: { $ne: application._id }, status: 'pending' },
+    { $set: { status: 'not_chosen' } }, { session });</pre>
+<p class="a">সব query-তে <code>{ session }</code> — মানে একটা transaction। (১) Offer এখনো pending? (২) Technician-এর অন্য active job? (৩) Request update-এর <b>filter</b>-এই শর্ত: এখনো <code>pending-pickup</code> আর technician নেই — অন্য কেউ আগে book করলে match 0। (৪) Technician-কে শুধু <code>available</code> হলে busy করা; না পেলে throw → পুরো transaction rollback। (৫) এই offer accepted, বাকি সব not_chosen। "Check করে তারপর update" না করে শর্তটা update-এর filter-এ রাখা — এটাই race আটকানোর কৌশল।</p>
+<p class="what">Return আর throw আলাদা কেন? — শুরুর check-এ কিছু লেখা হয়নি, তাই শুধু code ফেরত (caller fee refund করে)। Request update হয়ে যাওয়ার পর technician fail করলে আগের লেখা ফেরাতে হবে, তাই throw → rollback।</p>
+
+<p class="q">Offer ranking-এর মূল অংশ বোঝাও।</p>
+<p class="file">sarabo-server/services/offerRanking.js</p>
+<pre class="code">const WEIGHTS = Object.freeze({ rating: 0.3, reliability: 0.25, price: 0.2, distance: 0.15, response: 0.1 });
+
+function ratingScore(averageRating, reviewCount) {
+    if (!reviewCount || …) return NEUTRAL;                                   // 0.5
+    const smoothed = (averageRating * reviewCount + 3 * 2) / (reviewCount + 2);
+    return clamp01((smoothed - 1) / 4);                                      // 1★→0, 5★→1
+}
+function reliabilityScore(completed, noShows) {
+    return (completed + 1) / (completed + noShows + 2);                      // কোনো history নেই → 0.5
+}
+function distanceScore(technicianDistrict, customerDistrict) {
+    if (!technicianDistrict || !customerDistrict) return NEUTRAL;
+    return sameText(technicianDistrict, customerDistrict) ? 1 : 0.4;
+}
+// rankOffers():
+const total = Object.keys(WEIGHTS).reduce((sum, key) =&gt; sum + WEIGHTS[key] * factors[key], 0);
+const ordered = [...scored].sort((a, b) =&gt; (b.total - a.total) || (a.createdAt - b.createdAt));</pre>
+<p class="a">প্রতিটা factor 0–1। Rating-এ "Bayesian smoothing": ধরে নেওয়া হয় আগে থেকে ২টা 3-star review আছে — ১টা 5-star পেলে (5+6)/3 = 3.67, ১০০টা 4.8 পেলে প্রায় 4.76; তাই নতুন একজন লাফিয়ে উপরে উঠে না। Reliability-তে Laplace smoothing (+1/+2) — নতুন technician 0.5। District একই হলে 1, নাহলে 0.4। মোট = weight × score-এর যোগফল। Sort: বেশি score আগে; সমান হলে যে আগে offer দিয়েছে সে আগে। Reason tag আলাদা শর্তে (যেমন rating ≥4.5 আর ≥3 review হলে "top rated")।</p>
+<p class="what">একজন খুব কম দাম দিয়ে উপরে উঠে যাবে না? — Price মাত্র 20%; rating আর reliability মিলে 55%। আর শেষে customer-ই বেছে নেয়।</p>
+
+<p class="q">Region-এ technician আছে কি না দেখার code?</p>
+<p class="file">sarabo-server/services/technicianMatchGate.js</p>
+<pre class="code">async function hasTechnicianFor(collections, { region, definition }) {
+    const needs = { region, productCategorySlug: definition.productCategorySlug,
+                    repairCategorySlug: definition.repairCategorySlug,
+                    requiredExpertiseLevel: definition.requiredExpertiseLevel };
+    const candidates = await collections.technicians.find(
+        { status: 'approved', 'expertise.productCategorySlug': definition.productCategorySlug },
+        { projection: { status: 1, region: 1, expertise: 1 } }
+    ).toArray();
+    return candidates.some((technician) =&gt; canTechnicianEverTakeRequest(technician, needs));
+}
+
+function hashCustomer(email) {
+    return crypto.createHash('sha256').update(String(email || '').trim().toLowerCase()).digest('hex');
+}
+// recordTurnedAway: _id = `${customerHash}|${day}|${definitionId}|${region}` , $setOnInsert</pre>
+<p class="a">Service-এর দরকার (device, repair, level) আর customer-এর region নিয়ে, DB থেকে শুধু approved আর ওই device-এর technician আনে (দরকারি field-ই শুধু — projection)। তারপর assignment-এর একই নিয়ম <code>canTechnicianEverTakeRequest</code> দিয়ে মেলায় — কাউকে পাওয়া গেলে true। না পেলে turned-away record: email SHA-256 hash (privacy), আর <code>_id</code>-এ customer+দিন+service+region, <code>$setOnInsert</code> — একই মানুষ একই দিনে ১০ বার চেষ্টা করলেও count ১।</p>
+<p class="what">Hash কেন, email রাখলে কী সমস্যা? — Report-এ শুধু সংখ্যা লাগে, কে চেয়েছিল জানার দরকার নেই; personal data কম রাখা (privacy), তবু duplicate গোনা আটকায়।</p>
+
+<p class="q">Receipt confirm একবারই হয় — code দেখাও।</p>
+<p class="file">sarabo-server/services/receiptConfirmation.js → confirmReceiptOnce()</p>
+<pre class="code">const filter = {
+    _id: request._id,
+    deliveryStatus: REPAIR_COMPLETED,
+    $or: [ { customerReceiptConfirmation: { $exists: false } },
+           { 'customerReceiptConfirmation.status': { $ne: 'confirmed' } } ],
+    ...(method === 'auto' ? { 'deviceReturn.markedAt': { $lte: new Date(now.getTime() - AUTO_CONFIRM_MS) },
+                              'deviceReturn.disputedAt': { $exists: false } } : {}),
+};
+const result = await collections.repairRequests.updateOne(filter, {
+    $set: { deliveryStatus: 'parcel_delivered', customerReceiptConfirmation: confirmation,
+            ...(request.technicianSettlement?.status === SETTLEMENT_PENDING
+                ? { 'technicianSettlement.status': SETTLEMENT_AVAILABLE, 'technicianSettlement.availableAt': now } : {}),
+            updatedAt: now },
+});
+return result.matchedCount === 1 ? confirmation : null;</pre>
+<p class="a">"Single-winner" filter: repair completed আর এখনো confirm হয়নি — দুইবার চাপলে দ্বিতীয়টা match করে না। Auto (cron) হলে আরও শর্ত: technician ৩ দিন আগে returned mark করেছে আর customer dispute করেনি। <b>একই update</b>-এ status বদল আর settlement available — টাকা ছাড়া আর confirm আলাদা হতে পারে না। Method তিনটা: customer, auto, admin।</p>
+<p class="what">Customer dispute করলে auto confirm হবে? — না, <code>disputedAt</code> থাকলে auto filter match করে না; admin সিদ্ধান্ত দেয়।</p>
+
+<p class="q">Status transition-এর নিয়ম কোথায়, বোঝাও।</p>
+<p class="file">sarabo-server/utils/repairRequestStatus.js</p>
+<pre class="code">const ALLOWED_TRANSITIONS = {
+    assignment_pending: [],
+    driver_assigned: ['rider_arriving'],
+    rider_arriving: ['parcel_picked_up'],
+    parcel_picked_up: ['parcel_delivered'],
+    parcel_delivered: []
+};
+function isValidTransition(currentStatus, nextStatus) {
+    const allowedNext = ALLOWED_TRANSITIONS[currentStatus];
+    return Array.isArray(allowedNext) &amp;&amp; allowedNext.includes(nextStatus);
+}</pre>
+<p class="a">Generic <code>PATCH /repair-requests/:id/status</code> শুধু এই ছোট map-এর পরের ধাপে যেতে দেয় (on the way → collected …)। Inspection, quote, payment, repair-এর status এই পথে বদলানো যায় না — সেগুলোর নিজস্ব endpoint নিজের নিয়ম চেক করে। Technician চাইলেও সরাসরি "repair_completed" বা "paid" বানাতে পারবে না।</p>
+<p class="what">Map-এ নেই এমন status দিলে? — <code>allowedNext</code> undefined → false → 400/409।</p>
+
+<p class="q">Minimum inspection fee-র code?</p>
+<p class="file">sarabo-server/utils/inspectionFee.js</p>
+<pre class="code">const SMALL_JOB_MAX_ESTIMATE_BDT = 1000;
+const MIN_INSPECTION_FEE_SMALL_BDT = 100;
+const MIN_INSPECTION_FEE_BDT = 200;
+
+function minimumInspectionFee(estimateMax) {
+    const max = Number(estimateMax);
+    return Number.isFinite(max) &amp;&amp; max &gt; 0 &amp;&amp; max &lt;= SMALL_JOB_MAX_ESTIMATE_BDT
+        ? MIN_INSPECTION_FEE_SMALL_BDT
+        : MIN_INSPECTION_FEE_BDT;
+}
+function withMinimumInspectionFee(fee, estimateMax) {
+    const amount = Number(fee);
+    const floor = minimumInspectionFee(estimateMax);
+    return Number.isFinite(amount) &amp;&amp; amount &gt; floor ? amount : floor;
+}</pre>
+<p class="a">Estimate-এর সর্বোচ্চ ≤1,000 হলে minimum 100, নাহলে (বা অজানা হলে) 200। <code>withMinimumInspectionFee</code> পুরনো/কম fee-কে floor পর্যন্ত তোলে। এক জায়গার নিয়ম — request, offer, admin editor আর public price list সবাই এটাই ব্যবহার করে, তাই কোথাও আলাদা হয় না।</p>
+<p class="what">অজানা estimate-এ বড় floor কেন? — নিরাপদ দিক: কম দেখিয়ে technician-কে ঠকানোর চেয়ে standard fee ভালো।</p>
+
+<p class="q">AI summary-র ভুল সংখ্যা ছাঁকার code?</p>
+<p class="file">sarabo-server/services/aiReportSummaryService.js</p>
+<pre class="code">function allowedNumbers(facts) {
+    const allowed = new Set(CONTEXT_NUMBERS);             // 24, 30, 90
+    const add = (n) =&gt; { … allowed.add(Math.abs(Math.round(n * 10) / 10)); allowed.add(Math.abs(Math.round(n))); };
+    const walk = (value) =&gt; {
+        if (typeof value === 'number') add(value);
+        else if (Array.isArray(value)) value.forEach(walk);
+        else if (value &amp;&amp; typeof value === 'object') {
+            if (Number.isFinite(value.thisPeriod) &amp;&amp; Number.isFinite(value.previousPeriod)) {
+                add(value.thisPeriod - value.previousPeriod);                    // পার্থক্য
+                if (value.previousPeriod !== 0) add(((value.thisPeriod - value.previousPeriod) / value.previousPeriod) * 100);  // % বদল
+            }
+            Object.values(value).forEach(walk);
+        }
+    };
+    walk(facts);
+    return allowed;
+}
+function numbersIn(text) { return (text.match(/\d[\d,]*(?:\.\d+)?/g) || []).map((n) =&gt; Number(n.replace(/,/g, ''))); }
+function onlyKnownNumbers(text, allowed) {
+    return numbersIn(text).every((n) =&gt; n &lt;= FREE_NUMBER_MAX || allowed.has(n) || allowed.has(Math.round(n)));
+}</pre>
+<p class="a"><code>walk</code> recursion দিয়ে facts object-এর ভেতরের প্রতিটা সংখ্যা set-এ রাখে; আগের-এখনের জোড়া থাকলে তাদের পার্থক্য আর % বদলও (AI "36 বেড়েছে" বললে যেন বাতিল না হয়)। <code>numbersIn</code> regex দিয়ে sentence থেকে সংখ্যা বের করে (কমা সরিয়ে)। <code>onlyKnownNumbers</code>: প্রতিটা সংখ্যা হয় ছোট (≤10), নয়তো set-এ আছে — নাহলে sentence বাদ।</p>
+<p class="what">10-এর নিচে কেন ছাড়? — "two to four", "3 actions" এমন ছোট সংখ্যা স্বাভাবিক লেখায় আসে; সেগুলো ক্ষতিকর ভুল তথ্য না।</p>
+
+<p class="q">AI note থেকে phone number সরানোর regex বোঝাও।</p>
+<p class="file">sarabo-server/services/aiOfferNoteService.js</p>
+<pre class="code">const BANGLA_DIGITS = '০১২৩৪৫৬৭৮৯';
+const toAsciiDigits = (text) =&gt; text.replace(/[০-৯]/g, (d) =&gt; String(BANGLA_DIGITS.indexOf(d)));
+
+const CONTACT_PATTERNS = Object.freeze([
+    /[^\s@]+@[^\s@]+\.[^\s@]+/g,                          // email
+    /\b(?:https?:\/\/|www\.)\S+/gi,                       // link
+    /\b[a-z0-9-]+\.(?:com|net|org|bd|me|io|link)\b\S*/gi, // domain
+    /(?:^|\s)@[A-Za-z0-9_.]{3,}/g,                        // @handle
+    /\+?\d(?:[\s().-]*\d){6,}/g,                          // ৭+ অঙ্কের phone
+]);
+function removeContactDetails(text) {
+    let clean = toAsciiDigits(text);
+    for (const pattern of CONTACT_PATTERNS) clean = clean.replace(pattern, ' ');
+    const result = clean === toAsciiDigits(text) ? text : clean;
+    return result.replace(/[ \t]{2,}/g, ' ').replace(/\s+([.,!?।])/g, '$1').trim();
+}</pre>
+<p class="a">আগে বাংলা অঙ্ক (০১৭…) ইংরেজি অঙ্কে বদলায়, যাতে বাংলায় লেখা phone-ও ধরা পড়ে। তারপর ৫টা pattern: email, link, domain, @handle, আর ৭ বা তার বেশি অঙ্ক (মাঝে space/dash/bracket থাকলেও)। কিছু সরানো না হলে আসল text (বাংলা অঙ্কসহ) ফেরত; সরানো হলে পরিষ্কার text। শেষে double space আর বিরামচিহ্নের আগের space ঠিক করে।</p>
+<p class="what">"৩,৫০০ টাকা" লিখলে সেটাও মুছবে? — না, ৪ অঙ্ক; pattern ৭+ অঙ্ক চায়।</p>
+
+<p class="q">Cron URL-এর secret check বোঝাও।</p>
+<p class="file">sarabo-server/controllers/pickupReminderController.js</p>
+<pre class="code">function secretMatches(provided, expected) {
+    const a = Buffer.from(String(provided || ''));
+    const b = Buffer.from(String(expected || ''));
+    return a.length === b.length &amp;&amp; crypto.timingSafeEqual(a, b);
+}
+async sendReminders(req, res) {
+    const secret = this.env.CRON_SECRET;
+    if (!secret) return res.status(503).send({ code: 'CRON_NOT_CONFIGURED', … });
+    const header = req.headers &amp;&amp; req.headers.authorization;
+    const provided = typeof header === 'string' &amp;&amp; header.startsWith('Bearer ') ? header.slice(7) : '';
+    if (!secretMatches(provided, secret)) { … 401 }
+    …
+}</pre>
+<p class="a">Vercel Cron header-এ <code>Bearer &lt;CRON_SECRET&gt;</code> পাঠায়। Secret set না থাকলে 503 (ভুলে খোলা না থাকে)। তুলনা <code>timingSafeEqual</code> দিয়ে — সাধারণ <code>===</code> প্রথম অমিল অক্ষরে থামে, সময় মেপে অক্ষর-অক্ষর করে secret অনুমান করা যেত; constant-time তুলনায় তা যায় না। Length আগে চেক কারণ <code>timingSafeEqual</code> সমান length চায়।</p>
+<p class="what">একদিনে কত reminder? — এক run-এ সর্বোচ্চ 200 (<code>MAX_REMINDERS_PER_RUN</code>), কারণ Gmail free limit দিনে প্রায় 500।</p>
+
+<p class="q">Warranty claim খোলা যাবে কি না — code?</p>
+<p class="file">sarabo-server/utils/warranty.js</p>
+<pre class="code">function claimEligibility(request, claims, now) {
+    const window = warrantyWindow(request);
+    if (!window) return { ok: false, code: 'WARRANTY_NOT_STARTED', window: null };
+    if (now &gt; window.endsAt) return { ok: false, code: 'WARRANTY_EXPIRED', window };
+    if ((claims || []).some((c) =&gt; isClaimOpen(c, now))) return { ok: false, code: 'CLAIM_ALREADY_OPEN', window };
+    if ((claims || []).length &gt;= MAX_CLAIMS_PER_REPAIR) return { ok: false, code: 'CLAIM_LIMIT_REACHED', window };
+    return { ok: true, window };
+}</pre>
+<p class="a">ক্রমানুসারে চার শর্ত: warranty শুরু হয়েছে (receipt confirm-এ শুরু)? ৩০ দিন পার হয়নি? এখন কোনো claim খোলা নেই? মোট ২টার কম? প্রতিটা fail-এর আলাদা code, client সেটা দেখে বার্তা দেখায়। <code>now</code> parameter হিসেবে আসে — test-এ সময় বদলে দেখা যায় (pure function)।</p>
+<p class="what"><code>now</code> function-এর ভেতরে <code>new Date()</code> না করে বাইরে থেকে কেন? — Test-এ "৩১ দিন পরে" simulate করতে; ঘড়ির উপর নির্ভর করলে test অস্থির হতো।</p>
+
+<p class="q">Client-এ data আনা আর mutation-এর পর refresh — code?</p>
+<p class="file">sarabo-client/src/hooks/useJobPortal.js, hooks/useQuoteMutations.js</p>
+<pre class="code">export const jobPortalKeys = {
+    portal: ['job-portal'],
+    openJobs: ['open-jobs'],
+    applications: (requestId) =&gt; ['job-applications', requestId],
+};
+export function useJobPortal({ enabled = true } = {}) {
+    const axiosSecure = useAxiosSecure();
+    return useQuery({ queryKey: jobPortalKeys.portal, queryFn: () =&gt; getJobPortal(axiosSecure),
+                      refetchInterval: 60 * 1000, enabled });
+}
+
+export function useSubmitQuote(requestId) {
+    const axiosSecure = useAxiosSecure();
+    const invalidate = useQuoteInvalidation(requestId);
+    return useMutation({
+        mutationFn: (payload) =&gt; submitQuote(axiosSecure, requestId, payload),
+        onSettled: invalidate,
+    });
+}</pre>
+<p class="a"><code>queryKey</code> হলো cache-এর নাম — একই key-এর data একবার আনা হয়, সব component share করে। <code>refetchInterval</code> 60 সেকেন্ডে নতুন job নিজে থেকে আনে। Mutation (quote পাঠানো) শেষ হলে — সফল বা ব্যর্থ, <code>onSettled</code> — সংশ্লিষ্ট key invalidate হয়, ফলে page নতুন data দেখায়। Key-গুলো এক object-এ রাখা যাতে টাইপো না হয়।</p>
+<p class="what"><code>onSuccess</code> না দিয়ে <code>onSettled</code> কেন? — Error হলেও (যেমন অন্যজন আগে বদলে দিয়েছে, 409) সর্বশেষ অবস্থা দেখানো দরকার।</p>
+
+<p class="q">Checkout দুবার খোলা আটকানোর code?</p>
+<p class="file">sarabo-server/services/checkoutSessionManager.js</p>
+<pre class="code">async function findActive(requestId) {
+    const row = await checkoutSessions.findOne({ requestId, active: true });
+    if (!row) return null;
+    if (row.status === 'creating') {
+        const age = Date.now() - row.createdAt.getTime();
+        if (age &gt; CREATING_CLAIM_TTL_MS) {              // 60 সেকেন্ড
+            await checkoutSessions.updateOne({ _id: row._id, active: true },
+                { $set: { status: 'failed', active: false, updatedAt: new Date() } });
+            return null;
+        }
+        return row;
+    }
+    if (row.status === 'open' &amp;&amp; row.expiresAt &amp;&amp; row.expiresAt &lt;= new Date()) {
+        await checkoutSessions.updateOne({ _id: row._id, active: true },
+            { $set: { status: 'expired', active: false, updatedAt: new Date() } });
+        return null;
+    }
+    return row;
+}</pre>
+<p class="a">একটা request-এ একটাই <code>active: true</code> row থাকতে পারে (partial unique index)। Stripe-এ session বানানোর আগে "creating" claim লেখা হয়; ৬০ সেকেন্ডে শেষ না হলে (server crash) সেটা failed করে ছেড়ে দেয়, যাতে চিরকাল আটকে না থাকে। খোলা session-এর মেয়াদ শেষ হলে expired। নাহলে আগের session-টাই আবার দেয় — দুই tab-এ দুইবার চাপলেও একটা checkout।</p>
+<p class="what">Database-এ unique index না থাকলে? — দুই request একসাথে এলে দুজনেই "কিছু নেই" দেখে দুটো claim লিখত; index দ্বিতীয়টা ফেলে দেয়।</p>
+
+<p class="q">Tracking code কীভাবে বানানো হয়?</p>
+<p class="file">sarabo-server/utils/trackingId.js</p>
+<pre class="code">function generateSecureTrackingId() {
+    const token = crypto.randomBytes(16).toString('base64url');
+    return `SRB-${token}`;
+}</pre>
+<p class="a">Node-এর <code>crypto.randomBytes</code> (cryptographically secure, <code>Math.random</code> না) থেকে 16 byte = 128 bit, base64url-এ (URL-এ নিরাপদ অক্ষর, 22টা)। কোনো তারিখ বা ক্রমিক অংশ নেই যাতে অনুমান সহজ হয়। DB-তে <code>trackingId</code> unique index — অসম্ভব কাকতালীয় মিল হলেও দুটো এক হবে না।</p>
+<p class="what">পুরনো <code>generateTrackingId()</code> কী? — Parcel যুগের ছোট code (তারিখ + ৬ hex অক্ষর); শুধু legacy-র জন্য আছে, নতুন request-এ ব্যবহার হয় না।</p>
+
+<div class="tip"><b>Code প্রশ্নের কৌশল:</b> (১) file-এর নাম আর কোন layer (route / middleware / controller / service / utils) বলো; (২) input কী, output কী; (৩) মূল শর্তগুলো ক্রমে; (৪) কেন এভাবে (race, privacy, test); (৫) "এটা বাদ দিলে কী হতো" — এক লাইনে। Code মুখস্থ না, <b>কারণ</b> মনে রাখো।</div>
 
 <div class="tip"><b>শেষ টিপস:</b> Demo-র আগে <code>RepairRequestV2Form.jsx</code>, <code>jobBooking.js</code>, <code>settlement.js</code>, <code>offerRanking.js</code>, <code>paymentController.js</code> (webhook অংশ) আর <code>middleware/auth.js</code> একবার খুলে দেখে নাও — "code দেখাও" বললে এগুলোই সবচেয়ে বেশি চাওয়া হয়। VS Code-এ <b>Ctrl+P</b> দিয়ে file নাম লিখে দ্রুত খোলো, <b>Ctrl+Shift+F</b> দিয়ে route path (যেমন <code>/applications</code>) খুঁজে দেখাও।</div>
 

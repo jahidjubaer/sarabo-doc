@@ -810,3 +810,16 @@ Nothing in entries 3–4 was committed, pushed or deployed.
   rapid-fire table. Each new fact was checked in the code.
 - Result: `presentation/Sarabo_Viva_QnA.pdf`, 20 pages (was 14), 113 questions plus the
   rapid-fire table.
+
+### 28. Code-explanation questions in the viva Q&A — 2026-10-18
+
+- Asked for: more code-explanation questions.
+- New section 21: 21 "explain this code" questions, each with a short excerpt copied from
+  the real file (long comments trimmed), the file path, a line-by-line explanation in
+  Bangla, and a "what if" follow-up (e.g. what breaks if this line is removed). Covers the
+  axios token interceptor, `verifyFBToken`, role middleware, `AdminRoute`, webhook route
+  order and handler, `calculateSettlement`, `calculateWallet`, `bookApplication`,
+  offer ranking, the match gate, `confirmReceiptOnce`, status transitions, the fee floor,
+  the AI number check, contact-detail removal, the cron secret check, warranty
+  eligibility, TanStack Query keys and mutations, the checkout claim, and tracking codes.
+- Result: `presentation/Sarabo_Viva_QnA.pdf`, 31 pages, 134 questions.
