@@ -752,3 +752,17 @@ Nothing in entries 3–4 was committed, pushed or deployed.
   those areas in the copies the report uses.
 - The BibTeX warning on compile is not new (the previous commit gives the same one).
 - Result: 128 pages (was 96), no undefined references.
+
+### 24. Two screenshots per page, and a coverage check — 2026-10-18
+
+- Asked for: fewer pages without dropping anything (one screenshot per page left large
+  blank spaces), and a check that the report covers all the work done.
+- Chapter 7: every screenshot is still the whole screen with its full caption, now sized
+  to 38% of the text height (about 88% of the text width) so two figures share a page.
+  The two phone screens stay side by side in one figure. Nothing was removed.
+- Result: 108 pages (was 128); chapter 7 is 33 pages (was 52). No undefined references.
+- Coverage check: every feature in the project overview and every work-log entry is in the
+  report (chapters 3-10, the final-phase table and the walkthrough). Small gaps noted for
+  the user: the admin Reports page (charts, region demand, pickup heat map) is described in
+  prose only through its AI summary, and the production settings for emails and the
+  reminder cron were not re-checked for this report.
