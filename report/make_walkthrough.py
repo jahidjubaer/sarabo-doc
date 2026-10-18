@@ -14,6 +14,8 @@ SRC = HERE / "img" / "screens"      # originals (most emails already blurred)
 OUT = HERE / "img" / "wt"
 TEX = HERE / "tex" / "walkthrough.tex"
 
+FIG_H = 0.38     # screenshot height as a share of the text height: two per page
+
 # personal email addresses still readable at the edge of a screenshot: (left, top, right, bottom)
 BLUR = {
     "c13": [(930, 1095, 1180, 1125)],
@@ -195,9 +197,10 @@ def figure_tex(key):
     _, short, caption = S[key]
     box = "{\\setlength{\\fboxsep}{0pt}\\fbox{\\includegraphics[%s]{img/wt/%s}}}"
     if key == "mob":   # two tall phone screens side by side
-        body = box % ("height=0.62\\textheight", "moba") + "\\hspace{10mm}" + box % ("height=0.62\\textheight", "mobb")
+        body = box % ("height=0.5\\textheight", "moba") + "\\hspace{10mm}" + box % ("height=0.5\\textheight", "mobb")
     else:
-        body = box % ("width=\\dimexpr\\linewidth-0.6pt\\relax,height=0.66\\textheight,keepaspectratio", key)
+        # the whole screen, sized so that two figures with their captions share a page
+        body = box % (f"width=\\dimexpr\\linewidth-0.6pt\\relax,height={FIG_H}\\textheight,keepaspectratio", key)
     # single-spaced caption, like the tables
     return (f"\\begin{{figure}}[!htbp]\\renewcommand{{\\baselinestretch}}{{1.0}}\\selectfont\\centering"
             f"{body}\\caption[{short}]{{{caption}}}\\label{{fig:wt-{key}}}\\end{{figure}}\n")
@@ -213,7 +216,7 @@ def main():
 \chapter{System Walkthrough}
 \label{ch:walkthrough}
 
-This chapter shows the finished system through """ + str(n) + r""" figures (54 screenshots), taken on 14 October 2026 from the final code with real Firebase sign-in, real Gemini answers and Stripe in test mode. Section~\ref{sec:wt-public} shows the public pages. From Section~\ref{sec:wt-request} the screenshots follow \emph{one} repair, the cracked Samsung Galaxy A54 used throughout this report, through every state in Figure~\ref{fig:e2e}, switching between the customer's and the technician's screens as the case moves on. The last two sections show the technician's own account and the admin pages. Each picture shows the whole browser window as the user saw it, at the full width of the page. Personal email addresses are blurred, and other requests, people and figures visible in lists come from the seeded development data.
+This chapter shows the finished system through """ + str(n) + r""" figures (54 screenshots), taken on 14 October 2026 from the final code with real Firebase sign-in, real Gemini answers and Stripe in test mode. Section~\ref{sec:wt-public} shows the public pages. From Section~\ref{sec:wt-request} the screenshots follow \emph{one} repair, the cracked Samsung Galaxy A54 used throughout this report, through every state in Figure~\ref{fig:e2e}, switching between the customer's and the technician's screens as the case moves on. The last two sections show the technician's own account and the admin pages. Each picture shows the whole browser window as the user saw it, uncropped, two to a page. Personal email addresses are blurred, and other requests, people and figures visible in lists come from the seeded development data.
 
 % a page holding only a screenshot starts it at the top of the page, not in the middle
 \makeatletter\setlength{\@fptop}{0pt}\setlength{\@fpbot}{0pt plus 1fil}\makeatother
