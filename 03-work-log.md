@@ -766,3 +766,19 @@ Nothing in entries 3–4 was committed, pushed or deployed.
   the user: the admin Reports page (charts, region demand, pickup heat map) is described in
   prose only through its AI summary, and the production settings for emails and the
   reminder cron were not re-checked for this report.
+
+### 25. Admin reports section, and emails and reminders in production — 2026-10-18
+
+- Asked for: fix the two gaps from the coverage check. The user confirmed that emails and
+  the daily reminder job run on Vercel.
+- New Section 6.15 "Admin Attention List and Reports": what the attention list counts and
+  how it is ordered, and the seven parts of the Reports page (overview against the previous
+  period, daily trend, regions, top devices and repairs, pickup heat map, technician
+  workload, inspection-fee money), checked against `controllers/adminReportController.js`.
+  The AI summary section now points to it.
+- Section 5.x (notifications, email and scheduled jobs): the daily job's time (12:00 UTC,
+  18:00 Bangladesh, from `vercel.json`) and every step it runs (from
+  `controllers/pickupReminderController.js`), and that email and the job are on in
+  production. Section 6 "Notifications and Reminders" no longer says "when enabled".
+  Objective O8 in the evaluation table says both run in production.
+- Result: 109 pages, no undefined references.

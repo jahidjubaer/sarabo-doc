@@ -213,8 +213,24 @@ The Service Areas page draws every district on an OpenStreetMap map (Leaflet) fr
 \section{Feedback and Moderation}
 After a receipt-confirmed repair the customer may leave one review: 1--5 stars and an optional plain-text comment of up to 1,000 characters. Admins can hide or restore a review with a reason, and every change is kept in a moderation history. A customer can also file a private report about a technician (e.g.\ unprofessional behaviour, device damage, a payment issue); reports go only to admins, move through \emph{open}, \emph{under review}, \emph{resolved} or \emph{dismissed}, and are never deleted with the request. Technicians see their rating and visible reviews, never reports or reviewer identities.
 
+\section{Admin Attention List and Reports}
+\label{sec:reports}
+\paragraph*{Attention list.} The admin home page puts the work that needs a person first (Figure~\ref{fig:wt-a01}): missed pickups (a technician was booked but the device was not collected), overdue pickups (the window passed with no technician), requests with no offer 24 hours after posting, stalled repairs, requests no technician in the region can take, and inspection-fee refunds still waiting on Stripe. Items are ordered by urgency, then age, and each count opens its list already filtered, for example ``Assign technicians'' with only overdue or unmatched requests.
+
+\paragraph*{Reports page.} \texttt{GET /admin/reports?days=7|30|90} builds one read-only report for the last 7, 30 or 90 Bangladesh days (Figures~\ref{fig:wt-a08}--\ref{fig:wt-a09b}). It has seven parts:
+\begin{itemize}
+  \item \textbf{Overview}, each figure next to the previous period of the same length: requests made, repairs finished, requests cancelled, success rate (finished $\div$ (finished + cancelled)), average days from request to finished repair, and requests turned away because no local technician offers that repair.
+  \item \textbf{Trend}: requests made and repairs finished per day as a line chart, with ``Show as a table'' giving the same numbers as text.
+  \item \textbf{Regions}: for each division, the requests, how many are waiting, how many of those no local technician can take, how many were turned away, and the approved and free technicians. Regions that need recruiting stand out.
+  \item \textbf{Devices and repairs}: the eight most requested devices and repair types.
+  \item \textbf{Pickup times}: a heat map of booked pickups by weekday and two-hour window (Friday closed), so admins can see when demand peaks.
+  \item \textbf{Technician workload}: busy, free and never-assigned technicians, and the ten who finished most repairs, shown with name, region and counts only, never contact details.
+  \item \textbf{Inspection fees}: fees paid and refunded, fees kept (split into the technician's 90\% and Sarabo's 10\%, and by reason: quote declined or late cancellation) and refunds still pending.
+\end{itemize}
+The chart colours were checked for contrast in light and dark mode. The same report is the only input to the optional AI summary (Section~\ref{sec:aisummary}), so the summary cannot mention a number the page does not show.
+
 \section{Notifications and Reminders}
-Forty-seven notification types, defined in one module (\texttt{utils/notificationEvents.js}) and each with a de-duplication key, cover offers, booking, refunds, inspection, quotes, payment, repair, returns and disputes, warranty, reviews and withdrawals. The daily job sends one ``pickup tomorrow'' reminder per slot, in the app and by email when enabled.
+Forty-seven notification types, defined in one module (\texttt{utils/notificationEvents.js}) and each with a de-duplication key, cover offers, booking, refunds, inspection, quotes, payment, repair, returns and disputes, warranty, reviews and withdrawals. The daily job sends one ``pickup tomorrow'' reminder per request and pickup slot to the customer and the assigned technician, in the app and by email; a moved pickup is reminded again. This runs on the live site every evening at 18:00.
 
 \section{Damage Image Upload}
 \begin{figure}[htbp]
