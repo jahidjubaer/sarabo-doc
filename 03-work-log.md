@@ -719,3 +719,20 @@ Nothing in entries 3–4 was committed, pushed or deployed.
   uploads on its own); client CI also runs browser tests; the API has 125 routes
   ("over 120"); the manual-acceptance section now records the 14 October walkthrough.
 - Result: 86 pages, no undefined references.
+
+### 22. Whole, full-width screenshots with fuller captions — 2026-10-18
+
+- Asked for: the supervisor did not approve the cropped screenshots; show every
+  screenshot at full width with nothing cropped, and describe each figure in more detail.
+  More pages are acceptable.
+- Chapter 7 keeps the same 21 screens (user's choice), but each is now the whole
+  1800 x 1125 browser window at the full text width (`report/make_walkthrough.py` no
+  longer crops; `img/wt/` holds uncropped copies).
+- Every screenshot caption is now two or three sentences: what the screen is, who uses
+  it, what its main parts show, and where the step fits in the walkthrough repair. The
+  List of Figures uses a short title for each. Other figures' captions are unchanged
+  (user's choice).
+- Layout: two full-width screenshots with these captions do not fit on one A4 page
+  (each image is 94 mm tall in a 217 mm text area), so each has its own page, placed at
+  the top. Screenshot captions are single-spaced, like the tables.
+- Result: 96 pages (was 86), no undefined references.
