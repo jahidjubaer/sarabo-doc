@@ -736,3 +736,19 @@ Nothing in entries 3–4 was committed, pushed or deployed.
   (each image is 94 mm tall in a 217 mm text area), so each has its own page, placed at
   the top. Screenshot captions are single-spaced, like the tables.
 - Result: 96 pages (was 86), no undefined references.
+
+### 23. All 54 screenshots in the walkthrough — 2026-10-18
+
+- Asked for: add every screenshot (the home page was missing) and improve the chapter further.
+- Chapter 7 now shows all 54 screenshots taken on 14 October in 53 figures (the two phone
+  screens share one figure, side by side). Each is the whole screen at full text width,
+  one per page from the top, with a 2-3 sentence caption and a short List of Figures title.
+- Ten sections follow the walkthrough repair: Public Website; Creating the Request;
+  Receiving an Offer; Choosing and Booking; Pickup, Inspection and Quote; Payment; Repair
+  and Hand-Over; Warranty; The Technician's Account; Administration. Each section opens
+  with a short paragraph explaining what happens and who acts.
+- Privacy: three screenshots still showed part of a personal email at the edge (payment
+  history, admin request list, technician profile editor). `make_walkthrough.py` now blurs
+  those areas in the copies the report uses.
+- The BibTeX warning on compile is not new (the previous commit gives the same one).
+- Result: 128 pages (was 96), no undefined references.
