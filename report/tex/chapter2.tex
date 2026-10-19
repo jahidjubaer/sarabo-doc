@@ -5,41 +5,41 @@
 \chapter{Background and Related Work}
 
 \section{Web-Based Service Management}
-Unlike a static information system, a service platform moves each request through decisions made by different people. Sarabo uses a resource-oriented HTTP API in the REST style~\cite{fielding2000}: the browser presents the workflow, but only the server decides whether a transition is legal.
+A static information system mostly stores and shows data. A service platform is different, because each request moves forward through decisions made by different people. Sarabo uses a resource-oriented HTTP API in the REST style~\cite{fielding2000}. The browser shows the workflow, but only the server decides whether a change of state is allowed.
 
 \section{Single-Page Application Architecture}
-The client is a React single-page application: React composes stateful components~\cite{react}, React Router maps public and role-specific routes, and TanStack Query manages server state, caching and invalidation~\cite{tanstack}. This matters because request status, offers, quotes, balances and notifications change independently of the form a user is filling in. Vite~\cite{vite} builds the app and Tailwind CSS~\cite{tailwind} styles it.
+The client is a React single-page application. React builds the interface out of stateful components~\cite{react}, React Router maps the public and role-specific routes, and TanStack Query manages server state, caching and invalidation~\cite{tanstack}. This is important here because a request's status, its offers, quotes, balances and notifications can all change while a user is in the middle of filling in a form. Vite~\cite{vite} builds the app and Tailwind CSS~\cite{tailwind} handles the styling.
 
 \section{RESTful API and Express}
-The server uses Express~5~\cite{express}, with routes grouped by domain (users, technicians, requests, offers, inspection, quotes, payments, repairs, warranty, wallet, feedback, notifications, tracking, catalogue, uploads, support, administration). Sensitive routes check authentication and role before any database operation.
+The server runs on Express~5~\cite{express}. Its routes are grouped by domain: users, technicians, requests, offers, inspection, quotes, payments, repairs, warranty, wallet, feedback, notifications, tracking, catalogue, uploads, support and administration. Sensitive routes check who the caller is and what role they have before touching the database.
 
 \section{Document Database and Transactions}
-MongoDB~\cite{mongodb} suits a repair request, which keeps one identity while gathering nested workflow data (product and price snapshots, images, inspection, quote and history, payment, evidence, assignment history, settlement). Separate collections hold things with their own lifecycle, index or audit trail (offers, payments, notifications, tracking events, withdrawals, reviews, warranty claims), and multi-document transactions on a replica set change several of them together or not at all.
+MongoDB~\cite{mongodb} is a good fit for a repair request. The request keeps one identity for its whole life while collecting nested workflow data along the way, such as product and price snapshots, images, the inspection, the quote and its history, payment, evidence, assignment history and settlement. Things that have their own lifecycle, index or audit trail live in separate collections (offers, payments, notifications, tracking events, withdrawals, reviews and warranty claims). Multi-document transactions on a replica set make sure several of them change together, or not at all.
 
 \section{Authentication and Authorization}
-Firebase Authentication supplies identity and signed ID tokens~\cite{firebaseauth}; the server verifies each token with the Firebase Admin SDK before trusting the caller's email. Authorization is role-based (Customer, Technician, Admin) and state-based (the request must be in the right stage). The stored Technician role is still \texttt{rider}, from the original codebase, but users only see ``Technician''.
+Firebase Authentication provides identity and signed ID tokens~\cite{firebaseauth}. The server verifies each token with the Firebase Admin SDK before it trusts the caller's email. Authorization works on two levels: by role (Customer, Technician or Admin) and by state (the request has to be at the right stage). The Technician role is still stored as \texttt{rider}, a leftover from the original codebase, but users only ever see the word ``Technician''.
 
 \section{Online Payment Processing}
-Card payments use Stripe Checkout~\cite{stripe}, and the server's record is authoritative: Stripe calls a webhook verified with a shared secret~\cite{stripewebhooks}, so a payment is recorded even if the customer closes the browser. Refunds use idempotency keys, so none is issued twice. Payments currently run in test mode.
+Card payments go through Stripe Checkout~\cite{stripe}, and the server's own record is the one that counts. Stripe calls a webhook that is verified with a shared secret~\cite{stripewebhooks}, so a payment is still recorded even if the customer closes the browser halfway. Refunds use idempotency keys, which means the same refund can never be issued twice. For now, payments run in test mode.
 
 \section{Private Object Storage}
-Images live in a private Supabase Storage bucket~\cite{supabase}. The browser uploads directly through a short-lived signed URL, the server verifies the stored file's real type and size, and every view uses a fresh signed URL; large files never pass through the API, and the storage key never reaches the browser.
+Images are kept in a private Supabase Storage bucket~\cite{supabase}. The browser uploads each file directly through a short-lived signed URL, the server then checks the stored file's real type and size, and every time someone views an image a fresh signed URL is created. This way large files never pass through the API, and the storage key never reaches the browser.
 
 \section{Large Language Models in Applications}
-Large language models such as Google Gemini~\cite{gemini} turn free text into structured data, summarise and draft messages, but can also be confidently wrong, be steered by instructions hidden in user text (prompt injection), and cost unpredictably; OWASP lists prompt injection and overreliance among the main risks~\cite{owaspllm}. Sarabo therefore uses AI only as an \emph{assistant}: answers follow a JSON schema, are checked against live data, never set a price, and are reviewed by a person (Chapter~\ref{ch:ai}).
+Large language models such as Google Gemini~\cite{gemini} can turn free text into structured data, summarise information and draft messages. They also have well-known weaknesses: they can be confidently wrong, they can be steered by instructions hidden inside user text (prompt injection), and their cost can be hard to predict. OWASP lists prompt injection and overreliance among the main risks~\cite{owaspllm}. For this reason Sarabo uses AI only as an \emph{assistant}. Its answers must follow a JSON schema, they are checked against live data, they never set a price, and a person always reviews them (Chapter~\ref{ch:ai}).
 
 \section{Usability and Accessibility}
-The interface is action-first: the repair's stage and the role's next action outweigh secondary data, and a ``service spine'' (Request, Inspect, Approve, Repaired) recurs on the home page, tracking page and dashboards. Labels, focus order, keyboard access, contrast, reduced motion and layouts from 320\,px follow WCAG~2.2~\cite{wcag22}.
+The interface is built around actions. The stage the repair has reached and the next thing the user needs to do are shown more prominently than secondary details. A ``service spine'' with four stages (Request, Inspect, Approve, Repaired) appears on the home page, the tracking page and the dashboards. Labels, focus order, keyboard access, colour contrast, reduced motion and layouts that work from 320\,px wide all follow WCAG~2.2~\cite{wcag22}.
 
 \section{Related Systems}
-Repair and home-service needs in Bangladesh are served today in three broad ways:
+Today, people in Bangladesh get repairs and home services in three broad ways:
 \begin{itemize}
-  \item \textbf{Local repair shops and freelance technicians}, found through word of mouth or social media. Prices are negotiated in person, there is no tracking and little recourse.
-  \item \textbf{Brand service centres}, which offer reliable repair for their own products but cover only one brand and are concentrated in large cities.
-  \item \textbf{General on-demand service marketplaces} such as Sheba.xyz in Bangladesh~\cite{sheba} and Urban Company in South Asia~\cite{urbancompany}, which let customers book many kinds of household services from listed providers.
+  \item \textbf{Local repair shops and freelance technicians}, found through word of mouth or social media. The price is negotiated face to face, there is no tracking, and the customer has little to fall back on if something goes wrong.
+  \item \textbf{Brand service centres}, which repair their own products reliably but cover only one brand and are mostly found in large cities.
+  \item \textbf{General on-demand service marketplaces} such as Sheba.xyz in Bangladesh~\cite{sheba} and Urban Company in South Asia~\cite{urbancompany}, where customers book many kinds of household services from listed providers.
 \end{itemize}
 
-International platforms such as Thumbtack~\cite{thumbtack} popularised the model in which customers describe a job and several professionals respond with quotes. Sarabo adopts this offer model but specialises it for electronics repair, where the true price is usually unknown until the device has been opened. Table~\ref{tab:related} compares the approaches on the features most relevant to this project.
+International platforms such as Thumbtack~\cite{thumbtack} made a particular model popular: the customer describes a job and several professionals reply with quotes. Sarabo uses this offer model but adapts it to electronics repair, where the real price is usually unknown until someone has opened the device. Table~\ref{tab:related} compares the approaches on the features that matter most for this project.
 
 \begin{table}[htbp]
 \centering
@@ -63,6 +63,6 @@ Bangla/Banglish AI request assistance & -- & -- & \checkmark \\
 \end{tabularx}
 \end{table}
 
-Sarabo's contribution is not a new algorithm. Its engineering value lies in combining patterns from ticketing systems (a trackable case with an identifier and history), field-service systems (assignment, inspection, completion), marketplaces (offers, payment, commission, payouts) and evidence-driven workflows (private photos and completion records) into one coherent repair workflow with explicit state, money and authorization rules.
+Sarabo does not introduce a new algorithm. Its value is in the engineering: it brings together patterns from ticketing systems (a trackable case with an ID and a history), field-service systems (assignment, inspection and completion), marketplaces (offers, payment, commission and payouts) and evidence-based workflows (private photos and completion records). These are combined into one consistent repair workflow, with clear rules for state, money and access.
 
 \end{document}

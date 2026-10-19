@@ -6,7 +6,7 @@
 \label{ch:testing}
 
 \section{Testing Strategy}
-Testing focused on \emph{domain correctness}: whether the right person can do the right thing at the right time, exactly once. Four layers were used (Figure~\ref{fig:testlayers}).
+The testing mainly checks that the business rules are right. In other words, can the right person do the right thing at the right time, and only once? I used four layers of testing (Figure~\ref{fig:testlayers}).
 
 \begin{figure}[htbp]
 \centering
@@ -20,15 +20,15 @@ Testing focused on \emph{domain correctness}: whether the right person can do th
 \label{fig:testlayers}
 \end{figure}
 
-\paragraph*{Server integration tests.} A custom harness (\texttt{test-all.js}) starts its own API on a random port against an isolated test database, seeds role accounts, an approved technician and the catalogue, and calls endpoints over real HTTP, plus direct service checks. Stripe, Supabase, Gemini and email are injected fakes, so no external service or money is touched. Races are tested by firing competing requests at once (two admins assigning, a cancellation racing a payment, one webhook delivered several times): each must give exactly one winner and a consistent state.
+\paragraph*{Server integration tests.} A custom test harness (\texttt{test-all.js}) starts its own copy of the API on a random port, connected to a separate test database. It creates accounts for each role, an approved technician and the catalogue, and then calls the endpoints over real HTTP. It also checks some services directly. Stripe, Supabase, Gemini and email are all replaced with fakes, so the tests never touch an outside service or any money. To test race conditions, the harness sends competing requests at the same moment, for example two admins assigning the same request, a cancellation arriving together with a payment, or one webhook delivered several times. In every case there must be exactly one winner, and the data must end up consistent.
 
-\paragraph*{Browser tests.} Playwright runs a production build of the client against a faked API on desktop and mobile (Pixel~7) viewports, covering public pages, the jobs board (listing, filters, sorting, empty and error states), tracking (valid, unknown and invalid codes, server errors), sign-in forms and route protection.
+\paragraph*{Browser tests.} Playwright runs a production build of the client against a fake API, at both desktop and mobile (Pixel~7) screen sizes. The tests cover the public pages, the jobs board (the listing, filters, sorting, and the empty and error states), tracking (valid, unknown and invalid codes, and server errors), the sign-in forms and route protection.
 
-\paragraph*{Continuous integration.} GitHub Actions runs the server suites on a throwaway MongoDB~8 replica set, and client lint, build and browser tests, on every push and pull request. On the final commits (server 16 October, client 14 October 2026) the server workflow passed and the client lint-and-build job passed; the client browser-test job failed once on GitHub while the same 58 tests pass locally on that commit (Table~\ref{tab:results}).
+\paragraph*{Continuous integration.} On every push and pull request, GitHub Actions runs the server suites on a throwaway MongoDB~8 replica set, and runs lint, the build and the browser tests for the client. On the final commits (16 October for the server and 14 October 2026 for the client), the server workflow passed and so did the client's lint-and-build job. The client's browser-test job failed once on GitHub, even though the same 58 tests pass locally on that commit (Table~\ref{tab:results}).
 
 \section{Verification Results}
 \label{sec:results}
-For this report every check was run on 14--16 October 2026 against the final code (client commit \texttt{e9caaeb}, server commit \texttt{d81fa65}). The server suites were run against a temporary in-memory MongoDB replica set, as in CI, so no shared database state can affect the result. Table~\ref{tab:results} shows the results.
+For this report I ran every check between 14 and 16 October 2026 on the final code (client commit \texttt{e9caaeb} and server commit \texttt{d81fa65}). Just as in CI, the server suites ran against a temporary in-memory MongoDB replica set, so no leftover data in a shared database could affect the results. Table~\ref{tab:results} shows what happened.
 
 \begin{table}[htbp]
 \centering
@@ -53,7 +53,7 @@ GitHub Actions, client browser tests (same tests pass locally) & \multicolumn{2}
 \end{tabularx}
 \end{table}
 
-The server suite has grown from 1,890 checks at the time of the earlier report (August 2026) to 2,761. The final phase added 181 of them: 15 for the final payout on removal, 4 for the AI fallback, 22 for offer ranking, 45 for the warranty, 72 for the no-stuck workflow fixes, 22 for profile editing and the minimum inspection fee, and 1 for the Stripe item name.
+When the earlier report was written in August 2026, the server suite had 1,890 checks. It now has 2,761. The final phase alone added 181 of them: 15 for the final payout on removal, 4 for the AI fallback, 22 for offer ranking, 45 for the warranty, 72 for the fixes that stop requests getting stuck, 22 for profile editing and the minimum inspection fee, and 1 for the Stripe item name.
 
 \section{Representative Test Scenarios}
 \begin{longtable}{@{}p{1.1cm}p{6.1cm}p{6.9cm}@{}}
@@ -105,7 +105,7 @@ T-34 & Technician changes service area during an active repair & Refused; allowe
 \end{longtable}
 
 \section{Manual End-to-End Acceptance}
-In August 2026 the core lifecycle (request, assign, inspect, quote, reject, revise, approve, pay, repair, complete, confirm receipt) was accepted by hand with three accounts and Stripe test cards, checking that all roles saw the same state and that money became available only after receipt. On 14 October 2026 the marketplace flow was walked through the same way with real customer, technician and admin accounts: AI-assisted request, offer with AI note, inspection-fee payment, pickup condition, inspection, quote, approve-and-pay, repair, hand-back, review, a warranty claim to resolution, and a bKash withdrawal marked paid. Chapter~\ref{ch:walkthrough} is the record of that run.
+In August 2026 I tested the core lifecycle by hand with three accounts and Stripe test cards: request, assign, inspect, quote, reject, revise, approve, pay, repair, complete and confirm receipt. I checked that every role saw the same state, and that the money only became available after the customer confirmed receipt. On 14 October 2026 I went through the marketplace flow in the same way, using real customer, technician and admin accounts. This run covered an AI-assisted request, an offer with an AI note, the inspection-fee payment, the pickup condition, inspection, the quote, approve-and-pay, the repair, the hand-back, a review, a warranty claim through to its resolution, and a bKash withdrawal marked as paid. Chapter~\ref{ch:walkthrough} is the record of that run.
 
 \section{Evaluation Against Objectives}
 \begin{table}[htbp]
@@ -134,6 +134,6 @@ O12 & Achieved & Warranty, deadlines and stalled-work alerts (T-28 -- T-32) \\
 \end{table}
 
 \section{Validation Boundary}
-The automated results come from an isolated environment with fake providers. Payments use Stripe test mode, so no real money has moved, and there are no real customers yet. Load testing and a formal security audit were out of scope.
+It is worth being clear about what these results do and do not show. The automated results come from an isolated environment with fake providers. Payments run in Stripe test mode, so no real money has changed hands, and the platform has no real customers yet. Load testing and a formal security audit were outside the scope of this project.
 
 \end{document}

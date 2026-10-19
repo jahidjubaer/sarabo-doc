@@ -5,7 +5,7 @@
 
 \chapter{API Surface}
 \label{app:api}
-All routes except the public ones require a Firebase ID token. ``Role'' shows who may call the route (C = Customer, T = Technician, A = Admin, P = public).
+Every route except the public ones needs a Firebase ID token. The ``Role'' column shows who is allowed to call each route (C = Customer, T = Technician, A = Admin, P = public).
 
 {\footnotesize
 \begin{longtable}{@{}p{1.5cm}p{7.4cm}p{0.9cm}p{3.6cm}@{}}
@@ -135,7 +135,7 @@ GET & \nolinkurl{/cron/pickup-reminders} & Cron & Daily reminders, deadlines and
 \text{Minimum inspection fee} &= 100 \text{ if the highest estimate} \le 1{,}000, \text{ else } 200\\
 \text{Warranty refund} &= \text{Quote total (repair payment + credited fee); settlement reversed}
 \end{align*}
-All amounts are whole Bangladeshi taka (BDT). The settlement is calculated on the full quote, even when part of it was covered by the inspection fee. A settlement becomes withdrawable only after the customer confirms receipt; a kept inspection-fee share is available immediately.
+All amounts are in whole Bangladeshi taka (BDT). The settlement is calculated on the full quote, even when the inspection fee already paid for part of it. A repair settlement can only be withdrawn after the customer confirms receipt, but the technician's share of a kept inspection fee is available straight away.
 
 \begin{table}[htbp]
 \centering
@@ -194,21 +194,21 @@ npm test             # full suite, isolated test database
 npm run seed:service-definitions -- --confirm-seed
 \end{lstlisting}
 
-\paragraph*{Configuration.} No secret values appear in this report. Database, Firebase, Stripe, Supabase, Gemini, Gmail and cron credentials are supplied through environment variables, documented by name in each repository's \texttt{.env.example}, \texttt{README.md} and \texttt{SETUP.md}.
+\paragraph*{Configuration.} This report contains no secret values. The credentials for the database, Firebase, Stripe, Supabase, Gemini, Gmail and the cron job are provided through environment variables. Their names (but not their values) are listed in each repository's \texttt{.env.example}, \texttt{README.md} and \texttt{SETUP.md}.
 
 \chapter{Incident Record: Revised Quote Hang}
 \label{app:incident}
-\paragraph*{Observed failure.} During manual testing in August 2026, submitting a \emph{revised} quote (after the customer had rejected the first one) left the technician's screen on ``Working...'' indefinitely.
+\paragraph*{What went wrong.} While I was testing by hand in August 2026, I found that submitting a \emph{revised} quote (after the customer had rejected the first one) left the technician's screen stuck on ``Working...'' for good.
 
-\paragraph*{Cause.} The ``quote submitted'' notification used a de-duplication key that was the same for the whole life of a request. The second round therefore hit a duplicate-key error inside the database transaction. The code treated that error as a harmless duplicate and carried on, but MongoDB had already aborted the transaction. The commit then failed, the driver retried the same callback, and the cycle repeated until it timed out, with nothing ever saved.
+\paragraph*{Cause.} The ``quote submitted'' notification used a de-duplication key that stayed the same for the whole life of a request. So the second round of quoting hit a duplicate-key error inside the database transaction. The code treated this as a harmless duplicate and carried on, but by then MongoDB had already aborted the transaction. The commit failed, the driver retried the same callback, and this repeated until it timed out, without anything ever being saved.
 
-\paragraph*{Fix.} The key now includes the quote round, derived on the server:
+\paragraph*{Fix.} The key now includes the quote round, which the server works out itself:
 \begin{lstlisting}[caption={Round-aware quote notification key},label={lst:roundkey}]
 round = quoteHistory.length + 1
 key   = "repair:" + requestId + ":quote_submitted:" + round
 \end{lstlisting}
-In addition, notification creation inside a transaction first checks for an existing key in the same session, and if a race still causes a duplicate-key error, the error is passed on so that the driver restarts the whole transaction cleanly instead of continuing an aborted one. Regression tests cover first and revised submissions, same-round replays and transactional races.
+On top of that, when a notification is created inside a transaction, the code now first checks whether the key already exists in the same session. If a race still causes a duplicate-key error, the error is passed on, so the driver restarts the whole transaction cleanly instead of carrying on with one that has already been aborted. Regression tests cover first and revised submissions, repeats within the same round, and races between transactions.
 
-\paragraph*{Lesson.} Inside a database transaction, an error may already have invalidated the transaction by the time application code sees it. Such errors must be propagated, not swallowed.
+\paragraph*{Lesson.} Inside a database transaction, an error may already have broken the transaction by the time the application code sees it. Errors like this have to be passed on, not swallowed.
 
 \end{document}

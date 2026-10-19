@@ -34,7 +34,7 @@ Delivery & GitHub Actions, Vercel & CI, serverless API (Mumbai region), cron, st
 \end{table}
 
 \section{Development Process}
-Sarabo was built in small, reviewable phases from 26 July to 4 October 2026, plus a final improvement phase from 11 to 16 October: 163 client and 120 server commits. Each phase followed one loop: define the rule, implement it on the server with tests, build the interface, run lint, build and tests, review. Larger features used branches merged by pull request once CI passed (Table~\ref{tab:phases}).
+I built Sarabo in small phases that were each easy to review, from 26 July to 4 October 2026, followed by a final improvement phase from 11 to 16 October. Altogether this came to 163 commits on the client and 120 on the server. Every phase followed the same loop. First I defined the rule, then implemented it on the server together with its tests, then built the interface, ran lint, the build and the tests, and finally reviewed the result. Larger features were developed on their own branches and merged through a pull request once CI had passed (Table~\ref{tab:phases}).
 
 \begin{longtable}{@{}p{3.2cm}p{2.2cm}p{8.8cm}@{}}
 \caption{Development phases (from the git history)}\label{tab:phases}\\
@@ -62,32 +62,36 @@ Sarabo was built in small, reviewable phases from 26 July to 4 October 2026, plu
 
 \section{Frontend Implementation}
 \subsection{Role-Aware Routing}
-The dashboard sits behind an authenticated route with role guards. Customers get Overview, Create Request, My Requests and Payment History; Technicians get Overview, Find jobs, Assigned jobs, Completed jobs, Warranty claims and Wallet; Admins get Overview, Repair requests, Assign technicians, Technicians, Withdrawals, Warranty claims, Users, Services \& prices, Reports, Technician reports and Technician reviews. All roles have Notifications and Profile; phones get a bottom tab bar. Deep links (e.g.\ \texttt{?category=smartphone}) survive sign-in. Routing is only a convenience: every protected endpoint re-checks authentication and authorization.
+The dashboard is behind a route that requires sign-in, with guards for each role. Customers see Overview, Create Request, My Requests and Payment History. Technicians see Overview, Find jobs, Assigned jobs, Completed jobs, Warranty claims and Wallet. Admins see Overview, Repair requests, Assign technicians, Technicians, Withdrawals, Warranty claims, Users, Services \& prices, Reports, Technician reports and Technician reviews. Every role also has Notifications and Profile, and on phones these pages move to a tab bar at the bottom. Deep links such as \texttt{?category=smartphone} are kept through sign-in. The routing is only there for convenience, though. Every protected endpoint checks authentication and authorization again on the server.
 
 \subsection{Server-State Hooks}
-Each feature has a query-key factory (e.g.\ \texttt{quoteKeys}, \texttt{walletKeys}) and read/mutate hooks. A mutation invalidates exactly the stale queries (approving a quote refreshes the quote, the request, the request list and payment eligibility), so all three roles stay consistent without page reloads.
+Each feature has its own query-key factory (for example \texttt{quoteKeys} or \texttt{walletKeys}) and hooks for reading and changing data. When something changes, only the queries that are now out of date are refreshed. Approving a quote, for instance, refreshes the quote, the request, the request list and the payment eligibility. This keeps what all three roles see in step, without anyone having to reload the page.
 
 \subsection{Action-First Workspace}
-Each request page (e.g.\ Figure~\ref{fig:wt-c10}) shows the service spine, then a ``next step'' panel telling the signed-in role what to do (e.g.\ ``Choose a technician'' or ``Approve and pay BDT 3,800''), then supporting details. Shared empty, loading, error, confirmation and form components keep behaviour consistent; a product tour introduces each dashboard, and a command menu supports keyboard navigation.
+Every request page (see Figure~\ref{fig:wt-c10} for an example) starts with the service spine. Below it is a ``next step'' panel that tells the signed-in user what to do, such as ``Choose a technician'' or ``Approve and pay BDT 3,800'', and the supporting details come after that. Shared components for empty, loading, error and confirmation states and for forms make every page behave the same way. A product tour introduces each dashboard, and a command menu lets users move around with the keyboard.
 
 \section{Backend Implementation}
 \subsection{Controllers, Services and Adapters}
-Endpoints live in domain controllers (e.g.\ \texttt{jobPortalController}, \texttt{quoteController}, \texttt{paymentController}); shared logic lives in services such as \texttt{jobBooking}, \texttt{inspectionFeeRefunds}, \texttt{paymentEligibility}, \texttt{technicianMatchGate} and \texttt{notificationService}. External providers sit behind adapters (Supabase, Gemini, Stripe) that tests replace with fakes.
+Each domain has a controller for its endpoints, for example \texttt{jobPortalController}, \texttt{quoteController} and \texttt{paymentController}. Logic that is shared goes into services such as \texttt{jobBooking}, \texttt{inspectionFeeRefunds}, \texttt{paymentEligibility}, \texttt{technicianMatchGate} and \texttt{notificationService}. The external providers (Supabase, Gemini and Stripe) are wrapped in adapters, which the tests replace with fakes.
 
 \subsection{Database Transactions}
-Updates to several dependent records use MongoDB transactions. Booking after an inspection-fee payment, for instance, records the payment, sets the request to \texttt{driver\_assigned}, marks the technician busy, accepts the chosen offer and marks the others \texttt{not\_chosen} in one transaction (\texttt{services/jobBooking.js}); if any step fails, nothing changes.
+Whenever several records depend on each other, they are updated inside a MongoDB transaction. Take booking after an inspection-fee payment. In one transaction (\texttt{services/\allowbreak jobBooking.js}) the server records the payment, sets the request to \texttt{driver\_assigned}, marks the technician as busy, accepts the chosen offer and marks all the other offers \texttt{not\_chosen}. If any of these steps fails, none of them is saved.
 
 \subsection{Notifications, Email and Scheduled Jobs}
-Events create in-app notifications through one service, with de-duplication keys so a retry never notifies twice. Emails (request received, pickup reminder, new job) go through Gmail after the main action; a failed email is logged in \texttt{email\_log} and never fails the request. A daily Vercel Cron job (\texttt{GET /cron/pickup-reminders} at 12:00 UTC, 18:00 in Bangladesh), protected by a secret, sends the next day's pickup reminders and applies every deadline in Section~\ref{sec:nostuck}: it closes declined and unpaid quotes nobody acted on, confirms receipts the customer left unanswered for three days, and alerts admins to late warranty steps and stalled work. Each step runs on its own, so one failure does not stop the others. Email and the daily job are both switched on in production, so the live site sends reminders by email as well as in the app.
+All in-app notifications are created through one service. Each one has a de-duplication key, so retrying an action never sends the same notification twice. Emails (request received, pickup reminder and new job) are sent through Gmail after the main action has finished. If an email fails, it is logged in \texttt{email\_log}, and the request itself still succeeds.
+
+Once a day a Vercel Cron job calls \texttt{GET /cron/pickup-reminders} at 12:00 UTC, which is 18:00 in Bangladesh. The call is protected by a secret. The job sends the pickup reminders for the next day and applies every deadline described in Section~\ref{sec:nostuck}. It closes declined and unpaid quotes that nobody acted on, confirms receipts that the customer has left unanswered for three days, and warns admins about late warranty steps and stalled work. Each of these steps runs separately, so if one fails the others still run. Email and the daily job are both turned on in production, which means the live site sends reminders by email as well as in the app.
 
 \section{Service Catalogue and Matching}
-Admins edit services and prices from the dashboard; a price change increments \texttt{pricingRule.version}, while existing requests keep their price snapshot. Every service has an inspection fee of at least 100\,BDT (200\,BDT when its estimate tops out above 1,000\,BDT). One rule, \texttt{minimumInspectionFee}, applies to requests, offers, the editor and the public price list, and a one-time migration raised the 16 live services that had no fee. On request creation \texttt{technicianMatchGate} checks that an approved technician in the region has the required device, repair and level; if not, the API answers \texttt{409 NO\_TECHNICIAN\_AVAILABLE} and the refused demand is counted once per customer, service, region and day (customer hashed), showing admins where to recruit.
+Admins edit services and prices from the dashboard. Changing a price increases \texttt{pricingRule.version}, while requests that already exist keep their own copy of the old price. Every service has an inspection fee of at least 100\,BDT, or 200\,BDT if the top of its estimate is above 1,000\,BDT. A single rule, \texttt{minimumInspectionFee}, is used for requests, offers, the catalogue editor and the public price list. A one-time migration raised the fee for the 16 live services that had none.
+
+When a request is created, \texttt{technicianMatchGate} checks that there is an approved technician in the region who covers the device and the repair at the required level. If there is not, the API answers \texttt{409 NO\_TECHNICIAN\_AVAILABLE}, and the refused request is counted once per customer, service, region and day, with the customer stored only as a hash. These counts show admins where they need to recruit more technicians.
 
 \section{Pickup Scheduling}
-Customers pick one of four two-hour windows (10:00--18:00 Bangladesh time), Saturday to Thursday, one hour to seven days ahead. Each region takes a configurable number of pickups per slot (default three; a full slot returns \texttt{409 PICKUP\_SLOT\_FULL}). The window can change until collection, and a moved pickup is reminded again.
+Customers choose one of four two-hour windows between 10:00 and 18:00 Bangladesh time, from Saturday to Thursday, anywhere from one hour to seven days ahead. Each region accepts a set number of pickups per slot. This number can be configured and is three by default, and a full slot returns \texttt{409 PICKUP\_SLOT\_FULL}. The customer can change the window until the device is collected, and if the pickup moves, the reminder is sent again.
 
 \section{Quotation Model}
-A quote has whole-taka labour, parts and additional charges, a total, currency, version and status. A rejected quote moves to \texttt{quoteHistory} before the live quote is cleared, so it stays auditable and can never be paid by mistake.
+A quote is made up of labour, parts and additional charges, all in whole taka, plus a total, a currency, a version and a status. When a quote is rejected, it is moved to \texttt{quoteHistory} before the live quote is cleared. That way there is still a record of it, and it can never be paid by mistake.
 
 \begin{lstlisting}[caption={Quote total and amount still to pay},label={lst:quote}]
 repairSubtotal   = laborAmount + partsAmount + additionalCharges
@@ -96,10 +100,10 @@ amountDue        = max(quote.totalAmount - inspectionFeePaid, 0)
 \end{lstlisting}
 
 \section{Payment Implementation}
-Every Stripe Checkout session is created from stored data (the approved quote or the chosen offer's fee), never from a browser amount, and its metadata says what it pays for (\texttt{repair} or \texttt{inspection\_fee}). The signed webhook and, as a fallback, the success page call the same idempotent processor, so a payment is recorded exactly once. One server function decides whether a request is paid, used by eligibility, admin filters and badges alike. Each payment has a PDF receipt (Stripe ID, Dhaka-time date, device, repair, technician, amount, refund status).
+Every Stripe Checkout session is created from data the server has stored, either the approved quote or the fee of the chosen offer. It never uses an amount sent by the browser. The session's metadata records what it is paying for, either \texttt{repair} or \texttt{inspection\_fee}. The signed webhook and, as a backup, the success page both call the same idempotent processor, so each payment is recorded exactly once. A single server function decides whether a request counts as paid, and the eligibility checks, admin filters and status badges all use it. Every payment also has a PDF receipt showing the Stripe ID, the date in Dhaka time, the device, the repair, the technician, the amount and the refund status.
 
 \section{Technician Settlement and Wallet}
-When a repair is paid, a settlement snapshot is frozen from the approved quote:
+As soon as a repair is paid, the server takes a snapshot of the settlement from the approved quote, and this snapshot does not change afterwards:
 
 \begin{lstlisting}[caption={Settlement rule (whole taka)},label={lst:settlement}]
 commission  = round(repairSubtotal * 10 / 100)    # Sarabo
@@ -107,20 +111,22 @@ receivable  = repairSubtotal - commission          # Technician
 # invariant: commission + receivable == repairSubtotal
 \end{lstlisting}
 
-The settlement stays \emph{pending} until the customer confirms receipt, then becomes \emph{available}. Balances are never stored; they are recomputed from settlements and withdrawals, so they cannot drift. A technician withdraws up to the available balance to a bKash number; an admin sends it by bKash Send Money and records the TrxID. A unique partial index allows one open withdrawal per technician.
+The settlement stays \emph{pending} until the customer confirms they have received the device, and then it becomes \emph{available}. Balances are never stored. They are worked out each time from the settlements and withdrawals, so they cannot slowly drift away from the truth. A technician can withdraw up to their available balance to a bKash number. An admin then sends the money with bKash Send Money and records the TrxID. A unique partial index makes sure each technician can only have one open withdrawal at a time.
 
 \section{Damage and Evidence Images}
-Images go straight from the browser to a private Supabase bucket via a signed upload URL (JPEG, PNG or WebP, up to 8\,MB, three per request). The server checks the stored object's real type and size before attaching it, and gives five-minute signed read URLs only to the owner, an admin or the assigned technician. Storage clean-up after deletion is retried until it succeeds.
+Images go straight from the browser to a private Supabase bucket through a signed upload URL. They must be JPEG, PNG or WebP files of up to 8\,MB, with at most three per request. Before attaching an image, the server checks the real type and size of the stored file. Signed links for viewing it last five minutes and are given only to the owner, an admin or the assigned technician. When something is deleted, the storage clean-up is retried until it succeeds.
 
 \section{Public Tracking and Jobs Board}
-Each request gets a tracking code \texttt{SRB-<random>} with 128 bits of randomness; \texttt{GET /public/trackings/:code} (exact codes, rate limited) returns only the status timeline. The jobs board (\texttt{GET /jobs}, 60 requests per minute per address) shows device, repair, area, pickup day, usual price and offer count, never the problem text, photos, tracking code or personal details.
+Every request gets a tracking code of the form \texttt{SRB-<random>}, with 128 bits of randomness. \texttt{GET /public/trackings/:code} only accepts exact codes, is rate limited, and returns nothing but the status timeline. The jobs board (\texttt{GET /jobs}, limited to 60 requests per minute per address) shows the device, the repair, the area, the pickup day, the usual price and the number of offers. It never shows the problem description, photos, the tracking code or any personal details.
 
 \section{Deployment and Continuous Integration}
-The API is a Vercel serverless function (Node.js 24) at \url{https://sarabo-server.vercel.app} and the client a static Vercel site at \url{https://sarabo-client-six.vercel.app}; both deploy from \texttt{main}. The API runs in Vercel's Mumbai region (\texttt{bom1}), next to the MongoDB Atlas cluster, which cut the first request after idle from 10.7\,s to 2.9\,s and a normal one from 0.75\,s to about 0.2\,s. Production has its own database, and the server will not start there without its secrets and an \texttt{https} client origin. GitHub Actions runs on every push: the server suites on a throwaway MongoDB replica set (never with real credentials), and client lint, build and browser tests. Pushing to \texttt{main} happens only after all checks pass.
+The API is a Vercel serverless function (Node.js 24) at \url{https://sarabo-server.vercel.app}, and the client is a static Vercel site at \url{https://sarabo-client-six.vercel.app}. Both are deployed from the \texttt{main} branch. The API runs in Vercel's Mumbai region (\texttt{bom1}), close to the MongoDB Atlas cluster. Moving it there brought the first request after an idle period down from 10.7\,s to 2.9\,s, and a normal request from 0.75\,s to about 0.2\,s. Production has a database of its own, and the server refuses to start there unless its secrets and an \texttt{https} client origin are set.
+
+GitHub Actions runs on every push. It runs the server suites on a throwaway MongoDB replica set, never with real credentials, and it runs lint, the build and the browser tests for the client. I only push to \texttt{main} after all of these checks have passed.
 
 \section{Final Improvement Phase}
 \label{sec:finalphase}
-After feature completion on 4 October, a final phase (11--16 October 2026) prepared the project for submission, starting with a review of both codebases and a fresh run of every check (Chapter~\ref{ch:testing}). Each change is recorded in the project work log with its problem, files and verification, and summarised in Table~\ref{tab:finalphase}.
+The features were finished on 4 October. After that, a final phase from 11 to 16 October 2026 got the project ready for submission. It began with a review of both codebases and a fresh run of every check (Chapter~\ref{ch:testing}). I recorded each change in the project work log, with the problem it solved, the files it touched and how it was verified. Table~\ref{tab:finalphase} summarises these changes.
 
 {\small
 \begin{longtable}{@{}p{0.6cm}p{2cm}p{11.4cm}@{}}

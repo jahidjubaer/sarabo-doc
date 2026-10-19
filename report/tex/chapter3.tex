@@ -5,7 +5,7 @@
 \chapter{Requirements Analysis}
 
 \section{Stakeholders and Roles}
-The system has three signed-in roles and one anonymous audience. Their goals are summarised in Table~\ref{tab:roles}.
+Sarabo has three roles for signed-in users, plus visitors who use it without an account. Table~\ref{tab:roles} summarises what each of them wants from the system.
 
 \begin{table}[htbp]
 \centering
@@ -25,7 +25,7 @@ Visitor & Learn about the service & Browse services, service areas and open jobs
 \end{table}
 
 \section{Functional Requirements}
-Table~\ref{tab:fr} lists the functional requirements. Requirements FR-21 to FR-32 were added in the second development stage, and FR-33 to FR-38 in the final phase.
+Table~\ref{tab:fr} lists the functional requirements. FR-21 to FR-32 were added during the second development stage, and FR-33 to FR-38 during the final phase.
 
 \begin{longtable}{@{}p{1.4cm}p{13cm}@{}}
 \caption{Functional requirements}\label{tab:fr}\\
@@ -104,7 +104,7 @@ Auditability & Tracking events, assignment history, quote history, payment rows,
 \end{table}
 
 \section{Service Catalogue}
-The catalogue contains \textbf{45 services} across eight device categories (Table~\ref{tab:catalogue}). Each service pairs a device category with a repair category and carries a BDT estimate range, an inspection-fee cap, a required expertise level (beginner, intermediate, advanced, expert) and an estimated duration. Prices are shown as estimates; the final amount is always the technician's written quote after inspection.
+The catalogue has \textbf{45 services} spread over eight device categories (Table~\ref{tab:catalogue}). Each service links a device category to a repair category. It also has an estimated price range in BDT, a maximum inspection fee, the expertise level a technician needs (beginner, intermediate, advanced or expert) and an estimated duration. These prices are only estimates. The amount the customer actually pays is always the technician's written quote after inspection.
 
 \begin{table}[htbp]
 \centering
@@ -130,7 +130,7 @@ Other Electronics & 2 & General Repair & 1,000--5,000 \\
 \end{table}
 
 \section{Use-Case View}
-Figure~\ref{fig:usecase} shows the main interactions of each role with the platform.
+Figure~\ref{fig:usecase} shows the main things each role does on the platform.
 
 \begin{figure}[htbp]
 \centering

@@ -5,25 +5,25 @@
 \chapter{AI-Assisted Features}
 \label{ch:ai}
 
-Sarabo uses Google Gemini in four places. In each the AI \emph{suggests} and a person \emph{decides}: nothing it returns changes a price, payment or request state without human review. All four are off by default and need an explicit setting and an API key; the client asks \texttt{GET /ai/status} and hides unavailable features. The model is \texttt{gemini-3.5-flash-lite}, with \texttt{gemini-3.1-flash-lite} as fallback when it is slow, overloaded or rate-limited.
+Sarabo uses Google Gemini in four places. In all of them the same idea applies: the AI \emph{suggests}, and a person \emph{decides}. Nothing the AI returns can change a price, a payment or the state of a request unless a person has reviewed it. All four features are off by default and only work once they are turned on in the settings and an API key is supplied. The client calls \texttt{GET /ai/status} and hides any feature that is not available. The main model is \texttt{gemini-3.5-flash-lite}. When it is slow, overloaded or rate-limited, \texttt{gemini-3.1-flash-lite} is used instead.
 
 \section{AI Customer Support Chat}
-A chat on every page answers questions about how Sarabo works, its services and usual prices. The prompt is built from the \emph{live} catalogue (\texttt{supportKnowledgeService}), so prices are always current. History, message and answer length are capped, and follow-up buttons (View services, Track a request, Log in, Create an account) come from a fixed list, not generated links (Figure~\ref{fig:wt-p05}).
+Every page has a chat that answers questions about how Sarabo works, what services it offers and what they usually cost. The prompt is built from the \emph{live} catalogue (\texttt{supportKnowledgeService}), so the prices it mentions are always up to date. The length of the history, of each message and of each answer is capped. The follow-up buttons (View services, Track a request, Log in and Create an account) come from a fixed list, so the AI never makes up links (Figure~\ref{fig:wt-p05}).
 
 \section{AI Request Helper}
-On the request form a customer can describe the problem in Bangla, English or mixed ``Banglish'' and/or add a damage photo. The AI drafts the device, catalogue service, brand, model, an English description, a confidence level, an optional follow-up question and, for a photo, whether it shows a device. The form fills itself, the customer edits anything, and \emph{Undo} restores the previous values (Figure~\ref{fig:wt-c02}). A photo showing a device is kept with the request's photos and sent when the customer presses ``Upload'', so it need not be picked twice.
+On the request form, the customer can describe the problem in Bangla, in English or in a mix of the two (``Banglish''), add a photo of the damage, or do both. The AI then drafts the device, the catalogue service, the brand, the model and an English description. It also gives a confidence level, may ask a follow-up question, and for a photo says whether it actually shows a device. The form fills itself in, the customer can change anything, and \emph{Undo} brings back the previous values (Figure~\ref{fig:wt-c02}). If the photo shows a device, it is kept with the request's other photos and sent when the customer presses ``Upload'', so they do not have to pick it a second time.
 
 \section{Technician Price Guide and AI Offer Note}
-A price guide (computed without AI) shows the usual range from real offers for the same service in the last 180 days: the 25th percentile of ``from'' prices to the 75th percentile of ``to'' prices, and the same for fees; with fewer than three offers it uses the catalogue range. Offers far outside it get an advisory warning.
+The price guide does not use AI at all. It shows the usual price range from real offers made for the same service over the last 180 days, running from the 25th percentile of the ``from'' prices to the 75th percentile of the ``to'' prices, and it does the same for fees. If there are fewer than three offers, it uses the catalogue range instead. An offer that falls far outside the guide gets a warning, but the technician can still send it.
 
-The technician can ask AI to write the offer note in English or Bangla. The model sees only what the technician sees (device, repair, problem text, whether photos exist), writes in the technician's voice, presents the likely issue as a possibility, says the final price follows inspection, and uses no numbers. Phone numbers (including Bangla digits), emails, links and social handles are stripped, so contact stays on the platform (Figure~\ref{fig:wt-t03}).
+The technician can also ask the AI to write the offer note, in English or in Bangla. The model is given only what the technician can see: the device, the repair, the problem description and whether there are photos. It writes in the technician's voice, describes the likely issue only as a possibility, says that the final price will be set after inspection, and uses no numbers. Phone numbers (Bangla digits included), emails, links and social media handles are removed from the note, so all contact stays on the platform (Figure~\ref{fig:wt-t03}).
 
 \section{AI Summary of Admin Reports}
 \label{sec:aisummary}
-The Reports page (7, 30 or 90 days, Section~\ref{sec:reports}) can show an AI summary: a headline, two to four highlights and one to three actions. The model gets only aggregate figures (requests made, finished and cancelled, success rate, average days, refused demand by region, top devices and repairs, workload, inspection-fee money, attention counts), never names, emails or IDs. The last summary per period is stored, so reopening costs nothing (Figure~\ref{fig:wt-a08}).
+The Reports page (for 7, 30 or 90 days, see Section~\ref{sec:reports}) can show an AI summary made up of a headline, two to four highlights and one to three suggested actions. The model only receives totals: requests made, finished and cancelled, the success rate, the average number of days, refused requests by region, the top devices and repairs, technician workload, inspection-fee money and the attention counts. It never receives names, emails or IDs. The most recent summary for each period is saved, so opening it again costs nothing (Figure~\ref{fig:wt-a08}).
 
 \section{Safeguards}
-Table~\ref{tab:aisafety} summarises how the main risks of LLM features~\cite{owaspllm} are handled.
+Table~\ref{tab:aisafety} sums up how Sarabo deals with the main risks of features built on LLMs~\cite{owaspllm}, and Table~\ref{tab:ailimits} gives the default usage limits.
 
 \begin{table}[htbp]
 \centering
@@ -64,6 +64,6 @@ Report summary & 5 & 20 & 50 \\
 \end{tabular}
 \end{table}
 
-All AI tests use fake providers, so the automated suites never call Gemini or spend money.
+All of the AI tests use fake providers, so the automated test suites never call Gemini and never cost any money.
 
 \end{document}

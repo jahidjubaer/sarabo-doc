@@ -843,3 +843,21 @@ Nothing in entries 3–4 was committed, pushed or deployed.
   was not checked on a real phone.
 
 Committed as client `33368a7` (author and committer Jahid Hasan) and pushed to `github.com/jahidjubaer/sarabo-client` (`main`).
+
+### 30. Report wording made more natural (humanized) — 2026-10-20
+- Type: docs
+- Asked for: keep everything in the report as it is, but make the writing read like a person
+  wrote it.
+- What was changed: the running text of every chapter, the abstract, the acknowledgements,
+  the appendix notes and the walkthrough captions was rewritten in plain first-person
+  language. Long lists in brackets and chains of semicolons became shorter sentences, and
+  stiff phrases ("The central design decision is...", "This matters because...") were
+  replaced. No facts, numbers, dates, commit IDs, tables, figures, labels or references
+  were changed. The requirement, data and result tables were left as they were.
+- Files: `report/tex/*.tex` (all chapters), `report/make_walkthrough.py` (caption text only;
+  `tex/walkthrough.tex` regenerated from it), `Sarabo_Final_Report.pdf`.
+- How it was checked: compiled with tectonic, with no undefined references. Three paragraphs
+  that pushed a code name into the margin were reworded. The only warnings left are the two
+  small (5.5 pt) table warnings in the appendix that were already there. The report is now
+  111 pages (was 109) because the plainer sentences are a little longer.
+- Not pushed.

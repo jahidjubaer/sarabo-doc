@@ -5,50 +5,50 @@
 \chapter{Security, Reliability and Data Integrity}
 
 \section{Security Principles}
-Sarabo is \emph{server-authoritative}: the client decides what to show, the server what is allowed, enforcing authorization at every resource operation~\cite{owasprest}. Secrets (database, Stripe, Supabase, Gemini, Gmail, cron) live only in server environment variables, never in the repository or the browser.
+In Sarabo the server has the final word. The client decides what to show, but only the server decides what is allowed, and it checks authorization on every operation on every resource~\cite{owasprest}. The secrets for the database, Stripe, Supabase, Gemini, Gmail and the cron job are kept only in the server's environment variables. They never appear in the repository or in the browser.
 
 \section{Authentication}
-Each protected request carries a Firebase ID token, verified on the server with Firebase Admin; the caller's email comes only from that token, so endpoints such as \texttt{/technicians/me} or the wallet never take another user's email as input. Creating requests or payments needs a verified email address.
+Every protected request carries a Firebase ID token, which the server verifies with Firebase Admin. The caller's email is taken only from this token. This is why endpoints such as \texttt{/technicians/me} or the wallet never accept someone else's email as input. A user also needs a verified email address before they can create requests or make payments.
 
 \section{Role- and State-Based Authorization}
-Every write endpoint checks both who the caller is and what state the request is in:
+Every endpoint that changes data checks two things: who the caller is, and what state the request is in.
 \begin{itemize}
-  \item only Admins approve technicians, edit the catalogue, retry refunds, process withdrawals and moderate feedback;
-  \item only an approved, matching Technician can see job details or send an offer, and only the booked Technician can inspect, quote, revise and repair;
-  \item only the owning Customer can choose or reject offers, decide on a quote, pay, cancel, confirm receipt and review;
-  \item a quote can be submitted only after inspection, payment only after approval, revision only from \texttt{quote\_rejected}, and a paid repair can never re-enter the rejected-quote path.
+  \item Only Admins can approve technicians, edit the catalogue, retry refunds, process withdrawals and moderate feedback.
+  \item Only an approved Technician who matches the job can see its details or send an offer, and only the booked Technician can inspect, quote, revise and repair.
+  \item Only the Customer who owns the request can choose or reject offers, decide on a quote, pay, cancel, confirm receipt and leave a review.
+  \item A quote can only be submitted after the inspection, payment can only happen after approval, and a revision can only start from \texttt{quote\_rejected}. A paid repair can never go back into the rejected-quote path.
 \end{itemize}
-Requests that do not belong to the caller return the same ``not found'' answer as missing ones, so their existence is not revealed.
+If a request does not belong to the caller, the server gives the same ``not found'' answer as it would for a request that does not exist, so it does not reveal that the request is there.
 
 \section{Financial Integrity}
-Prices, fees, credits, commissions, balances and withdrawal limits are derived on the server from stored data, in whole taka. Stripe sessions use stored amounts, the webhook signature is checked on the raw body~\cite{stripewebhooks}, payments and refunds are idempotent, settlements are frozen once, and a withdrawal moves to \emph{paid} or \emph{rejected} through a single-winner update, so it can never be paid twice.
+Prices, fees, credits, commissions, balances and withdrawal limits are all calculated on the server from stored data, in whole taka. Stripe sessions use amounts the server has stored, and the webhook signature is checked against the raw request body~\cite{stripewebhooks}. Payments and refunds are idempotent, and a settlement is fixed only once. A withdrawal moves to \emph{paid} or \emph{rejected} through an update that only one caller can win, so it can never be paid twice.
 
 \section{Privacy}
-Public endpoints (tracking, jobs board, availability) return purpose-built projections with no names, emails, addresses, phone numbers, payment data or database IDs. Technicians see only the district and problem until booked; refused-demand counts store a hash, not the email; reports about technicians are admin-only.
+The public endpoints (tracking, the jobs board and availability) return data shaped specially for them, with no names, emails, addresses, phone numbers, payment data or database IDs. Until they are booked, technicians see only the district and the problem. The counts of refused requests store a hash instead of the customer's email, and reports about technicians are visible to admins only.
 
 \section{Private Image Security}
-The bucket is private; signed URLs are short-lived and per object; the server checks the real stored type and size, and never returns the permanent object identifier.
+The storage bucket is private. Each signed URL is for one object only and expires quickly. The server checks the real type and size of each stored file, and it never sends out the permanent identifier of an object.
 
 \section{Input Validation and Safe Errors}
-The server validates IDs, transitions, amounts, text lengths, file types and each mutation's allowed fields, rejecting anything unexpected; user text is stored and shown as plain text. Errors use stable codes (e.g.\ \texttt{PICKUP\_SLOT\_FULL}) instead of raw provider messages, and logs keep only request ID, route, status and a category, never bodies or secrets.
+The server validates IDs, state changes, amounts, text lengths, file types and the fields each update is allowed to touch, and it rejects anything unexpected. Text written by users is stored and shown as plain text. Errors use fixed codes such as \texttt{PICKUP\_SLOT\_FULL} instead of passing on raw messages from providers. The logs keep only the request ID, the route, the status and a category, never request bodies or secrets.
 
 \section{CORS, Rate Limiting and Abuse Control}
-The API accepts browser calls only from the configured \texttt{https} client origin. Tracking, the jobs board and all AI features are rate limited, with AI limits stored in MongoDB so they hold across serverless instances; the scheduled job refuses to run without its secret.
+The API accepts calls from browsers only if they come from the configured \texttt{https} client origin. Tracking, the jobs board and all of the AI features are rate limited. The AI limits are stored in MongoDB, so they still apply when the API runs on several serverless instances at once. The scheduled job will not run without its secret.
 
 \section{Transaction Safety}
-MongoDB transactions protect the invariants that matter most:
+MongoDB transactions protect the rules that matter most:
 \begin{itemize}
-  \item a request's state and its technician's availability always agree, so a technician cannot be double-booked;
-  \item a payment, the booking it causes and the offers it closes change together;
-  \item a quote transition, its tracking event and its notification apply together or not at all;
-  \item a fee refund is marked pending in the same transaction as the event that causes it.
+  \item a request's state and its technician's availability always agree, so a technician cannot be booked twice;
+  \item a payment, the booking it leads to and the offers it closes all change together;
+  \item a change to a quote, its tracking event and its notification are applied together or not at all;
+  \item a fee refund is marked as pending in the same transaction as the event that causes it.
 \end{itemize}
-A late defect (Appendix~\ref{app:incident}) showed a subtle rule: a duplicate-key error inside a transaction has already aborted it, so it must be passed on for the driver to retry, never swallowed.
+A bug found late in development (Appendix~\ref{app:incident}) taught me a less obvious rule. When a duplicate-key error happens inside a transaction, the transaction has already been aborted. The error therefore has to be passed on so the driver can retry, and must never be swallowed.
 
 \section{Environment Isolation}
-Development, tests and production use different databases, and tests refuse to run against development or production. Seed and migration scripts default to dry runs and need explicit one-time flags for production; CI uses a throwaway database and no real credentials.
+Development, testing and production each use their own database, and the tests refuse to run against the development or production database. Seed and migration scripts do a dry run unless told otherwise, and running them on production needs explicit one-time flags. CI uses a throwaway database and no real credentials.
 
 \section{Legacy Compatibility Boundary}
-Some stored values come from the original parcel-delivery codebase (the role \texttt{rider}, statuses such as \texttt{driver\_assigned} or \texttt{parcel\_delivered}). They are frozen contract values behind a presentation layer, so users only see repair terms; renaming them needs a data migration (future work).
+Some stored values still come from the parcel-delivery codebase Sarabo started from, such as the role \texttt{rider} and statuses like \texttt{driver\_assigned} or \texttt{parcel\_delivered}. They are fixed contract values hidden behind a presentation layer, so users only ever see repair terms. Renaming them would need a data migration, which is left as future work.
 
 \end{document}
