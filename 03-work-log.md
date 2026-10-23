@@ -861,3 +861,21 @@ Committed as client `33368a7` (author and committer Jahid Hasan) and pushed to `
   small (5.5 pt) table warnings in the appendix that were already there. The report is now
   111 pages (was 109) because the plainer sentences are a little longer.
 - Not pushed.
+
+### 31. Project task sheet and a Bangla project explainer — 2026-10-24
+- Type: docs
+- Asked for: a task sheet for Sarabo in the same format as the example in `task-list/`
+  (another group's thesis sheet), and an informal Bangla report for my own preparation, so
+  I can explain the project clearly.
+- `task-list/Sarabo_Project_Task_Sheet.docx`: built from the example file so the layout,
+  fonts, logo and signature rows stay identical. Heading changed to "Project Task Sheet",
+  project name, one student (ID 222-115-116, Jahid Hasan), and 33 tasks from requirement
+  analysis to defense preparation, all marked Completed. The example file itself is not
+  committed.
+- `presentation/Sarabo_Bangla_Report.pdf` (7 pages, from `project-bangla-report.html`,
+  headless Chrome, Nirmala UI): the problem, the roles, the whole journey as one story,
+  money rules, offer ranking, AI and its safeguards, tech stack and why, architecture,
+  security, the no-stuck rules, testing, problems met while building, limitations, numbers
+  to remember, and a 2-minute spoken explanation. Facts taken from the report, the work log
+  and the viva sheet.
+- Not pushed.

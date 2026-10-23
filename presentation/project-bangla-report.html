@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<title>Sarabo — বাংলায় Project বোঝা</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm 16mm 14mm; }
+  body { font-family: "Nirmala UI", "Shonar Bangla", "Segoe UI", sans-serif; font-size: 10.8pt; line-height: 1.6; color: #1a1a1a; }
+  h1 { font-size: 20pt; margin: 0 0 4px; }
+  h2 { font-size: 14.5pt; margin: 22px 0 8px; padding-bottom: 3px; border-bottom: 2px solid #1f6f5c; color: #12493d; page-break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 14px 0 4px; color: #12493d; page-break-after: avoid; }
+  p { margin: 4px 0 6px; }
+  code { font-family: Consolas, "Cascadia Mono", monospace; font-size: 9pt; background: #f1f4f3; padding: 0 3px; border-radius: 3px; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; font-size: 9.6pt; }
+  th, td { border: 1px solid #c9d3d0; padding: 4px 6px; vertical-align: top; text-align: left; }
+  th { background: #e5efec; }
+  tr { page-break-inside: avoid; }
+  .flow { font-family: Consolas, "Nirmala UI", monospace; font-size: 9pt; background: #f6f8f7; border: 1px solid #dde5e2; padding: 8px 10px; white-space: pre-wrap; margin: 4px 0 8px; page-break-inside: avoid; }
+  .tip { background: #fff6e5; border: 1px solid #f0d49b; padding: 6px 9px; margin: 8px 0; border-radius: 4px; page-break-inside: avoid; }
+  .say { background: #eef6f3; border-left: 4px solid #1f6f5c; padding: 6px 10px; margin: 8px 0; page-break-inside: avoid; }
+  .small { font-size: 9pt; color: #555; }
+  ul, ol { margin: 2px 0 6px 20px; padding: 0; }
+  li { margin: 2px 0; }
+</style>
+</head>
+<body>
+
+<h1>Sarabo — বাংলায় পুরো Project বোঝা</h1>
+<p class="small">নিজের প্রস্তুতির জন্য, formal report না। উদ্দেশ্য একটাই: কেউ জিজ্ঞেস করলে যেন গুছিয়ে, পরিষ্কার করে বলতে পারি project-টা কী, কেন, কীভাবে কাজ করে। সব সংখ্যা report আর code থেকে মিলিয়ে লেখা। ২৪ অক্টোবর ২০২৬।</p>
+
+<div class="say"><b>এক লাইনে:</b> Sarabo হলো একটা web platform, যেখানে customer অনলাইনে phone/laptop/TV/fridge/AC ইত্যাদি repair-এর request দেয়, এলাকার verified technician-রা offer পাঠায়, customer একজনকে বেছে নেয়, আর device তুলে নেওয়া থেকে repair, payment, ফেরত দেওয়া, warranty পর্যন্ত সবকিছু track করা যায়।</div>
+
+<h2>১. সমস্যাটা কী ছিল? (কেন বানালাম)</h2>
+<p>আমাদের দেশে কিছু নষ্ট হলে সাধারণত যা হয়:</p>
+<ul>
+  <li>দোকান খুঁজি পরিচিত কারো কাছ থেকে শুনে — দোকানটা ভালো কিনা জানার উপায় নেই।</li>
+  <li>দাম আগে থেকে জানি না। device দিয়ে আসার পর দাম বলে, তখন দর কষাকষি করার সুযোগ কম।</li>
+  <li>device এখন কোথায়, কী অবস্থায় — কিছুই দেখতে পাই না, বারবার ফোন করতে হয়।</li>
+  <li>কোনো লিখিত record নেই। repair-এর পর আবার নষ্ট হলে প্রমাণ বা warranty দাবি করার কিছু নেই।</li>
+</ul>
+<p>Sarabo এই informal কাজটাকে একটা <b>tracked, দাম-জানা, record-রাখা service</b>-এ পরিণত করে। আগে দাম জানো, technician বেছে নাও, প্রতিটা ধাপ দেখো, টাকা নিরাপদে দাও, আর কিছু হলে warranty আছে।</p>
+
+<h2>২. কারা ব্যবহার করে? (৩টা role)</h2>
+<table>
+<tr><th>Role</th><th>কী করে</th></tr>
+<tr><td><b>Customer</b></td><td>repair request দেয়, offer গুলো তুলনা করে একজনকে বেছে নেয়, inspection fee ও repair-এর টাকা দেয়, progress দেখে, শেষে review বা private report দেয়।</td></tr>
+<tr><td><b>Technician</b></td><td>আগে apply করে (কোন device, কোন repair পারে, কত বছরের অভিজ্ঞতা, কোন এলাকা); admin approve করলে jobs board থেকে কাজ দেখে offer পাঠায়, device তোলে, inspect করে, final quote দেয়, repair করে, wallet-এ টাকা পায়, bKash-এ তোলে।</td></tr>
+<tr><td><b>Admin</b></td><td>technician approve করে, service-এর তালিকা আর দাম ঠিক করে, আটকে থাকা কাজ (overdue pickup, offer না আসা request) দেখে, refund আর withdrawal সামলায়, review/report moderate করে, report দেখে।</td></tr>
+<tr><td><b>Public visitor</b></td><td>login ছাড়াই service list, service area map, open jobs board আর tracking code দিয়ে repair-এর অবস্থা দেখতে পারে।</td></tr>
+</table>
+<p class="small">Database-এ role-গুলোর নাম <code>user</code>, <code>rider</code>, <code>admin</code> — কারণ project-টা একটা পুরনো parcel-delivery codebase থেকে শুরু হয়েছিল। ব্যবহারকারী এগুলো কখনো দেখে না।</p>
+
+<h2>৩. পুরো কাজটা কীভাবে চলে — রহিমের ফোনের গল্প</h2>
+<p>ধরো রহিমের ফোনের screen ফেটে গেছে। Sarabo-তে যা হয়:</p>
+<ol>
+  <li><b>Request দেওয়া:</b> রহিম device আর service (যেমন "screen replacement") বেছে নেয়। সাথে সাথে catalogue থেকে আনুমানিক দাম দেখায়। সমস্যা লিখে দেয় (চাইলে বাংলা/Banglish-এ লিখলে AI form পূরণ করে দেয়), সর্বোচ্চ ৩টা ছবি দেয়, আর একটা ২ ঘণ্টার pickup slot বাছে। রহিমের এলাকায় এই কাজ পারে এমন কোনো approved technician না থাকলে request-টাই নেওয়া হয় না — যাতে কেউ শুধু শুধু অপেক্ষা না করে।</li>
+  <li><b>Offer আসা:</b> request-টা jobs board-এ চলে যায়, মিলে যায় এমন technician-রা notification পায়। তারা offer পাঠায়: আনুমানিক দামের range + inspection fee + একটা note।</li>
+  <li><b>বেছে নেওয়া:</b> রহিম offer গুলো দেখে। সবচেয়ে ভালোটার উপর "Best match" badge থাকে (নিচে smarter matching দেখো)। একজনকে বেছে inspection fee Stripe দিয়ে দেয় — payment হলেই technician book হয়ে যায়। পছন্দ না হলে reject করা যায়, তখন job আবার post হয়।</li>
+  <li><b>Pickup ও inspection:</b> technician এসে ফোন নেয়, ফোনের অবস্থা আর সাথে কী কী আছে (charger, case, SIM) লিখে রাখে। তারপর inspect করে।</li>
+  <li><b>Final quote:</b> technician আসল দাম পাঠায় — labour, parts, extra আলাদা করে। রহিম approve করে বাকি টাকা দেয় (quote থেকে আগের inspection fee বাদ দিয়ে), অথবা decline করে।</li>
+  <li><b>Repair:</b> technician progress update দেয়, শেষে চাইলে ছবি দিয়ে প্রমাণ রাখে।</li>
+  <li><b>ফেরত:</b> ফোন ফেরত পেলে রহিম confirm করে। ৩ দিনেও confirm না করলে নিজে থেকেই confirm হয়ে যায় (যদি না রহিম বলে "পাইনি")। তখন technician পায় ৯০%, Sarabo রাখে ১০%।</li>
+  <li><b>Feedback ও warranty:</b> রহিম ১–৫ star review দেয়। ৩০ দিনের মধ্যে একই সমস্যা আবার হলে warranty claim করতে পারে।</li>
+</ol>
+<div class="flow">Request → Offers → Choose + inspection fee → Pickup → Inspection → Quote → Approve + pay
+→ Repair → Handover (90/10 split) → Review → (৩০ দিনের warranty)</div>
+<p>যার কাছে tracking code (<code>SRB-…</code>) আছে, সে login ছাড়াই একটা public page-এ timeline দেখতে পারে — কিন্তু সেখানে কারো নাম, email বা payment-এর তথ্য দেখায় না।</p>
+
+<h2>৪. টাকার নিয়মগুলো (এগুলো পরিষ্কার জানতে হবে)</h2>
+<table>
+<tr><th>বিষয়</th><th>নিয়ম</th></tr>
+<tr><td>Inspection fee</td><td>technician offer-এ নিজে ঠিক করে, তবে কমপক্ষে ১০০ টাকা; estimate-এর max ১,০০০ টাকার বেশি হলে কমপক্ষে ২০০। এই fee পরে final quote থেকে বাদ যায় — মানে customer-কে দুবার দিতে হয় না।</td></tr>
+<tr><td>Commission</td><td>technician ৯০%, Sarabo ১০%, পুরো quote total-এর উপর, পূর্ণ টাকায় round করে।</td></tr>
+<tr><td>Cancel</td><td>pickup-এর অন্তত ২ ঘণ্টা আগে cancel করলে inspection fee পুরো ফেরত; পরে করলে fee রাখা হয় (সেটাও ৯০/১০ ভাগ)।</td></tr>
+<tr><td>Quote decline / না দেওয়া</td><td>approve করেও ৩ দিনে টাকা না দিলে request বন্ধ হয়ে যায়; inspection fee রাখা হয়, technician free হয়ে যায়।</td></tr>
+<tr><td>Withdrawal</td><td>technician wallet থেকে bKash withdrawal চায়, admin bKash Send Money করে TrxID লিখে রাখে (এটা manual)।</td></tr>
+<tr><td>Warranty refund</td><td>repair আবার ঠিক না হলে admin পুরো quote total ফেরত দেয়; technician-এর settlement উল্টে যায়। আগেই টাকা তুলে নিলে সেটা "owed" দেখায়, পরের আয় থেকে কাটা যায়।</td></tr>
+</table>
+<div class="tip"><b>Payment সম্পর্কে সৎভাবে বলবে:</b> Stripe এখন <b>test mode</b>-এ চলছে, কারণ বাংলাদেশের business-কে Stripe local account দেয় না। আসল launch-এ SSLCOMMERZ বা bKash Payment Gateway লাগবে — সেটা একই payment service-এর পেছনে বসানো যাবে।</div>
+
+<h2>৫. Smarter matching — কোন offer "Best match"?</h2>
+<p>আগে offer গুলো শুধু যে আগে এসেছে সেই order-এ দেখাতো। এখন ৫টা জিনিস দেখে score দেয়, সবই Sarabo-র নিজের data থেকে (কোনো paid service বা map API লাগে না):</p>
+<table>
+<tr><th>Factor</th><th>Weight</th><th>কীভাবে</th></tr>
+<tr><td>Rating</td><td>৩০%</td><td>review-এর গড়, কিন্তু ৩★-এর দিকে "smooth" করা — যাতে একটা মাত্র ৫★ review চল্লিশটা ৪.৮★-কে হারাতে না পারে।</td></tr>
+<tr><td>Reliability</td><td>২৫%</td><td>কয়টা repair শেষ করেছে বনাম কয়টা pickup miss করেছে।</td></tr>
+<tr><td>Price</td><td>২০%</td><td>অন্য offer-গুলোর তুলনায় estimate কত।</td></tr>
+<tr><td>District</td><td>১৫%</td><td>customer-এর একই district-এ কিনা।</td></tr>
+<tr><td>Reply time</td><td>১০%</td><td>job post হওয়ার কতক্ষণ পরে সাধারণত offer দেয় (শেষ ২০টা offer-এর median)।</td></tr>
+</table>
+<p>নতুন technician, যার কোনো history নেই, সে neutral score পায় — শাস্তিও না, বোনাসও না। আর শেষ সিদ্ধান্ত customer-এর; system নিজে কাউকে book করে না।</p>
+
+<h2>৬. AI কোথায় কোথায় আছে?</h2>
+<p>Google Gemini ব্যবহার করেছি, ৪ জায়গায়:</p>
+<ol>
+  <li><b>Customer support chat</b> — site নিয়ে প্রশ্নের উত্তর দেয়।</li>
+  <li><b>Request helper</b> — customer বাংলা, English বা Banglish-এ লিখলে বা ছবি দিলে AI form-এর draft বানিয়ে দেয় (কোন device, কোন service)।</li>
+  <li><b>Offer note</b> — technician-কে offer-এর note লিখতে সাহায্য করে, সাথে একটা price guide দেখায়।</li>
+  <li><b>Admin report summary</b> — report-এর সংখ্যা দেখে সহজ ভাষায় summary লেখে।</li>
+</ol>
+<div class="tip"><b>AI-কে বিশ্বাস না করে guard-rail রেখেছি</b> (viva-তে এটা জোর দিয়ে বলবে):
+<ul>
+  <li>AI শুধু live catalogue-এ যে service id আছে সেখান থেকেই বাছতে পারে, নিজে কিছু বানাতে পারে না।</li>
+  <li>AI কখনো দাম ঠিক করে না।</li>
+  <li>AI-এর লেখা থেকে phone নম্বর/email-এর মতো contact details মুছে ফেলা হয়।</li>
+  <li>Admin summary-তে এমন কোনো বাক্য থাকলে যেখানে আসল data-তে নেই এমন সংখ্যা আছে — সেই বাক্যটা বাদ দেওয়া হয়। মানে AI "বানিয়ে" সংখ্যা বলতে পারে না।</li>
+  <li>প্রতি user আর পুরো site-এর জন্য দৈনিক limit, আর একটা model fail করলে fallback model।</li>
+</ul></div>
+
+<h2>৭. Technology — কী দিয়ে বানানো আর কেন</h2>
+<table>
+<tr><th>অংশ</th><th>কী ব্যবহার করেছি</th><th>কেন (সহজ কথায়)</th></tr>
+<tr><td>Frontend</td><td>React 19, Vite, React Router, TanStack Query, Tailwind CSS, Radix UI</td><td>single-page app, দ্রুত; TanStack Query server-এর data cache করে আর update হলে নিজে refresh করে।</td></tr>
+<tr><td>Backend</td><td>Node.js + Express 5 (REST API)</td><td>JavaScript দুই দিকেই, সহজ আর হালকা।</td></tr>
+<tr><td>Database</td><td>MongoDB Atlas</td><td>flexible document; আর সবচেয়ে জরুরি — <b>transaction</b> support আছে, টাকার কাজে লাগে।</td></tr>
+<tr><td>Login</td><td>Firebase Authentication (+ server-এ Firebase Admin)</td><td>email/password আর Google login ready; server প্রতিটা request-এ token verify করে।</td></tr>
+<tr><td>Payment</td><td>Stripe Checkout + webhook</td><td>নিরাপদ checkout page, webhook দিয়ে নিশ্চিত হওয়া যায় টাকা সত্যিই এসেছে।</td></tr>
+<tr><td>ছবি রাখা</td><td>Supabase Storage (private bucket)</td><td>ছবি public না; অল্প সময়ের signed URL দিয়েই শুধু দেখা যায়।</td></tr>
+<tr><td>Email</td><td>Nodemailer + Gmail</td><td>free, সহজ।</td></tr>
+<tr><td>Hosting</td><td>Vercel (client + API), Vercel Cron</td><td>push করলেই deploy; cron দিয়ে প্রতিদিন reminder আর auto-close।</td></tr>
+<tr><td>Testing / CI</td><td>Server integration test, Playwright, GitHub Actions</td><td>প্রতিটা push-এ সব test নিজে থেকে চলে।</td></tr>
+</table>
+
+<h3>Architecture এক নজরে</h3>
+<div class="flow">Browser (React app, Vercel)
+   │  Firebase ID token যায় Authorization header-এ
+   ▼
+Express API (Vercel, Mumbai region) ──► MongoDB Atlas (Mumbai)
+   ├─► Firebase Admin  (token যাচাই)
+   ├─► Stripe          (payment, webhook, refund)
+   ├─► Supabase        (private ছবি)
+   ├─► Google Gemini   (AI)
+   └─► Gmail SMTP      (email)
+Vercel Cron → প্রতিদিন pickup reminder, পুরনো কাজ auto-close</div>
+<p>একটা request server-এ ঢুকলে ক্রম: <b>route → middleware (token, role যাচাই) → controller (এই অবস্থায় এই কাজ চলবে কিনা) → service (আসল নিয়ম, transaction) → database</b>।</p>
+
+<h2>৮. Security আর data ঠিক রাখা — আমার project-এর শক্ত দিক</h2>
+<ul>
+  <li><b>Transaction:</b> booking, approve, complete, settlement, refund — যেখানেই টাকা বা assignment বদলায়, সব একটা MongoDB transaction-এ। মাঝপথে কিছু fail করলে সব আগের মতো থাকে, অর্ধেক কাজ হয়ে পড়ে থাকে না। একই technician-কে দুজন একসাথে book করতে পারে না।</li>
+  <li><b>Webhook-ই সত্য:</b> "টাকা দেওয়া হয়েছে" — এটা browser বললে বিশ্বাস করি না, Stripe-এর signature-যাচাই করা webhook বললে তবেই।</li>
+  <li><b>Idempotency key:</b> refund দুবার চলে গেলেও টাকা দুবার ফেরত যায় না। refund fail করলে "pending" থাকে, আবার চেষ্টা করা যায়।</li>
+  <li><b>Role ও state check server-এ:</b> UI-তে button লুকানো যথেষ্ট না; server প্রতিটা কাজে দেখে তুমি কে আর request-টা এখন কোন অবস্থায়। ১৪টা status, ভুল ধাপে যাওয়া যায় না।</li>
+  <li><b>অন্যান্য:</b> rate limiting (MongoDB-তে রাখা, তাই serverless-এ সব instance মিলে কাজ করে), CORS allow-list, ১২৮-bit random tracking code (অনুমান করা যায় না), private ছবি, log-এ request body রাখা হয় না।</li>
+</ul>
+
+<h2>৯. কোনো request যেন আটকে না থাকে</h2>
+<p>পুরো workflow ঘুরে দেখেছি কোথায় একটা request চিরকাল অপেক্ষায় পড়ে থাকতে পারে, আর প্রতিটার একটা রাস্তা বানিয়েছি:</p>
+<ul>
+  <li>quote approve করে টাকা দেয় না → ৩ দিনে auto close।</li>
+  <li>customer receipt confirm করে না → ৩ দিনে auto confirm (আপত্তি থাকলে admin-এর কাছে যায়)।</li>
+  <li>customer pickup-এর সময় বাড়িতে নেই → technician জানায়, customer নতুন সময় দেয়; এটা technician-এর দোষ ধরা হয় না।</li>
+  <li>paid repair শেষ করা যাচ্ছে না → admin cancel করে পুরো টাকা refund করে।</li>
+  <li>কাজ নড়ছে না → ৩ দিন (চলমান repair-এ ১৪ দিন) পর admin-এর overview-তে alert।</li>
+</ul>
+
+<h2>১০. Testing আর deploy</h2>
+<ul>
+  <li><b>২,৭৬১টা server test</b> — আসল HTTP request আর আসল MongoDB replica set দিয়ে (Stripe/AI/storage fake)।</li>
+  <li><b>৫৮টা Playwright browser test</b> — public page গুলোর জন্য।</li>
+  <li>GitHub Actions-এ প্রতিটা push-এ lint, build আর test চলে, একটা আলাদা throwaway database-এ।</li>
+  <li>Client আর API দুটোই Vercel-এ live: <code>sarabo-client-six.vercel.app</code>।</li>
+</ul>
+
+<h2>১১. কাজ করতে গিয়ে যে সমস্যায় পড়েছিলাম (গল্প হিসেবে বলা যায়)</h2>
+<table>
+<tr><th>সমস্যা</th><th>কারণ</th><th>সমাধান</th></tr>
+<tr><td>Site খুব slow, প্রথম request-এ ১০ সেকেন্ডেরও বেশি</td><td>Database Mumbai-তে, কিন্তু API চলছিল আমেরিকায় (Washington)। প্রতিটা DB call পৃথিবী ঘুরে আসছিল।</td><td><code>vercel.json</code>-এ এক লাইন — API-কে Mumbai region-এ নিলাম। ১০.৭ সেকেন্ড → ২.৯, সাধারণ request ০.৭৫ → ~০.২ সেকেন্ড।</td></tr>
+<tr><td>Robi mobile data-তে site খোলে না</td><td>খুঁজে দেখি সমস্যা DNS-এ — <code>.app</code>/<code>.dev</code> address resolve হচ্ছিল না, code-এ না।</td><td>Phone-এর DNS <code>dns.google</code> দিলে চলে। স্থায়ী সমাধান নিজের <code>.com</code> domain — future work-এ রেখেছি।</td></tr>
+<tr><td>AI support মাঝে মাঝে fail করতো</td><td>পুরনো Gemini model free tier-এ ৬–১৬ সেকেন্ড নিতো, server-এর ১২ সেকেন্ডের limit পার হয়ে যেত; মাঝে মাঝে 503/429 দিতো।</td><td>দ্রুত model (<code>gemini-3.5-flash-lite</code>, ১–৩ সেকেন্ড) default করেছি; প্রথমটা fail করলে দ্বিতীয় চেষ্টা যায় fallback model-এ।</td></tr>
+<tr><td>কিছু request আটকে যেতে পারতো</td><td>কিছু ধাপে "এরপর কী" ঠিক করা ছিল না।</td><td>উপরের ৯ নম্বর অংশের সব নিয়ম।</td></tr>
+</table>
+<p>আরেকটা বড় কাজ ছিল <b>migration</b>: project শুরু হয়েছিল একটা parcel-delivery codebase ("zap_shift") থেকে। ধাপে ধাপে database, collection, API route আর UI-এর ভাষা repair-এর দিকে বদলেছি — প্রতিটা script আগে dry-run, তারপর আসল run।</p>
+
+<h2>১২. দুর্বলতা আর ভবিষ্যতে কী করা যায় (সৎভাবে বলবে)</h2>
+<table>
+<tr><th>এখনকার limitation</th><th>ভবিষ্যতে</th></tr>
+<tr><td>Stripe test mode, technician payout manual (bKash Send Money)</td><td>SSLCOMMERZ / bKash gateway, auto payout</td></tr>
+<tr><td>একই slot-এর শেষ জায়গা দুজন একই সেকেন্ডে নিলে দুজনই পেতে পারে</td><td>atomic slot counter</td></tr>
+<tr><td>একজন technician একসাথে একটাই active job নিতে পারে</td><td>technician scheduling, দৈনিক capacity</td></tr>
+<tr><td>দামগুলো demo-র জন্য, আসল দোকানের সাথে ঠিক করা না</td><td>আসল business-এর সাথে দাম ঠিক করা</td></tr>
+<tr><td>Browser test signed-in page cover করে না (server test করে)</td><td>test account দিয়ে signed-in browser test</td></tr>
+<tr><td>এখনো আসল customer নেই, load test হয়নি</td><td>pilot launch, load test, security audit</td></tr>
+<tr><td>UI শুধু English (AI বাংলা input নেয়)</td><td>পুরো বাংলা interface, SMS notification, mobile app/PWA, live technician location, cash payment</td></tr>
+</table>
+
+<h2>১৩. মুখস্থ রাখার সংখ্যা</h2>
+<table>
+<tr><th>কী</th><th>মান</th><th>কী</th><th>মান</th></tr>
+<tr><td>Service</td><td>৪৫টা, ৮ ধরনের device</td><td>Request status</td><td>১৪টা</td></tr>
+<tr><td>Commission</td><td>৯০ / ১০</td><td>Min inspection fee</td><td>১০০ (বা ২০০) টাকা</td></tr>
+<tr><td>Cancel-এ পুরো refund</td><td>pickup-এর ≥২ ঘণ্টা আগে</td><td>Warranty</td><td>৩০ দিন, max ২ claim</td></tr>
+<tr><td>Pickup slot</td><td>দিনে ৪টা, ২ ঘণ্টার; শুক্রবার বন্ধ</td><td>Damage photo</td><td>max ৩টা</td></tr>
+<tr><td>Matching weight</td><td>৩০/২৫/২০/১৫/১০</td><td>API</td><td>১২৫টা route</td></tr>
+<tr><td>Server test</td><td>২,৭৬১</td><td>Browser test</td><td>৫৮</td></tr>
+<tr><td>Code size</td><td>client ~২৮.৭k লাইন, server ~৪৫.১k লাইন</td><td>Report</td><td>১১১ পৃষ্ঠা</td></tr>
+</table>
+
+<h2>১৪. ২ মিনিটে project বোঝানোর script</h2>
+<div class="say">
+<p>"আমার project-এর নাম <b>Sarabo</b> — একটা electronics repair service management platform। আমাদের দেশে phone বা laptop নষ্ট হলে আমরা পরিচিত দোকানে দিই, আগে দাম জানি না, device কোথায় আছে দেখতে পাই না, আর কোনো record থাকে না।</p>
+<p>Sarabo-তে customer অনলাইনে request দেয়, ছবি আর pickup-এর সময় দেয়। ওই এলাকার verified technician-রা offer পাঠায়, আর system rating, reliability, দাম, এলাকা আর reply time দেখে best match দেখায়। customer একজনকে বেছে inspection fee দেয়, technician device নিয়ে inspect করে final quote দেয়, customer approve করে টাকা দেয়, repair হয়, device ফেরত আসে। পুরো সময় customer প্রতিটা ধাপ দেখতে পায়, আর ৩০ দিনের warranty থাকে। technician পায় ৯০%, platform রাখে ১০%।</p>
+<p>এটা React আর Express দিয়ে বানানো, database MongoDB, login Firebase, payment Stripe, আর ৪ জায়গায় Google Gemini AI আছে — কিন্তু guard-rail সহ, AI কখনো দাম ঠিক করে না। টাকার সব কাজ database transaction-এ হয়, তাই মাঝপথে fail করলেও data ভুল হয় না। ২,৭৬১টা server test আর ৫৮টা browser test আছে, প্রতিটা push-এ চলে, আর পুরো system Vercel-এ live।"</p>
+</div>
+
+<div class="tip"><b>মনে রাখার কৌশল:</b> প্রশ্ন যাই আসুক, আগে এক লাইনে উত্তর, তারপর একটা উদাহরণ (রহিমের ফোন), তারপর পারলে একটা edge case। না জানলে বানিয়ে বলবে না — "এটা এখন নেই, limitation-এ রেখেছি।" বিস্তারিত code প্রশ্নের জন্য <code>Sarabo_Viva_QnA.pdf</code> দেখো।</div>
+
+</body>
+</html>
