@@ -879,3 +879,17 @@ Committed as client `33368a7` (author and committer Jahid Hasan) and pushed to `
   to remember, and a 2-minute spoken explanation. Facts taken from the report, the work log
   and the viva sheet.
 - Not pushed.
+
+### 32. Humanized slide scripts and a 5-minute demo plan — 2026-10-27
+- Type: docs
+- Asked for: a plan for showing the live demo in five minutes (workflow and how to explain
+  it), and the slide presentation script rewritten to sound more human, in two lengths.
+- `presentation/script-5min.md` (5 minutes, about 700 words) and `presentation/script-full.md`
+  (12-14 minutes, about 1,800 words) were rewritten in spoken, first-person language around
+  Rahim's story, with pause/point cues, cut-if-late lines and bridge lines between slides.
+  Same 10 slides and the same facts and numbers as before.
+- `presentation/demo-plan-5min.md` (new): setup checklist, a 7-step workflow across the
+  Customer, Technician and Admin windows (diagram `demo-workflow.png`), what to click and say
+  at each step, fallbacks and likely questions.
+- PDFs rebuilt from the markdown with headless Chrome: `Sarabo_Script_5min.pdf` (2 pages),
+  `Sarabo_Script_Full.pdf` (4 pages), `Sarabo_Demo_Plan_5min.pdf` (5 pages, new). README lists them.

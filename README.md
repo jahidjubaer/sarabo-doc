@@ -8,6 +8,9 @@ Author: Jahid Hasan (222-115-116, Batch 57 C). Supervisor: Shrabanti Chowdhury.
 | **[Sarabo_Final_Report.pdf](Sarabo_Final_Report.pdf)** | Final report, compiled from `report/` (109 pages, Metropolitan University template; Chapter 7 is a screenshot walkthrough built by `report/make_walkthrough.py`) |
 | `report/` | LaTeX source: `myThesis.tex` (main file), `tex/*.tex` (one file per chapter), `ref_file.bib`, `myStyle.sty`, `img/` |
 | **[presentation/Sarabo_Presentation.pptx](presentation/Sarabo_Presentation.pptx)** | 16 slides (about 8 minutes) with short points, large text, zoomed screenshots and an ER diagram (slide 5); the speaker script is in each slide's notes |
+| [presentation/script-5min.md](presentation/script-5min.md) · **[PDF](presentation/Sarabo_Script_5min.pdf)** | Slide script, exactly 5 minutes, written to be spoken (Rahim's story, timings, cut-if-late lines) |
+| [presentation/script-full.md](presentation/script-full.md) · **[PDF](presentation/Sarabo_Script_Full.pdf)** | Long slide script (12-14 min), same slides and story, with bridge lines between slides |
+| [presentation/demo-plan-5min.md](presentation/demo-plan-5min.md) · **[PDF](presentation/Sarabo_Demo_Plan_5min.pdf)** | 5-minute live demo plan: setup checklist, workflow diagram, what to click and say, fallbacks, likely questions |
 | [presentation/demo-script.md](presentation/demo-script.md) | 5-minute live demo, timed, told as one real-life story (Rahim's cracked phone) |
 | [presentation/demo-script-detailed.md](presentation/demo-script-detailed.md) | Longer demo (12-15 min): every role and feature, a fallback plan, and likely questions with short answers |
 | **[presentation/Sarabo_Demo_Script.pdf](presentation/Sarabo_Demo_Script.pdf)** | Both demo scripts in one PDF (5-minute and detailed), from `presentation/demo-script.html` |

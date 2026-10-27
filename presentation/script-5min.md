@@ -1,63 +1,78 @@
-# Sarabo — Presentation Script (exactly 5 minutes)
+# Sarabo — Presentation Script (5 minutes)
 
-10 slides · about 700 spoken words · speak at about 140 words per minute.
-The time at each heading is when that slide should **start**. If you are more than 10 seconds behind at slide 6, skip the second sentence marked *(cut if late)* on slides 6–9.
+10 slides · about 700 spoken words · written to be said, not read.
+The long version is [script-full.md](script-full.md).
+
+The time after each slide title is when that slide should start. If you're more than 10 seconds behind at slide 6, drop the lines marked *(cut if late)*. Cues in *[square brackets]* are for you, not for the audience: *[pause]* means one breath, *[point]* means point at the slide.
 
 ---
 
-## Slide 1 — Title  ·  0:00 (15 s)
+**Slide 1 · Title · 0:00**
 
-Assalamu alaikum. I am Jahid Hasan, ID 222-115-116. My final-year project, supervised by Shrabanti Chowdhury, is **Sarabo — an electronics repair service management platform.**
+Assalamu alaikum. I'm Jahid Hasan, ID 222-115-116, and my project, supervised by Shrabanti Chowdhury, is called **Sarabo**. In one line: it helps people get their devices repaired *without the fear*.
 
-## Slide 2 — The problem  ·  0:15 (25 s)
+**Slide 2 · The problem · 0:15**
 
-Getting a device repaired today is a leap of faith. Customers hand over a phone without knowing the price, or where the device is. Technicians find work only by word of mouth, and payment is uncertain. And whoever runs the service cannot see stuck jobs, and does refunds by hand. The result is low trust on both sides, and many repairs never happen.
+Let me start with a small story. *[pause]* Rahim cracks his phone screen. The shop says "around 2,500 taka", keeps the phone for a week, and then asks for 4,500. No written quote, no receipt. Ten days later the touch stops working again, and the shop says, "You must have dropped it."
 
-## Slide 3 — The solution  ·  0:40 (25 s)
+I think most of us have been Rahim at some point. And the technician isn't happy either: he finds work only by word of mouth, and he's never sure he'll get paid. So nobody trusts anybody.
 
-Sarabo turns this into **one tracked, priced workflow for three roles.** The customer requests, compares, pays and tracks. The technician finds jobs, quotes, repairs and gets paid. The admin approves technicians, sets prices, handles problems and reads reports. There are 45 services across 8 device types, priced in taka, and the system is live on Vercel.
+**Slide 3 · The solution · 0:40**
 
-## Slide 4 — How it works  ·  1:05 (40 s)
+Sarabo puts the whole repair into **one clear, tracked process** for three people. The customer asks for a repair, compares offers, pays and follows the device. The technician finds jobs, quotes and gets paid. And the admin keeps everything moving. There are 45 services across 8 device types, all in taka, and it's live on the internet today.
 
-Here is the full journey in six steps. **One:** the customer describes the problem — even in Banglish — and AI fills the form. **Two:** local technicians with the right skill send offers. **Three:** the customer pays a small inspection fee to book. **Four:** after inspection, the technician sends an itemised quote. **Five:** the customer pays only what is left, because the fee is already counted. **Six:** hand-over — the technician gets 90 percent and a 30-day warranty starts.
-It is fair by design: a no-show or an early cancel means a full refund.
+**Slide 4 · How it works · 1:05**
 
-## Slide 5 — ER diagram  ·  1:45 (35 s)
+So how does Rahim's repair look on Sarabo? *[point]* Six steps.
 
-This is the data model in MongoDB. A **user** creates many repair requests and can also become a **technician**. Each **repair request** is priced by one **service**, receives many **offers**, and has its **payments**, at most one **review**, and at most two **warranty claims**. The quote and inspection are stored inside the request itself, because they belong only to it. The crow's foot marks the "many" side.
+He describes the problem, even in Banglish, and AI fills the form for him. Local technicians with the right skill send offers. He picks one and pays a small inspection fee to book. After checking the phone, the technician sends a written quote: parts, labour, total. Rahim pays only what's left, because the fee is already counted. And when he gets his phone back, the technician gets 90 percent and a 30-day warranty starts.
 
-## Slide 6 — Customer: ranked offers  ·  2:20 (40 s)
+And it's fair both ways: if the technician doesn't turn up, Rahim gets every taka back.
 
-When offers arrive, Sarabo ranks them using five things it already stores: rating, reliability, price, district and reply time — and it shows the reasons as small tags. The customer still makes the choice.
-*(cut if late)* After the inspection, the quote shows exactly what is left: here a 4,000-taka quote, minus the 200-taka fee already paid, leaves 3,800. Approve and pay happen in one step.
+**Slide 5 · ER diagram · 1:45**
 
-## Slide 7 — Warranty and no stuck repairs  ·  3:00 (35 s)
+Here's how the data fits together. *[point]* A user can make many repair requests, and a user can also become a technician. Each request is priced by one service, gets many offers, and has its payments, one review and up to two warranty claims. The quote and the inspection live inside the request itself, because they belong only to that repair.
 
-Every repair has a **30-day warranty.** The same technician re-inspects for free, and a covered fault is repaired again or refunded.
-*(cut if late)* I also made sure no request can wait forever. Every waiting state has a deadline: an unpaid quote closes after 3 days, receipt is confirmed automatically after 3 days, a technician who can't finish triggers a refund, and stalled work alerts the admin.
+**Slide 6 · Ranked offers · 2:20**
 
-## Slide 8 — Applied AI  ·  3:35 (30 s)
+When offers come in, Rahim doesn't have to guess. Sarabo ranks them by rating, reliability, price, distance and how fast the technician replies, and the little tags tell him *why*. But the choice is still his.
 
-Google Gemini helps in four places: the request helper, the technician's offer note, the support chat and the admin's report summary. But the rule is simple — **AI suggests, people decide.**
-*(cut if late)* AI never sets a price, every answer is checked against live data, no personal data is sent, and usage has daily limits.
+*(cut if late)* Then the quote: 4,000 taka, minus the 200 he already paid, so 3,800. One button to approve and pay.
 
-## Slide 9 — Architecture  ·  4:05 (30 s)
+**Slide 7 · Warranty · 3:00**
 
-A React 19 client talks to an Express 5 API on Vercel in Mumbai, right next to the MongoDB Atlas database. Because this system handles money, the **server decides** — it checks role and state on every action. Booking, payment and refunds run in **database transactions**, so they are all-or-nothing.
-*(cut if late)* And payments and bookings happen **exactly once**, even if two people click at the same moment.
+Remember Rahim's touch failing after ten days? On Sarabo, that's covered. Every repair has a **30-day warranty**: the same technician checks it again for free, and fixes it or refunds it.
 
-## Slide 10 — Results  ·  4:35 (25 s)
+*(cut if late)* I also made sure nothing can get stuck. Every waiting step has a deadline, and if something stalls, the admin is told.
 
-All 2,761 server tests and all 58 browser tests pass, all twelve objectives were met, and the system is live. The limits: Stripe is in test mode, bKash payouts are manual, and there are no real customers yet. Next, I would add a local payment gateway and a mobile app with a full Bangla interface.
-**Thank you. Now I will show you the live demo.**
+**Slide 8 · Applied AI · 3:35**
+
+AI helps in four places: filling the request, writing the technician's note, the support chat, and the admin's weekly summary. But my rule was simple: **AI suggests, people decide.**
+
+*(cut if late)* AI never sets a price, everything it says is checked against real data, and no personal details are sent to it.
+
+**Slide 9 · Architecture · 4:05**
+
+Under the hood, it's React on the front, Express on Vercel, and MongoDB, all in the same region so it's fast. Because real money moves here, the **server always decides**. Booking, payment and refunds are all-or-nothing.
+
+*(cut if late)* So even if two people click at the same second, nobody pays twice.
+
+**Slide 10 · Results · 4:35**
+
+All 2,761 server tests and 58 browser tests pass, and all twelve objectives are met. To be honest about the limits: payments are in test mode, bKash payouts are manual, and there are no real customers yet. Next, I'd like to add a local payment gateway and a Bangla mobile app.
+
+Thank you. *[pause]* Now let me show you Rahim's repair, live.
 
 **[5:00]**
 
 ---
 
-### Rehearsal checklist
+## Making it sound like you
 
-- Run it with a timer three times. Mark your time at slide 6 (target 2:20) and slide 10 (target 4:35).
-- Pause for one breath after each slide title — it is already counted in the timing.
-- Numbers to say clearly: **45** services, **8** device types, **90 percent**, **30-day**, **2,761** and **58** tests.
-- Do not read the slide; look at the audience and point at the screenshot.
+- **Rehearse three times with a timer.** Check you're at slide 6 by 2:20 and slide 10 by 4:35.
+- **Learn the story, not the lines.** If you remember Rahim, the cracked screen, the 4,500 bill and the warranty, the rest follows naturally.
+- **Slow down on the numbers.** Say these clearly: 45 services, 8 device types, 90 percent, 30 days, 2,761 and 58 tests.
+- **Look at the board, not the slide.** Glance at the slide only when you *[point]*.
+- **Pause after each slide title.** One breath gives the board time to look, and it's already counted in the timing.
+- **Say Rahim's name in the demo too.** The script ends with "let me show you Rahim's repair", so the demo continues the same story ([demo-plan-5min.md](demo-plan-5min.md)).
+- **If you forget a line, skip it.** Nobody knows the script but you; just go to the next point.

@@ -1,192 +1,133 @@
-# Sarabo — Presentation Script (full version, for rewriting)
+# Sarabo — Presentation Script (long version, 12–14 minutes)
 
-This is the **long version** (about 1,900 words, around 13–14 minutes if read in full). It has more than you need on purpose, so you can cut it down to your own 5-minute script. Each slide has:
-
-- **Core** — the sentences to keep (these are the same ideas as the 5-minute script).
-- **Extra** — more detail, examples and numbers you can swap in, or use in the Q&A.
-- **Transition** — one line to move to the next slide.
+Same 10 slides and the same story as the [5-minute script](script-5min.md), with room to explain. About 1,800 words. Each slide ends with a bridge line that walks you into the next one. Cues in *[square brackets]* are for you, not for the audience: *[pause]* means one breath, *[point]* means point at the slide.
 
 ---
 
-## Slide 1 — Title
+## Slide 1 · Title
 
-**Core.**
-Assalamu alaikum, and good morning to the respected board members. I am Jahid Hasan, ID 222-115-116, from Batch 57, section C, Department of Computer Science and Engineering, Metropolitan University, Sylhet. My final-year project, supervised by Shrabanti Chowdhury, Senior Lecturer, is **Sarabo — an electronics repair service management platform.** The tagline on the slide says what it is for: *repair your device with confidence.*
+Assalamu alaikum, and good morning to the respected board. I'm Jahid Hasan, ID 222-115-116, Batch 57, section C, from the Department of CSE at Metropolitan University, Sylhet. My project was supervised by Shrabanti Chowdhury, Senior Lecturer, and it's called **Sarabo, an electronics repair service management platform.**
 
-**Extra.**
-I built the whole system myself: the requirements, the design, the server, the web client, the tests, the deployment and the report. It is not a prototype on my laptop — it is deployed and running on the internet today.
+The line on the slide says what I wanted it to do: *repair your device with confidence.* I built all of it myself, from the requirements to the server, the website, the tests and the deployment. And it isn't only on my laptop; it's running on the internet right now.
 
-**Transition.** Let me start with why this project is needed.
+*Bridge:* So why build this at all? Let me tell you about someone.
 
----
+## Slide 2 · The problem
 
-## Slide 2 — The problem
+This is Rahim. *[pause]* He's a student in Ambarkhana, here in Sylhet. One evening his Samsung Galaxy A54 slips out of his hand. The screen cracks, a green line appears, and the touch stops working.
 
-**Core.**
-Getting a device repaired today is a leap of faith. There are three people in this story, and each one has a problem.
-The **customer** hands over a phone or a laptop without knowing the final price, and once it is gone, they have no idea where it is or what is happening to it.
-The **technician** may be skilled, but finds work only by word of mouth, and is never sure they will actually be paid.
-And **whoever runs the service** cannot see which jobs are stuck, and has to handle refunds by hand.
-The result is low trust on both sides — and many repairs simply never happen.
+He goes to the nearest shop. He asks, "How much?" They say, "Around 2,500, we'll see after opening it." They keep the phone for a week. He calls three times just to ask where it is. When he finally collects it, the bill is 4,500. Nothing on paper explains why.
 
-**Extra.**
-- Think of a cracked phone screen. The customer asks "how much?" and hears "we'll see after opening it". There is no written quote, no record of the phone's condition at hand-over, and no warranty on paper.
-- If something goes wrong — the shop says the phone was already damaged, or the repair fails after a week — there is no evidence and no process.
-- For technicians, especially freelancers, the problem is the opposite: they have the skill but no steady flow of jobs and no protection if a customer does not pay.
+And ten days later the touch fails again. The shop says, "You dropped it again." Rahim can't prove anything. No quote, no receipt, no record of what the phone looked like when he handed it over.
 
-**Transition.** So the question I asked was: can one system make this process clear and fair for all three?
+Now look at the other side of the counter. *[point]* Karim is a good technician, but he gets work only when someone recommends him. He writes quotes on paper, and sometimes a customer changes their mind and simply doesn't pay. And whoever runs a repair service can't see which jobs are stuck, and handles refunds by hand.
 
----
+So you have three people, and none of them trusts the other two. That's why so many repairs just never happen.
 
-## Slide 3 — The solution
+*Bridge:* So I asked myself: can one system make this fair and clear for all three of them?
 
-**Core.**
-Sarabo turns this into **one tracked, priced workflow for three roles.**
-The **customer** can request a repair, compare offers, pay and track the device.
-The **technician** can find jobs, send a quote, do the repair and get paid.
-The **admin** approves technicians, sets prices, handles problems and reads reports.
-The catalogue has **45 repair services across 8 device types**, all priced in Bangladeshi taka, and the system is **live on Vercel.**
+## Slide 3 · The solution
 
-**Extra.**
-- Every request moves through clear stages — Request, Inspect, Approve, Repaired — shown as a progress bar on every request page, with a "Your next step" panel so each person always knows what to do.
-- A customer who is not signed in can still track a request with a private tracking code; the public tracking page shows only the stage and time, never a name, address or payment.
-- If no approved technician covers a region for that repair, Sarabo refuses the request politely at the start instead of leaving the customer waiting — and counts it, so the admin can see where technicians are needed.
+That's what Sarabo is. It turns a repair into **one tracked, priced workflow** for three roles.
 
-**Transition.** Let me walk you through the full journey of one repair.
+The **customer** asks for a repair, compares offers, pays, and always knows where the device is. The **technician** finds jobs nearby, sends a quote, does the work and gets paid for sure. The **admin** approves technicians, sets prices, handles problems and reads the reports.
 
----
+There are 45 services across 8 types of device, all priced in taka. Every request shows a simple progress bar, Request, Inspect, Approve, Repaired, with a "Your next step" box so nobody is ever confused about what to do.
 
-## Slide 4 — How it works
+One small thing I'm proud of: if no technician covers Rahim's area for that repair, Sarabo tells him straight away, instead of leaving him waiting for days. And it counts those requests, so the admin knows where to find more technicians.
 
-**Core.**
-The full journey has six steps.
-**One — Request.** The customer describes the problem, even in Banglish like "screen venge gese", and AI fills in the form. The customer also picks a pickup time.
-**Two — Offers.** Local technicians with the right skill see the job and send offers.
-**Three — Book.** The customer chooses one and pays a small inspection fee to book that technician.
-**Four — Quote.** After inspecting the device, the technician sends an itemised quote: parts, labour and any extra charge.
-**Five — Pay and repair.** The customer approves and pays only what is left, because the inspection fee is already counted.
-**Six — Hand-over.** The device is returned, the technician receives 90 percent, Sarabo keeps 10 percent, and a 30-day warranty starts.
-It is **fair by design**: if the technician does not show up, or the customer cancels at least two hours early, the fee is fully refunded. Otherwise the fee is split 90/10.
+*Bridge:* Let me walk you through Rahim's repair, step by step.
 
-**Extra.**
-- Pickup slots: four two-hour windows a day between 10 am and 6 pm, closed on Friday, up to 7 days ahead, at least one hour in advance, and limited per region so technicians are not overloaded.
-- The minimum inspection fee is 100 taka, or 200 taka for bigger repairs, so a technician never travels for free.
-- At pickup the technician records the device's condition, and the customer can dispute it — this record protects both sides later, for example in a warranty claim.
-- No money is charged when a request is created. The customer pays nothing until they choose a technician.
-- The technician's money is held until the customer confirms they received the device, so the technician is guaranteed payment and the customer is protected.
+## Slide 4 · How it works
 
-**Transition.** Behind this journey is the data model.
+*[point]* There are six steps.
 
----
+**One.** Rahim types the problem the way he'd say it, "screen venge gese, touch kaj kore na", and AI fills the form for him. He also picks a two-hour pickup slot.
 
-## Slide 5 — ER diagram
+**Two.** Technicians nearby who actually repair phones see the job and send offers.
 
-**Core.**
-This is the entity-relationship diagram of the data in MongoDB.
-A **user** creates many repair requests, and a user can also become a **technician**.
-Each **repair request** is priced by one **service**, receives many **offers**, and has its **payments**, at most one **review**, and at most two **warranty claims.**
-The quote and the inspection are stored inside the request itself, because they only belong to that request.
-The double bar means "one" and the crow's foot means "many".
+**Three.** Rahim chooses one and pays a small inspection fee. That fee is what books the technician.
 
-**Extra.**
-- I chose MongoDB because one repair request, with its quote, inspection, history and settlement, naturally fits one document.
-- Where data across collections must stay consistent — for example a payment and the booking it creates — I use multi-document transactions.
-- Prices are copied into the request when it is created (a price snapshot), so if the admin changes a price later, old requests are not affected.
-- The technician's wallet balance is **not stored**; it is calculated every time from settlements and withdrawals, so it can never drift out of sync.
+**Four.** The technician collects the phone, writes down its condition with Rahim, inspects it, and sends an itemised quote: labour 800, parts 3,200.
 
-**Transition.** Now let me show you the key screens, starting with the customer.
+**Five.** Rahim approves and pays only what's left, 3,800, because his 200 is already counted.
 
----
+**Six.** He gets his phone back. Karim receives 90 percent, Sarabo keeps 10, and a 30-day warranty starts.
 
-## Slide 6 — Customer: ranked offers and the quote
+And I wanted it to be fair to both sides. If Karim doesn't show up, Rahim gets a full refund. If Rahim cancels at least two hours before pickup, also a full refund. And Karim's money is held until Rahim confirms he has his phone, so the customer is protected, and the technician knows the money is really there.
 
-**Core.**
-When offers arrive, Sarabo **ranks them** using five things it already stores: the technician's rating, reliability, price, district and reply time. The reasons appear as small tags such as "Best match" or "Same district". But the customer still makes the final choice.
-After the inspection, the quote shows exactly what is left to pay. In this example, the quote is 4,000 taka, the 200-taka inspection fee is already paid, so only **3,800 taka** is left. Approving and paying happen in one step.
+*Bridge:* To make all of this work, the data has to be shaped the right way.
 
-**Extra.**
-- Weights: rating 30 percent, reliability 25, price 20, district 15, reply time 10.
-- A new technician gets a neutral score — not punished and not boosted — so new people can still get work.
-- Ratings are smoothed, so one five-star review cannot beat forty reviews at 4.8.
-- If the customer declines the quote, the technician can send one revised quote; otherwise the request closes and the fee is kept, split 90/10.
-- After payment, the customer can download a PDF receipt.
+## Slide 5 · ER diagram
 
-**Transition.** What happens after the repair is just as important.
+*[point]* This is the data model, stored in MongoDB.
 
----
+A **user** can create many repair requests, and the same user can also become a **technician**. Each **repair request** is priced by one **service** from the catalogue. It receives many **offers**, and it has its **payments**, at most one **review**, and at most two **warranty claims**. The double bar means "one", the crow's foot means "many".
 
-## Slide 7 — Warranty, and no stuck repairs
+You'll notice the quote and the inspection aren't separate tables. They live inside the request, because they only ever belong to that one repair. That's also why I chose MongoDB: one repair, with its quote, history and payout, fits naturally into one document.
 
-**Core.**
-Every repair comes with a **30-day warranty.** If the same fault comes back, the customer opens a claim, the same technician re-inspects it for free, and a covered fault is either repaired again or refunded.
-I also made sure that **no request can wait forever.** Every waiting state has a deadline, an automatic step or an admin alert. An unpaid approved quote closes after 3 days. If the customer does not confirm receipt, it is confirmed automatically after 3 days. If a technician can't finish a repair, the customer is refunded. And stalled work raises an alert for the admin.
+Two small design choices I'd like to mention. When a request is created, its price is copied into it, so if the admin changes prices later, Rahim's repair doesn't change. And a technician's wallet balance is never stored as a number; it's calculated from the records every time, so it can't quietly go wrong.
 
-**Extra.**
-- Warranty limits: at most two claims per repair and one open at a time. The technician has 3 days to book a re-inspection, 3 days to decide and 7 days to re-repair; if they miss a deadline, the admin takes over.
-- "Not covered" — for example new water or drop damage — must have a reason, and the customer can ask the admin to review it. The pickup condition record is the evidence.
-- If a refund happens after the technician already withdrew the money, the amount is shown as owed and taken from their next earnings.
-- A daily scheduled job runs reminders and all these deadlines; each job runs separately, so if one fails, the others still run.
+*Bridge:* Now let's see what Rahim actually sees on screen.
 
-**Transition.** Some of these steps are helped by AI.
+## Slide 6 · Customer: ranked offers and the quote
+
+When the offers come in, Rahim isn't left guessing which technician to trust. Sarabo ranks them using five things it already knows: rating, reliability, price, whether the technician is in his district, and how fast they usually reply. *[point]* The small tags, like "Best match" or "Same district", tell him *why* someone is on top.
+
+Rating counts for 30 percent, reliability 25, price 20, district 15 and reply time 10. A brand-new technician gets a neutral score, so new people can still find work. And the final choice is always Rahim's.
+
+Then, after inspection, *[point]* the quote is right there in writing. 4,000 taka. The 200 he already paid is taken off. He pays 3,800, in one step, and he can download a PDF receipt straight away.
+
+*Bridge:* But the story doesn't end when Rahim pays.
+
+## Slide 7 · Warranty, and no stuck repairs
+
+Remember Rahim's touch failing ten days later? *[pause]* On Sarabo, that's exactly what the warranty is for.
+
+Every repair has **30 days of warranty**. Rahim opens a claim, the same technician comes back and checks it for free, and if it's covered, it's repaired again for free, or refunded. If the technician says "not covered", say new water damage, he has to give a reason, and Rahim can ask the admin to look at it. The condition record from the pickup is the evidence that protects both of them.
+
+The second thing I really cared about is that **no request can get stuck**. Every waiting step has a deadline. An approved quote that isn't paid closes after three days. If Rahim forgets to confirm he got his phone, it's confirmed for him after three days. If a technician can't finish, Rahim is refunded. And anything that stalls shows up on the admin's screen.
+
+*Bridge:* Some of these steps get a little help from AI.
+
+## Slide 8 · Applied AI
+
+I used Google Gemini in four places. It turns Rahim's own words into a filled form. It helps Karim write a clear, polite note with his offer, in English or Bangla. It answers questions in the support chat. And it explains the admin's weekly numbers in plain sentences.
+
+But I was careful here, because AI can be confidently wrong. So the rule is: **AI suggests, people decide.** AI never sets a price. It can only pick services that really exist, and the server checks every answer again. Phone numbers are removed from offer notes, so deals stay on the platform. If the weekly summary mentions a number that isn't in the real data, that sentence is dropped. And no names or personal details are ever sent.
+
+If AI is slow or switched off, nothing breaks; you just fill the form yourself.
+
+*Bridge:* None of this means anything unless the foundation underneath is solid.
+
+## Slide 9 · Architecture
+
+*[point]* On the front there's a **React 19** website. It talks to an **Express 5** API running on Vercel in Mumbai, right next to the **MongoDB Atlas** database. Around them are Firebase for sign-in, Stripe for payments, Supabase for photos, Gemini for AI, and Gmail for emails.
+
+A quick story about that Mumbai part. At first the API ran in the US while the database was in Mumbai, and the first request took more than ten seconds. Moving it next to the database brought that down to about three seconds, and normal requests from 0.75 to 0.2 seconds.
+
+Because real money moves through this system, I followed three rules. *[pause]* First, **the server decides**: it checks who you are and what state the repair is in on every single action, and it never just trusts the browser. Second, **all or nothing**: booking, payment and refunds run inside database transactions, so nothing half-happens. Third, **exactly once**: a payment is confirmed only by Stripe's signed message, and even if it arrives twice, or two people click at the same moment, nobody pays twice and no job is booked twice.
+
+*Bridge:* So how do I know all of this actually works?
+
+## Slide 10 · Results, limits and what's next
+
+I tested it, a lot. There are **2,761 automated server tests** that make real requests against a real database, including tests where two admins act at the same moment. And there are **58 browser tests** on both a desktop and a phone screen. All of them pass, and they run automatically every time I push code. All **twelve objectives** I set at the start were met, and the system is live.
+
+I also want to be honest about what it doesn't do yet. Stripe is in test mode, because it doesn't work for real in Bangladesh. Payouts to technicians through bKash are sent by the admin by hand. And it hasn't had real customers yet, or a load test.
+
+If I continue, the next steps are a local payment gateway like SSLCOMMERZ or bKash, and a mobile app with a full Bangla interface, so someone like Rahim can do all of this from his phone, in his own language.
+
+*[pause]* So, Rahim gets a fair, written price, he can follow his phone at every step, and he has a warranty. And Karim gets steady work and knows he'll be paid.
+
+Thank you. Now let me show you Rahim's repair, live.
 
 ---
 
-## Slide 8 — Applied AI (Google Gemini)
+## Making it sound like you
 
-**Core.**
-Google Gemini helps in four places. The **request helper** turns the customer's own words into a filled form. The **offer note** helps a technician write a clear message, in English or Bangla. The **support chat** answers questions about services and prices. And the **report summary** explains the admin's weekly numbers in plain sentences.
-But the rule is simple: **AI suggests, people decide.** AI never sets a price. Every answer is checked against live data. No personal data is sent. And usage has daily limits.
-
-**Extra.**
-- The request helper can only pick services that really exist in the live catalogue; the server checks every suggestion again, and the customer can change everything or press Undo.
-- Phone numbers, emails and links are removed from AI offer notes, so customers and technicians cannot move the deal outside the platform.
-- In the report summary, any sentence that contains a number not found in the real data is removed.
-- Every AI feature is optional. If AI is slow or switched off, the user just fills the form by hand.
-- I measured the models: the current model answers in about 1.4 to 1.9 seconds, with a second model as a fallback.
-
-**Transition.** None of this is safe unless the foundation is solid.
-
----
-
-## Slide 9 — Architecture
-
-**Core.**
-A **React 19** web client talks to an **Express 5 API** on Vercel, in the Mumbai region, right next to the **MongoDB Atlas** database with 21 collections. Around it are Firebase for sign-in, Stripe for payments, Supabase for photos, Gemini for AI and Gmail for email.
-Because this system handles money, I followed three rules.
-**The server decides** — role and current state are checked on every action, never trusted from the browser.
-**All-or-nothing** — booking, payment and refunds run inside database transactions.
-**Exactly once** — no double payment and no double booking, even if two people click at the same moment.
-
-**Extra.**
-- Payment is confirmed only by Stripe's signed webhook, not by the success page, and the same event arriving twice is recorded once.
-- If a payment arrives but the job was already taken, nothing is booked and the fee is refunded automatically.
-- Damage photos are in a private bucket and are shown only through links that expire in a few minutes.
-- Moving the API to Mumbai, next to the database, cut the first request from 10.7 seconds to 2.9, and normal requests from 0.75 to 0.2 seconds.
-- Secrets live only in server environment variables, never in the code or the browser.
-
-**Transition.** So, how do I know it works?
-
----
-
-## Slide 10 — Results, limitations and next steps
-
-**Core.**
-All **2,761 server tests** and all **58 browser tests** pass, all **twelve objectives** were met, and the system is **live.**
-I want to be honest about the limits: Stripe runs in test mode, bKash payouts to technicians are sent manually by the admin, and there are no real customers yet.
-Next, I would add a local payment gateway such as SSLCOMMERZ or bKash, and a mobile app with a full Bangla interface.
-**Thank you. Now I will show you the live demo.**
-
-**Extra.**
-- The server tests use real HTTP calls against a real MongoDB replica set, with fake Stripe, AI and storage, and they include race tests such as two admins acting at once.
-- The browser tests run on both desktop and a mobile screen size, and every push runs all tests automatically on GitHub Actions.
-- Other limits worth mentioning if asked: one active job per technician at a time, matching by district and region instead of live GPS, no SMS (it is paid), and no load or security audit yet.
-
----
-
-## How to cut this down to 5 minutes
-
-1. Keep only the **Core** paragraphs — that alone is about 1,000 words (≈7 minutes).
-2. Remove one sentence of examples from slides 2, 3 and 9 and the pickup-time sentence on slide 4.
-3. Target about **700 words** total at around 140 words per minute.
-4. Use the slide timings from `script-5min.md`: 0:00, 0:15, 0:40, 1:05, 1:45, 2:20, 3:00, 3:35, 4:05, 4:35.
-5. Move any **Extra** point you like into your Q&A answers instead.
+- **Learn the story, not the lines.** If you remember Rahim, the cracked screen, the 4,500 bill and the warranty, the rest follows naturally.
+- **Slow down on the numbers.** Say these clearly: 45 services, 8 device types, 90 percent, 30 days, 2,761 and 58 tests.
+- **Look at the board, not the slide.** Glance at the slide only when you *[point]*.
+- **Use the bridges.** They are what make it sound like one talk instead of ten separate slides.
+- **If you forget a line, skip it.** Nobody knows the script but you; just go to the next point.
