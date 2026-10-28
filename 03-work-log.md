@@ -893,3 +893,25 @@ Committed as client `33368a7` (author and committer Jahid Hasan) and pushed to `
   at each step, fallbacks and likely questions.
 - PDFs rebuilt from the markdown with headless Chrome: `Sarabo_Script_5min.pdf` (2 pages),
   `Sarabo_Script_Full.pdf` (4 pages), `Sarabo_Demo_Plan_5min.pdf` (5 pages, new). README lists them.
+
+### 33. API call section in the viva Q&A, and slide changes — 2026-10-28
+- Type: docs
+- Asked for: a write-up of how an API call works for the Q&A (where it is called from, how it
+  reaches the server, which files are linked); a light background on the first slide; no
+  "Sarabo · Jahid Hasan · Metropolitan University" text at the bottom left of the slides; and
+  the thank-you / live demo moved from slide 10 to its own slide 11.
+- `presentation/viva-qna.md`: new section 30 (Bangla/mixed). Base URL (`.env` →
+  `src/config/api.js`), public `useAxios` vs `useAxiosSecure` (token interceptor, one forced
+  refresh on 401, then logout), the layer chain from component to MongoDB, the quote-approve
+  call traced file by file with the real code, `useQuery` for reads, a client `api/` ↔
+  server `routes/` table, status codes and where they come from, and 11 likely questions.
+  Section 2 points to it. `Sarabo_Viva_QnA.pdf` rebuilt from the markdown with headless
+  Chrome (39 pages, was 37).
+- `presentation/build_slides.py` → `Sarabo_Presentation.pptx` (11 slides): title slide on the
+  light paper background with dark text and the normal logo; footer keeps only the page
+  number; slide 10 keeps results, limits and next steps; new slide 11 "Thank you. Now, the
+  live demo" with the live URL and the university logo. Notes updated (slide 10 4:35-4:55,
+  slide 11 4:55-5:00).
+- Not changed: the slide scripts (`script-5min.md`, `script-full.md`) still describe 10
+  slides with the thank-you at the end of slide 10.
+- Not pushed.

@@ -1,4 +1,4 @@
-"""Builds Sarabo_Presentation.pptx: 10 slides for a 5-minute talk (a 5-minute live demo follows).
+"""Builds Sarabo_Presentation.pptx: 10 slides for a 5-minute talk, then a thank-you slide that opens the 5-minute live demo.
 
 Short points only, large text and zoomed-in screenshots, so everything can be read
 from the back of a classroom. Everything is placed on one grid (left margin 0.7 in,
@@ -37,7 +37,7 @@ prs = Presentation()
 prs.slide_width, prs.slide_height = Inches(13.333), Inches(7.5)
 W, H = prs.slide_width, prs.slide_height
 BLANK = prs.slide_layouts[6]
-TOTAL = 10
+TOTAL = 11
 LEFT, CONTENT_W, TOP = Inches(0.7), Inches(11.93), Inches(2.0)   # the grid
 
 
@@ -123,7 +123,6 @@ def title(slide, s, size=38):
 
 def footer(slide, n, dark=False):
     c = SOFT if dark else MUTED
-    text(slide, LEFT, H - Inches(0.45), Inches(7), Inches(0.3), "Sarabo  ·  Jahid Hasan  ·  Metropolitan University", size=12, color=c)
     text(slide, LEFT + CONTENT_W - Inches(1), H - Inches(0.45), Inches(1), Inches(0.3), f"{n}/{TOTAL}", size=12, color=c, align=PP_ALIGN.RIGHT)
 
 
@@ -172,18 +171,18 @@ def new_slide(kick, head, n):
 
 # ======================================================== 1. Title  (0:00-0:15)
 s = prs.slides.add_slide(BLANK)
-bg(s, INK)
+bg(s, PAPER)
 box(s, 0, 0, Inches(0.22), H, fill=MARIGOLD, line=None, radius=False)
-picture(s, ASSETS / "logo-on-ink.png", Inches(0.9), Inches(0.8), h=Inches(0.9))
-text(s, Inches(0.9), Inches(2.1), Inches(12.0), Inches(1.0), "Repair your device with confidence.", size=44, color=WHITE, bold=True)
-text(s, Inches(0.9), Inches(3.2), Inches(11.5), Inches(0.6), "Sarabo: An Electronics Repair Service Management Platform", size=26, color=MARIGOLD)
+picture(s, ASSETS / "logo.png", Inches(0.9), Inches(0.8), h=Inches(0.9))
+text(s, Inches(0.9), Inches(2.1), Inches(12.0), Inches(1.0), "Repair your device with confidence.", size=44, color=INK, bold=True)
+text(s, Inches(0.9), Inches(3.2), Inches(11.5), Inches(0.6), "Sarabo: An Electronics Repair Service Management Platform", size=26, color=VERDIGRIS)
 text(s, Inches(0.9), Inches(4.5), Inches(7.4), Inches(2.2), [
-    [("Jahid Hasan", {"bold": True, "color": WHITE, "size": 26})],
-    [("ID 222-115-116  ·  Batch 57 (C)", {"color": SOFT})],
-    [("Supervisor: Shrabanti Chowdhury, Senior Lecturer", {"color": SOFT})],
-    [("Dept. of CSE, Metropolitan University, Sylhet", {"color": SOFT})],
+    [("Jahid Hasan", {"bold": True, "color": INK, "size": 26})],
+    [("ID 222-115-116  ·  Batch 57 (C)", {"color": MUTED})],
+    [("Supervisor: Shrabanti Chowdhury, Senior Lecturer", {"color": MUTED})],
+    [("Dept. of CSE, Metropolitan University, Sylhet", {"color": MUTED})],
 ], size=20, spacing=1.25)
-box(s, W - Inches(3.9), H - Inches(2.05), Inches(3.1), Inches(1.6), fill=WHITE, line=None)
+box(s, W - Inches(3.9), H - Inches(2.05), Inches(3.1), Inches(1.6), fill=WHITE)
 picture(s, UNI_LOGO, W - Inches(3.75), H - Inches(1.95), w=Inches(2.8))
 notes(s, "[0:00-0:15] Assalamu alaikum. I am Jahid Hasan. My project, supervised by Shrabanti Chowdhury, is Sarabo, "
          "an electronics repair service platform.")
@@ -475,13 +474,25 @@ bullets(s, LEFT, TOP + Inches(2.55), half, Inches(1.5), ["Stripe test mode, manu
 text(s, LEFT + half + Inches(0.4), TOP + Inches(2.0), half, Inches(0.5), "Next", size=24, bold=True)
 bullets(s, LEFT + half + Inches(0.4), TOP + Inches(2.55), half, Inches(1.5),
         ["Local gateway (SSLCOMMERZ / bKash)", "Mobile app, full Bangla interface"], size=21, color=MUTED, gap=6)
-box(s, LEFT, Inches(5.95), CONTENT_W, Inches(0.8), fill=INK, line=None)
-text(s, LEFT + Inches(0.35), Inches(5.95), CONTENT_W - Inches(0.7), Inches(0.8), [
-    [("Thank you.  ", {"bold": True, "color": WHITE}), ("Live demo next  ·  sarabo-client-six.vercel.app", {"color": MARIGOLD})]],
-    size=22, anchor=MSO_ANCHOR.MIDDLE)
-notes(s, "[4:35-5:00] All server tests and all 58 browser tests pass, and the system is live; all twelve objectives were "
+notes(s, "[4:35-4:55] All server tests and all 58 browser tests pass, and the system is live; all twelve objectives were "
          "met. Limits: Stripe is in test mode, payouts are manual, and there are no real users yet. Next: a local "
-         "payment gateway and a mobile app. Thank you, now the live demo.")
+         "payment gateway and a mobile app.")
+
+# ======================================================== 11. Thank you + live demo  (4:55-5:00)
+s = prs.slides.add_slide(BLANK)
+bg(s, PAPER)
+box(s, 0, 0, Inches(0.22), H, fill=MARIGOLD, line=None, radius=False)
+picture(s, ASSETS / "logo.png", Inches(0.9), Inches(0.8), h=Inches(0.9))
+text(s, Inches(0.9), Inches(2.3), Inches(11.5), Inches(1.3), "Thank you.", size=66, color=INK, bold=True)
+text(s, Inches(0.9), Inches(3.75), Inches(11.5), Inches(0.6), "Now, the live demo", size=30, color=VERDIGRIS, bold=True)
+box(s, Inches(0.9), Inches(4.75), Inches(7.6), Inches(0.95), fill=INK, line=None)
+text(s, Inches(1.25), Inches(4.75), Inches(7.0), Inches(0.95), [
+    [("Live  ", {"bold": True, "color": MARIGOLD}), ("sarabo-client-six.vercel.app", {"color": WHITE})]],
+    size=24, anchor=MSO_ANCHOR.MIDDLE)
+box(s, W - Inches(3.9), H - Inches(2.35), Inches(3.1), Inches(1.6), fill=WHITE)
+picture(s, UNI_LOGO, W - Inches(3.75), H - Inches(2.25), w=Inches(2.8))
+footer(s, 11)
+notes(s, "[4:55-5:00] Thank you. Now let me show you Rahim's repair, live.")
 
 assert len(prs.slides) == TOTAL, len(prs.slides)
 out = HERE / "Sarabo_Presentation.pptx"

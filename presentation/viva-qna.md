@@ -32,6 +32,8 @@
 
 যেকোনো feature-এর "code কোথায়" প্রশ্নে এই chain-টা বলবে:
 
+*API call কোথা থেকে হয়, কোন file কোনটার সাথে যুক্ত — একটা আসল উদাহরণ ধরে ধাপে ধাপে: **§৩০**।*
+
 ```
 Browser (React page / component)
   → hook (TanStack Query, যেমন hooks/useJobPortal.js)
@@ -1470,3 +1472,230 @@ function generateSecureTrackingId() {
 | Cold start আগে/পরে? | 10.7s → 2.9s |
 | Cron কখন? | প্রতিদিন 12:00 UTC (বাংলাদেশ 6 PM) |
 | Live URL? | sarabo-client-six.vercel.app |
+
+
+---
+
+# নতুন অংশ (২৮ অক্টোবর ২০২৬ সংযোজন)
+
+## ৩০. API call — কোথা থেকে, কীভাবে, কোন file-এর সাথে যুক্ত
+
+> **এক লাইনে:** Client (React, `sarabo-client`) আর server (Express, `sarabo-server`) দুটো আলাদা app। Client **axios** দিয়ে HTTP request (JSON) পাঠায় server-এর URL-এ; সাথে Firebase-এর ID token যায় `Authorization: Bearer ...` header-এ। Server URL দেখে ঠিক route খুঁজে নেয়, token যাচাই করে, controller-এ rule check করে, MongoDB থেকে/তে data পড়ে-লেখে, তারপর JSON উত্তর ফেরত দেয়।
+
+### ৩০.১ Client কীভাবে server-এর ঠিকানা জানে
+
+| ধাপ | File | কী করে |
+|---|---|---|
+| ১ | `sarabo-client/.env` | `VITE_API_BASE_URL=http://localhost:3000` (local) — production-এ Vercel-এর API URL |
+| ২ | `src/config/api.js` | `.env` থেকে মান পড়ে `API_BASE_URL` export করে। Production-এ URL ঠিক আছে কিনা (`https`) যাচাই করে (`validateApiBaseUrl`); local-এ খালি থাকলে `http://localhost:3000` |
+| ৩ | `src/hooks/useAxios.jsx` | `axios.create({ baseURL: API_BASE_URL })` — **public** instance, token ছাড়া |
+| ৪ | `src/hooks/useAxiosSecure.jsx` | একই baseURL, কিন্তু **token সহ** (নিচে দেখো) |
+
+তাই code-এ শুধু path লেখা হয় (যেমন `/repair-requests/123/quote`); axios নিজে সামনে base URL জুড়ে দেয়।
+
+### ৩০.২ দুই ধরনের axios — public আর secure
+
+| Instance | কোথায় ব্যবহার | উদাহরণ |
+|---|---|---|
+| `useAxios()` (public) | Login ছাড়াই যে data দেখা যায় | `useServiceDefinitions.js` → `GET /service-definitions`, `useJobPortal.js` → `GET /jobs`, `useAiStatus.js` → `GET /ai/status`, `TrackRequest.jsx` → `GET /public/trackings/:code` |
+| `useAxiosSecure()` (secure) | Login লাগে এমন সব কিছু | quote, payment, offer, wallet, admin … প্রায় সব |
+
+`useAxiosSecure.jsx`-এর দুটো **interceptor** (axios-এর "মাঝপথের হাত"):
+
+```js
+// Request interceptor — প্রতিটা request যাওয়ার আগে
+const currentUser = auth.currentUser;
+if (currentUser) {
+    const token = await currentUser.getIdToken();      // মেয়াদ শেষ হলে SDK নিজে নতুন দেয়
+    config.headers.Authorization = `Bearer ${token}`;
+}
+
+// Response interceptor — উত্তর আসার পরে
+// 401 এলে: একবার জোর করে নতুন token নিয়ে (getIdToken(true)) আবার চেষ্টা
+// তারপরও 401 হলে: logOut() → /login
+// 403 (login আছে কিন্তু অনুমতি নেই) হলে logout করে না
+```
+
+> **কেন `auth.currentUser`, React context-এর user না?** Sign-in-এর ঠিক পরেই request গেলে context তখনো update হয়নি — তাই token ছাড়া request চলে যেত। `auth.currentUser` Firebase SDK-এর live pointer, সাথে সাথে update হয়।
+
+### ৩০.৩ Layer গুলো — কোন file কার সাথে যুক্ত
+
+```
+CLIENT (sarabo-client/src)
+  Component / page      components/quote/QuoteDecisionActions.jsx   (button click)
+    ↓ calls
+  Hook (TanStack Query) hooks/useQuoteMutations.js → useDecideQuote()  (useMutation)
+    ↓ calls
+  API function          api/quotes.js → decideQuote(axiosSecure, id, body)
+    ↓ uses
+  Axios instance        hooks/useAxiosSecure.jsx   (baseURL + Bearer token)
+    ↓ HTTP POST  {API_BASE_URL}/repair-requests/:id/quote/decision
+──────────────────────────── internet ────────────────────────────
+SERVER (sarabo-server)
+  Vercel                vercel.json  → সব path → index.js  (region bom1, Mumbai)
+  App                   index.js     → requestId → (Stripe webhook, raw body)
+                                     → express.json → cors → সব route register
+  CORS                  config/cors.js → শুধু SITE_DOMAIN (আর dev-এ localhost:5173)
+  Route                 routes/quotes.js → app.post('/repair-requests/:id/quote/decision', ...)
+  Middleware            middleware/auth.js      verifyFBToken, verifyEmailVerified
+                        middleware/database.js  ensureDatabaseReady (DB না থাকলে 503)
+  Controller            controllers/index.js → quote: new QuoteController(...)
+                        controllers/quoteController.js → decideQuote(req, res)
+  Service / utils       utils/ (validation, status), services/ (booking, refund, notification)
+  Database              config/database.js → MongoDB Atlas (transaction)
+    ↓ res.send(JSON)
+CLIENT আবার: mutation শেষ → onSettled → React Query cache invalidate
+             → GET quote আবার আনে → UI update
+```
+
+### ৩০.৪ আসল উদাহরণ — Customer quote "Approve" চাপলে কী হয়
+
+**১. Button (component)** — `components/quote/QuoteDecisionActions.jsx`
+```js
+const mutation = useDecideQuote(requestId);
+...
+mutation.mutate({ decision: 'approve' }, { onSuccess: ..., onError: ... });
+```
+
+**২. Hook** — `hooks/useQuoteMutations.js`
+```js
+export function useDecideQuote(requestId) {
+    const axiosSecure = useAxiosSecure();
+    const invalidate = useQuoteInvalidation(requestId);
+    return useMutation({
+        mutationFn: (decision) => decideQuote(axiosSecure, requestId, decision),
+        onSettled: invalidate,   // সফল হোক বা না হোক, quote + request + assignedJobs আবার আনো
+    });
+}
+```
+
+**৩. API function** — `api/quotes.js`
+```js
+export async function decideQuote(axiosSecure, requestId, decision) {
+    const res = await axiosSecure.post(`/repair-requests/${requestId}/quote/decision`, decision);
+    return res.data;
+}
+```
+
+**৪. Token যোগ** — `hooks/useAxiosSecure.jsx` (request interceptor, উপরে দেখো)।
+
+**৫. Server-এ ঢোকা** — `vercel.json` সব request `index.js`-এ পাঠায়; `index.js`-এ `quoteRoutes(app, controllers)` আগেই register করা।
+
+**৬. Route** — `routes/quotes.js`
+```js
+app.post('/repair-requests/:id/quote/decision',
+    verifyFBToken, ensureDatabaseReady, verifyEmailVerified,
+    (req, res) => quoteController.decideQuote(req, res));
+```
+Middleware বাঁ থেকে ডানে চলে; যেকোনোটা fail করলে সেখানেই উত্তর ফেরত যায়, controller-এ পৌঁছায় না।
+
+**৭. Token যাচাই** — `middleware/auth.js`
+```js
+const idToken = token.split(' ')[1];
+const decoded = await admin.auth().verifyIdToken(idToken);   // Firebase Admin SDK
+req.decoded_email = decoded.email;
+req.decoded_email_verified = decoded.email_verified === true;
+```
+Client-এর পাঠানো email বিশ্বাস করা হয় না — email আসে **token থেকে**।
+
+**৮. Controller** — `controllers/quoteController.js` → `decideQuote()`
+- `id` বৈধ ObjectId না হলে → 400 `INVALID_REQUEST_ID`
+- Request নেই বা দেখার অধিকার নেই → 404 `REQUEST_NOT_FOUND` (কেউ অন্যের request আছে কিনা বুঝতে পারবে না)
+- মালিক (customer) না হলে → 403 `NOT_REQUEST_OWNER` — admin বা technician-ও approve করতে পারে না
+- Body যাচাই (`validateQuoteDecision`) → তারপর `mongoSession.withTransaction(...)`-এর ভেতরে status বদল — সব একসাথে হবে, নাহলে কিছুই না
+
+**৯. উত্তর ফেরত** — JSON → `api/quotes.js` `res.data` return করে → hook-এর `onSettled` cache invalidate করে → `useQuote.js` আবার `GET /repair-requests/:id/quote` আনে → screen-এ "Pay" button দেখা যায়।
+
+### ৩০.৫ Data পড়া (GET) — `useQuery`
+
+`hooks/useQuote.js`:
+```js
+return useQuery({
+    queryKey: quoteKeys.request(requestId),           // cache-এর নাম
+    queryFn: () => getQuote(axiosSecure, requestId),  // api/quotes.js → GET
+    enabled: !!requestId && !!user && !authLoading,   // login শেষ হওয়ার আগে call না
+    staleTime: 60 * 1000,                             // 1 মিনিট cache
+    retry: shouldRetry,                               // 401/403/404 হলে আর চেষ্টা না
+});
+```
+**লেখা (POST/PATCH/DELETE) = `useMutation`, পড়া (GET) = `useQuery`।** Mutation শেষে সংশ্লিষ্ট query invalidate করা হয়, তাই page reload ছাড়াই নতুন data।
+
+### ৩০.৬ Client API file ↔ Server route file (মিলিয়ে বলা)
+
+| Client `src/api/` | মূল endpoint | Server `routes/` |
+|---|---|---|
+| `repairRequests.js` | `POST /repair-requests`, `DELETE /repair-requests/:id` | `repairRequests.js` |
+| `aiHelper.js` | `POST /ai/request-draft`, `GET /ai/status` | `aiRequestDraft.js` |
+| `damageImages.js` | `/repair-requests/:id/damage-images/...` (upload-session, finalize) | `damageUploads.js` |
+| `jobPortal.js` | `GET /jobs`, `GET /technician/job-portal`, `/repair-requests/:id/applications` | `jobPortal.js` |
+| `inspectionFee.js` | `POST /repair-requests/:id/cancel-booking`, refund retry | `inspectionFee.js` |
+| `pickupSlots.js` | `GET /pickup-slots`, `PATCH /repair-requests/:id/pickup-slot` | `pickupSlots.js` |
+| `inspections.js` | `GET/POST /repair-requests/:id/inspection` | `inspections.js` |
+| `quotes.js` | `/repair-requests/:id/quote` (+ `/decision`, `/revise`, `/close`) | `quotes.js` |
+| `payments.js` | `POST /repair-requests/:id/checkout-session`, receipt PDF | `payments.js` (+ `paymentWebhook.js` Stripe-এর জন্য) |
+| `repairs.js` | `/repair/complete`, `/repair/evidence`, `/confirm-receipt` | `repairs.js` |
+| `warranty.js` | `/repair-requests/:id/warranty`, `/admin/warranty-claims` | `warranty.js` |
+| `notifications.js` | `GET /notifications`, `PATCH /notifications/read-all` | `notifications.js` |
+| `support.js` | `POST /support/chat` | `support.js` |
+| `technicianFeedback.js` | `/repair-requests/:id/feedback`, `/admin/technician-reviews` | `feedback.js` |
+| `missedPickups.js` | `/admin/repair-requests/:id/missed-pickup/...` | `missedPickups.js` |
+| `serviceDefinitions.js`, `adminServiceDefinitions.js` | `GET /service-definitions`, `/admin/service-definitions` | `serviceDefinitions.js` |
+| `adminReports.js`, `adminAttention.js` | `GET /admin/reports`, `/ai-summary`, `GET /admin/attention` | `adminReports.js` |
+| *(api/ folder-এ নেই — hook-এর ভেতরেই call)* | `GET /users/me/role` (`useRole.jsx`), `GET /technicians/me` (`useTechnicianProfile.js`), `GET /technician/wallet` | `users.js`, `technicians.js`, `wallet.js` |
+
+> **খোঁজার কৌশল:** Browser-এ DevTools → **Network** tab খুলে button চাপো → request URL দেখো (যেমন `/quote/decision`) → VS Code-এ **Ctrl+Shift+F** দিয়ে server-এ সেই path খোঁজো → `routes/` file পাবে → সেখান থেকে controller method-এর নাম।
+
+### ৩০.৭ Server কী ধরনের উত্তর দেয় (status code)
+
+| Code | মানে | কোথা থেকে |
+|---|---|---|
+| 200 / 201 | সফল | controller |
+| 400 | ভুল input (id, body) | controller validation |
+| 401 | Token নেই / ভুল / মেয়াদ শেষ | `verifyFBToken` |
+| 403 | Login আছে কিন্তু অনুমতি নেই (role, owner, email verified না), বা বাইরের website থেকে request (CORS) | `verifyAdmin`, `verifyEmailVerified`, controller, `index.js`-এর CORS handler |
+| 404 | নেই, **বা** দেখার অধিকার নেই (দুটোর একই উত্তর — তথ্য ফাঁস হয় না) | controller |
+| 409 | State মিলছে না (যেমন আগেই paid, দুবার booking) | controller (85 জায়গায়) |
+| 429 | বেশি request (public tracking: 1 মিনিটে 20টা) | `routes/publicTracking.js` (express-rate-limit) |
+| 503 | Database এখন পাওয়া যাচ্ছে না | `ensureDatabaseReady` |
+
+প্রতিটা error-এ একটা `code` থাকে (যেমন `NOT_REQUEST_OWNER`), যাতে client বুঝে ঠিক বার্তা দেখাতে পারে।
+
+### ৩০.৮ সম্ভাব্য প্রশ্ন — API
+
+**প্রশ্ন: Frontend থেকে backend-এ API call কোথা থেকে হয়?**
+**উত্তর:** Component সরাসরি axios ডাকে না। Component → hook (`hooks/useX.js`, TanStack Query) → `src/api/*.js`-এর function → `useAxiosSecure` বা `useAxios` instance। Base URL আসে `.env`-এর `VITE_API_BASE_URL` থেকে `src/config/api.js` হয়ে।
+
+**প্রশ্ন: Backend কীভাবে বোঝে কে request পাঠাল?**
+**উত্তর:** Header-এ Firebase ID token যায়। `middleware/auth.js`-এর `verifyFBToken` Firebase Admin SDK দিয়ে token যাচাই করে email বের করে `req.decoded_email`-এ রাখে। Role (customer/technician/admin) এরপর database থেকে দেখা হয় — client-এর বলা role কখনো বিশ্বাস করা হয় না।
+
+**প্রশ্ন: Server কীভাবে জানে কোন URL-এ কোন code চলবে?**
+**উত্তর:** `index.js` শুরুতেই সব route file register করে (`quoteRoutes(app, controllers)` ইত্যাদি)। প্রতিটা route file-এ `app.post(path, middleware..., controllerMethod)` লেখা। Express request-এর method + path মিলিয়ে সেই handler চালায়।
+
+**প্রশ্ন: Client আর server আলাদা domain-এ, তাহলে browser block করে না কেন?**
+**উত্তর:** CORS। `config/cors.js` শুধু `SITE_DOMAIN` (আমাদের client URL) কে allow করে, development-এ `localhost:5173`-ও। অন্য কোনো website-এর page থেকে request এলে server 403 `Origin not allowed` দেয়।
+
+**প্রশ্ন: Token-এর মেয়াদ শেষ হলে কী হয়?**
+**উত্তর:** `getIdToken()` নিজেই নতুন token দেয়। তবুও 401 এলে `useAxiosSecure`-এর response interceptor একবার `getIdToken(true)` দিয়ে জোর করে নতুন token নিয়ে আবার পাঠায়; সেটাও fail করলে logout করে `/login`-এ নেয়। একসাথে অনেক request fail করলেও logout একবারই হয় (`isHandlingSessionExpiry` flag)।
+
+**প্রশ্ন: `fetch` না নিয়ে axios কেন?**
+**উত্তর:** Interceptor (একবার লিখলে সব request-এ token যায়), JSON নিজে parse করে, 4xx/5xx-কে error হিসেবে ধরে, `baseURL` সেট করা যায়। `fetch` দিয়েও করা যেত, কিন্তু এগুলো হাতে লিখতে হতো।
+
+**প্রশ্ন: TanStack Query (React Query) কেন?**
+**উত্তর:** Loading/error state, cache, retry আর invalidation নিজে সামলায়। Approve করার পরে `invalidateQueries` দিলে quote আর request আবার আসে — হাতে state update করতে হয় না, আর screen সবসময় server-এর সত্যটা দেখায়।
+
+**প্রশ্ন: কেউ Postman দিয়ে সরাসরি API call করলে?**
+**উত্তর:** CORS শুধু browser-এর নিয়ম, Postman-কে আটকায় না — কিন্তু তাতে সমস্যা নেই। আসল নিরাপত্তা token আর controller-এর check-এ: বৈধ token ছাড়া 401, অন্যের request-এ 404/403, ভুল state-এ 409। তাই Postman দিয়েও নিজের অধিকারের বাইরে কিছু করা যায় না।
+
+**প্রশ্ন: Stripe webhook-ও কি এভাবেই আসে?**
+**উত্তর:** না। Webhook আসে Stripe-এর server থেকে, browser থেকে না, তাই token থাকে না। `routes/paymentWebhook.js` `express.json()`-এর **আগে** register করা, raw body রেখে Stripe-এর signature যাচাই করে। Payment confirm হয় শুধু এখানে — client-এর "paid" বলাকে বিশ্বাস করা হয় না।
+
+**প্রশ্ন: Photo upload কি server দিয়ে যায়?**
+**উত্তর:** না, বড় file server দিয়ে যায় না। Client `POST .../damage-images/upload-session` দিয়ে Supabase-এর signed upload URL নেয়, file সরাসরি Supabase-এ যায়, তারপর `.../finalize` দিয়ে server-কে জানায়; server file-টা যাচাই করে record রাখে।
+
+**প্রশ্ন: Local-এ কীভাবে চালাও?**
+**উত্তর:** Server: `sarabo-server`-এ `node index.js` → port 3000। Client: `.env`-এ `VITE_API_BASE_URL=http://localhost:3000`, তারপর `npm run dev` → `localhost:5173`। Production-এ client Vercel-এর API URL-এ call করে, server Vercel serverless function হিসেবে চলে (`vercel.json`)।
+
+**প্রশ্ন: Test-এ API কীভাবে check করো?**
+**উত্তর:** Server test (`tests/`) চলমান server-এ আসল HTTP request পাঠায়, আসল MongoDB replica set-এ — token, middleware, controller, transaction সব একসাথে test হয় (2,761 test)। Stripe/AI/storage fake।
+
+> **Viva-তে দেখানোর ক্রম (৩০ সেকেন্ড):** Network tab-এ request দেখাও (URL + `Authorization` header + JSON উত্তর) → `api/quotes.js` → `routes/quotes.js` → `middleware/auth.js` → `quoteController.js`-এর `decideQuote`। এই চারটা file খুললেই পুরো যাত্রা বোঝানো যায়।
