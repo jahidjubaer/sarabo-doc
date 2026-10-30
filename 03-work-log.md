@@ -915,3 +915,12 @@ Committed as client `33368a7` (author and committer Jahid Hasan) and pushed to `
 - Not changed: the slide scripts (`script-5min.md`, `script-full.md`) still describe 10
   slides with the thank-you at the end of slide 10.
 - Not pushed.
+
+## 2026-10-30: Viva fundamentals question set
+
+- `presentation/viva-fundamentals.html` → `Sarabo_Viva_Fundamentals.pdf` (14 pages, 130 numbered
+  questions plus a stack table, a known-weaknesses table and a rapid-fire table; Bangla with
+  English technical terms). Covers AI use, tech choices, JWT/Firebase, JavaScript, Node, Express,
+  HTTP/REST, React, database design, system design, security, testing and deployment. Project
+  statements were checked against the code. Built with headless Chrome.
+- Not pushed.

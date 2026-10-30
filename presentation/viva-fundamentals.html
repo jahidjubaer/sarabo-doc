@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<title>Sarabo Viva — Fundamental Questions</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm 16mm 14mm; }
+  body { font-family: "Nirmala UI", "Shonar Bangla", "Segoe UI", sans-serif; font-size: 10.5pt; line-height: 1.55; color: #1a1a1a; counter-reset: q; }
+  h1 { font-size: 20pt; margin: 0 0 4px; }
+  h2 { font-size: 14.5pt; margin: 22px 0 8px; padding-bottom: 3px; border-bottom: 2px solid #1f6f5c; color: #12493d; page-break-after: avoid; }
+  p { margin: 4px 0 6px; }
+  code { font-family: Consolas, "Cascadia Mono", monospace; font-size: 9pt; background: #f1f4f3; padding: 0 3px; border-radius: 3px; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; font-size: 9.4pt; }
+  th, td { border: 1px solid #c9d3d0; padding: 4px 6px; vertical-align: top; text-align: left; }
+  th { background: #e5efec; }
+  tr { page-break-inside: avoid; }
+  .q { margin: 11px 0 2px; font-weight: 700; page-break-after: avoid; counter-increment: q; }
+  .q::before { content: counter(q) ". "; color: #b0531c; }
+  .a { margin: 0 0 8px 0; padding-left: 10px; border-left: 3px solid #d7e5e1; page-break-inside: avoid; }
+  .tip { background: #fff6e5; border: 1px solid #f0d49b; padding: 6px 9px; margin: 8px 0; border-radius: 4px; page-break-inside: avoid; }
+  .flow { font-family: Consolas, monospace; font-size: 8.8pt; background: #f6f8f7; border: 1px solid #dde5e2; padding: 6px 8px; white-space: pre-wrap; margin: 4px 0 8px; page-break-inside: avoid; }
+  .small { font-size: 9pt; color: #555; }
+  .star { color: #b0531c; }
+</style>
+</head>
+<body>
+
+<h1>Sarabo — Viva: Fundamental প্রশ্ন</h1>
+<p class="small">Feature নয়, technology আর concept নিয়ে প্রশ্ন। প্রতিটা উত্তর ছোট রাখা হয়েছে, যাতে মুখে বলা যায়। Project-এর কথাগুলো আসল code মিলিয়ে লেখা (৩০ অক্টোবর ২০২৬)। Feature আর code location-এর জন্য আলাদা ফাইল: <code>Sarabo_Viva_QnA.pdf</code>।</p>
+
+<div class="tip"><b>কীভাবে পড়বে:</b> <span class="star">★</span> চিহ্নিত প্রশ্নগুলো আগে পড়ো, এগুলো আসার সম্ভাবনা সবচেয়ে বেশি। উত্তরটা ঢেকে নিজের ভাষায় বলার চেষ্টা করো, মুখস্থ নয়। উত্তরের ধরন: <b>সংজ্ঞা → আমার project-এ কোথায় → একটা সীমাবদ্ধতা</b>। না জানলে বলো "এটা ভালো করে জানি না"; বানিয়ে বললে পরের প্রশ্নেই ধরা পড়ে।</div>
+
+<p><b>সূচি:</b> ১. AI ব্যবহার · ২. Tech stack · ৩. JWT ও Firebase · ৪. JavaScript · ৫. Node.js · ৬. Express.js · ৭. HTTP ও REST · ৮. React · ৯. Client-side বাকি tools · ১০. Database · ১১. System design · ১২. Security · ১৩. Testing ও deployment · ১৪. Project-এর দুর্বল দিক · ১৫. Rapid-fire</p>
+
+<h2>১. AI ব্যবহার নিয়ে প্রশ্ন</h2>
+
+<div class="tip">স্যারকে সৎভাবে বলবে, এটা ভালো সিদ্ধান্ত। তবে নিচের উত্তরগুলো নমুনা মাত্র: <b>তোমার ক্ষেত্রে যেটুকু সত্য শুধু সেটুকুই বলবে</b>, নিজের ভাষায়। এরপর স্যার যাচাই করবেন তুমি বোঝো কি না, তাই বাকি অংশগুলোই আসল প্রস্তুতি।</div>
+
+<p class="q"><span class="star">★</span> এই project-এ AI কতটা ব্যবহার করেছ?</p>
+<p class="a">সরাসরি বলো: code লেখায় অনেকটাই AI-এর সাহায্য নিয়েছি। Project-এর idea, কোন feature থাকবে, কোন নিয়ম চলবে, এগুলো আমি ঠিক করেছি, চালিয়ে পরীক্ষা করেছি, আর ভুল পেলে ঠিক করিয়েছি। শতাংশ বানিয়ে বলবে না।</p>
+
+<p class="q"><span class="star">★</span> AI যদি code লেখে, তাহলে তুমি কী শিখলে?</p>
+<p class="a">পুরো system কীভাবে একসাথে কাজ করে: request কীভাবে চলে, auth কীভাবে হয়, data কোথায় থাকে, payment কীভাবে confirm হয়। প্রতিটা line নিজে হাতে লিখিনি, কিন্তু design আর flow বুঝিয়ে বলতে পারি। আপনি যেকোনো অংশ খুলে জিজ্ঞেস করতে পারেন।</p>
+
+<p class="q"><span class="star">★</span> AI ভুল করলে কীভাবে ধরলে?</p>
+<p class="a">Automated test, browser-এ নিজে চালিয়ে দেখা, আর CI। উত্তরে <b>তোমার নিজের দেখা একটা বাস্তব ঘটনা</b> বলো, যেটা সত্যি ঘটেছে। আগে থেকে একটা ঠিক করে রাখো।</p>
+
+<p class="q">এখন AI ছাড়া একটা ছোট CRUD API বানাতে পারবে?</p>
+<p class="a">পারলে হ্যাঁ বলো, আর viva-র আগে একবার করে দেখো: Express route, MongoDB insert/find, একটা React form। না পারলে সৎভাবে বলো কোন অংশে আটকাবে। স্যার সামনে করতে বলতে পারেন।</p>
+
+<p class="q">তোমার project-এও তো AI feature আছে। সেটা আর code লেখায় AI, দুটো কি এক?</p>
+<p class="a">না। Project-এর ভেতরে Google Gemini চলে (request form draft, support chat, report summary)। আর development-এ AI ছিল coding সহকারী। এই দুটো আলাদা করে বলবে।</p>
+
+<h2>২. Tech stack: কোনটা কেন</h2>
+
+<table>
+<tr><th>কাজ</th><th>ব্যবহার করেছি</th><th>কেন</th><th>বিকল্প</th></tr>
+<tr><td>UI</td><td>React 19</td><td>Component, বড় ecosystem</td><td>Vue, Angular</td></tr>
+<tr><td>Build tool</td><td>Vite 7</td><td>দ্রুত dev server, সহজ config</td><td>Webpack</td></tr>
+<tr><td>Routing</td><td>React Router 7</td><td>Nested layout, lazy route</td><td>Next.js routing</td></tr>
+<tr><td>Server state</td><td>TanStack Query</td><td>Cache, refetch, invalidate</td><td>useEffect + useState, Redux</td></tr>
+<tr><td>Styling</td><td>Tailwind CSS 4, Radix</td><td>দ্রুত, consistent, accessible UI</td><td>Bootstrap, MUI</td></tr>
+<tr><td>API</td><td>Node.js + Express 5</td><td>Client-server দুদিকেই JavaScript</td><td>Django, Spring, Laravel</td></tr>
+<tr><td>Database</td><td>MongoDB (Atlas), native driver</td><td>Nested document, transaction আছে</td><td>PostgreSQL, Mongoose</td></tr>
+<tr><td>Auth</td><td>Firebase Authentication</td><td>Password, Google login, email verify তৈরি</td><td>নিজের JWT, Auth0</td></tr>
+<tr><td>Payment</td><td>Stripe</td><td>Checkout, webhook, refund, test mode</td><td>SSLCommerz, bKash</td></tr>
+<tr><td>File storage</td><td>Supabase Storage (private)</td><td>Free tier, signed URL</td><td>Cloudinary, S3</td></tr>
+<tr><td>Email</td><td>Nodemailer + Gmail</td><td>Free, প্রায় ৫০০ email/দিন</td><td>SendGrid</td></tr>
+<tr><td>PDF receipt</td><td>PDFKit</td><td>Server-এ PDF তৈরি</td><td>Puppeteer</td></tr>
+<tr><td>Map</td><td>Leaflet + OpenStreetMap</td><td>Free, key লাগে না</td><td>Google Maps</td></tr>
+<tr><td>AI</td><td>Google Gemini</td><td>Free tier, Banglish বোঝে</td><td>OpenAI</td></tr>
+<tr><td>Hosting</td><td>Vercel</td><td>Free, সহজ deploy, cron</td><td>Render, VPS</td></tr>
+<tr><td>Test</td><td>নিজের test suite, Playwright</td><td>Real HTTP + real DB, browser flow</td><td>Jest, Cypress</td></tr>
+</table>
+
+<p class="q"><span class="star">★</span> MERN stack কী? তোমারটা কি MERN?</p>
+<p class="a">MongoDB, Express, React, Node। হ্যাঁ, আমারটা MERN, সাথে Firebase Auth, Stripe, Supabase Storage আর Gemini।</p>
+
+<p class="q"><span class="star">★</span> Frontend, backend আর database কেন আলাদা রেখেছ?</p>
+<p class="a">Three-tier architecture: UI, business logic, data আলাদা। সব নিয়ম server-এ থাকে কারণ client-এর code user বদলাতে পারে। আলাদা deploy করা যায়, আর পরে mobile app হলে একই API চলবে।</p>
+
+<p class="q">তোমার project কোন architecture pattern মানে?</p>
+<p class="a">Layered, MVC-র মতো: <code>routes</code> → <code>middleware</code> → <code>controllers</code> → <code>services</code>/<code>models</code> → MongoDB। View অংশটা React। পুরো API এক deployment-এ, তাই এটা monolith।</p>
+
+<h2>৩. Authentication: JWT ও Firebase</h2>
+
+<p class="q"><span class="star">★</span> JWT কী? এর ভেতরে কী থাকে?</p>
+<p class="a">JSON Web Token: <code>header.payload.signature</code>। Header-এ algorithm, payload-এ claim (email, expiry), signature দিয়ে প্রমাণ হয় token বদলানো হয়নি। Server token store না করেই যাচাই করতে পারে।</p>
+
+<p class="q"><span class="star">★</span> JWT কি encrypted? Payload-এ password রাখা যায়?</p>
+<p class="a">না, সাধারণ JWT শুধু signed, encrypted নয়। Payload base64url, যে কেউ decode করে পড়তে পারে। তাই গোপন কিছু রাখা যাবে না। Signature শুধু পরিবর্তন ধরে।</p>
+
+<p class="q"><span class="star">★</span> Firebase ব্যবহার করলে, তাহলে কি JWT ব্যবহার করোনি?</p>
+<p class="a">করেছি। Firebase ID token নিজেই একটা JWT, মেয়াদ ১ ঘণ্টা। পার্থক্য হলো token বানায় Firebase, আমার server নয়। আমি নিজে <code>jwt.sign()</code> করি না; server <code>admin.auth().verifyIdToken()</code> দিয়ে যাচাই করে।</p>
+
+<p class="q"><span class="star">★</span> নিজের JWT না বানিয়ে Firebase কেন?</p>
+<p class="a">নিজে করলে password hashing, email verification, password reset, Google login, token refresh, key management সব লিখতে ও সুরক্ষিত রাখতে হতো। Firebase-এ এগুলো তৈরি আর free। Password আমার database-এ থাকেই না, তাই ফাঁস হওয়ারও ভয় নেই। ক্ষতি: Google-এর service-এর উপর নির্ভরতা।</p>
+
+<p class="q"><span class="star">★</span> পুরো login flow বলো।</p>
+<div class="flow">Client: Firebase SDK দিয়ে sign in → ID token পায়
+Client: useAxiosSecure interceptor → Authorization: Bearer &lt;token&gt;
+Server: verifyFBToken → verifyIdToken() → req.decoded_email
+Server: verifyAdmin / verifyTechnician → users collection থেকে role চেক
+Server: controller কাজ করে → response</div>
+
+<p class="q"><span class="star">★</span> Authentication আর authorization-এর পার্থক্য?</p>
+<p class="a">Authentication: তুমি কে (token যাচাই, ব্যর্থ হলে 401)। Authorization: তোমার অনুমতি আছে কি না (role, ownership, ব্যর্থ হলে 403)।</p>
+
+<p class="q">Session-based আর token-based auth-এর পার্থক্য?</p>
+<p class="a">Session: server state রাখে, browser-এ শুধু session id (সাধারণত cookie)। Token: তথ্য token-এই থাকে, server কিছু রাখে না, তাই stateless ও serverless-এ সুবিধা। Session সহজে সাথে সাথে বাতিল করা যায়, JWT যায় না।</p>
+
+<p class="q"><span class="star">★</span> Logout করলে JWT কি সাথে সাথে invalid হয়?</p>
+<p class="a">না। Client token ফেলে দেয়, কিন্তু কেউ কপি করে থাকলে মেয়াদ শেষ পর্যন্ত (১ ঘণ্টা পর্যন্ত) চলবে। আমার code-এ <code>verifyIdToken</code> revocation চেক করে না। দরকার হলে <code>checkRevoked: true</code> দেওয়া যায়, তবে প্রতি request-এ বাড়তি network call হবে।</p>
+
+<p class="q">Token-এর মেয়াদ শেষ হলে কী হয়? Access আর refresh token কী?</p>
+<p class="a">Access token স্বল্পমেয়াদি, refresh token দিয়ে নতুন access token আনা হয়। Firebase SDK এটা নিজেই করে: <code>getIdToken()</code> মেয়াদ শেষের কাছাকাছি হলে refresh করে। তবু 401 এলে আমার interceptor একবার forced refresh করে retry করে, এরপরও ব্যর্থ হলে logout।</p>
+
+<p class="q">Token কোথায় রাখা উচিত? localStorage না cookie?</p>
+<p class="a">localStorage XSS-এ পড়া যায়। httpOnly cookie JS পড়তে পারে না, কিন্তু CSRF protection লাগে। আমার ক্ষেত্রে Firebase SDK নিজে browser storage-এ (default IndexedDB) রাখে, আর token যায় header-এ। Cookie ব্যবহার করি না, তাই CSRF-এর ঝুঁকি কম, কিন্তু XSS থেকে সাবধান থাকতে হয়।</p>
+
+<p class="q">Server প্রতিবার token যাচাই করতে Google-কে call করে?</p>
+<p class="a">না। Firebase token RS256-এ signed: Google private key দিয়ে sign করে, আর Admin SDK Google-এর public key (cache করা) দিয়ে নিজেই যাচাই করে। Signature, expiry, audience, issuer সব চেক হয়।</p>
+
+<p class="q">HS256 আর RS256-এর পার্থক্য?</p>
+<p class="a">HS256 symmetric: একই secret দিয়ে sign ও verify। RS256 asymmetric: private key দিয়ে sign, public key দিয়ে verify, তাই যাচাইকারী token বানাতে পারে না।</p>
+
+<p class="q"><span class="star">★</span> Role JWT-তে রাখোনি কেন? Database-এ কেন?</p>
+<p class="a">Firebase custom claim-এ রাখা যেত, তাহলে প্রতিবার DB read লাগত না। কিন্তু token-এ থাকলে role বদলালে পুরনো token মেয়াদ পর্যন্ত পুরনো role বহন করে। DB-তে রাখায় পরিবর্তন সাথে সাথে কার্যকর। ক্ষতি: admin/technician route-এ একটা বাড়তি query।</p>
+
+<p class="q">Client-এর <code>AdminRoute</code> থাকলে server-এ <code>verifyAdmin</code> কেন?</p>
+<p class="a">Client route guard শুধু UI লুকায়; Postman দিয়ে সরাসরি API call করা যায়। আসল নিরাপত্তা server-এ।</p>
+
+<p class="q">Firebase-এর web <code>apiKey</code> client-এ দেখা যায়। সমস্যা না?</p>
+<p class="a">না। এটা project চেনার জন্য, গোপন key নয়। গোপন হলো server-এর service account key (<code>FB_SERVICE_KEY</code>), যেটা শুধু server-এর env-এ থাকে। Admin SDK সেটা দিয়ে চলে।</p>
+
+<p class="q">Email verification কীভাবে enforce করেছ?</p>
+<p class="a">Decoded token-এর <code>email_verified</code> দেখে <code>verifyEmailVerified</code> middleware; না হলে 403। Client-এর পাঠানো কোনো flag বিশ্বাস করি না।</p>
+
+<h2>৪. JavaScript</h2>
+
+<p class="q"><span class="star">★</span> <code>var</code>, <code>let</code>, <code>const</code>-এর পার্থক্য?</p>
+<p class="a"><code>var</code> function-scoped, hoisted হয়ে <code>undefined</code> পায়। <code>let</code>/<code>const</code> block-scoped, declare-এর আগে ব্যবহার করলে error (Temporal Dead Zone)। <code>const</code> reassign করা যায় না, তবে object-এর ভেতরের মান বদলানো যায়।</p>
+
+<p class="q"><span class="star">★</span> Closure কী? একটা উদাহরণ দাও।</p>
+<p class="a">Function তার তৈরি হওয়ার জায়গার variable মনে রাখে, বাইরের function শেষ হলেও। উদাহরণ: <code>useAxiosSecure</code>-এর interceptor; আর React-এর "stale closure" সমস্যা। আমার interceptor পুরনো <code>user</code> ধরে রাখছিল বলে <code>auth.currentUser</code> পড়ে।</p>
+
+<p class="q"><span class="star">★</span> Event loop কী?</p>
+<p class="a">JavaScript single-threaded। Call stack খালি হলে আগে সব microtask (Promise), তারপর একটা macrotask (setTimeout, I/O callback) চলে। এভাবে thread আটকে না রেখে async কাজ হয়।</p>
+
+<p class="q">এই code-এর output কী?</p>
+<div class="flow">console.log(1); setTimeout(() =&gt; console.log(2), 0);
+Promise.resolve().then(() =&gt; console.log(3)); console.log(4);</div>
+<p class="a"><code>1 4 3 2</code>। আগে sync কোড, তারপর microtask, তারপর timer।</p>
+
+<p class="q"><span class="star">★</span> Promise আর async/await কী?</p>
+<p class="a">Promise ভবিষ্যৎ ফলের object: pending, fulfilled, rejected। <code>async/await</code> Promise-এর উপরেই সহজ syntax; <code>await</code> ঐ function থামায়, পুরো thread নয়। Error ধরতে <code>try/catch</code>। আগে callback nesting-এর সমস্যা ছিল (callback hell)।</p>
+
+<p class="q"><code>Promise.all</code> আর <code>Promise.allSettled</code>-এর পার্থক্য?</p>
+<p class="a"><code>all</code> একটা fail করলেই পুরোটা reject। <code>allSettled</code> সবার ফল দেয়, সফল বা ব্যর্থ। পরস্পর নির্ভরশীল না হলে parallel চালালে সময় বাঁচে।</p>
+
+<p class="q"><code>==</code> আর <code>===</code>?</p>
+<p class="a"><code>==</code> type বদলে তুলনা করে (<code>"5" == 5</code> true), <code>===</code> type-সহ (false)। সবসময় <code>===</code> ব্যবহার করা ভালো।</p>
+
+<p class="q"><code>null</code> আর <code>undefined</code>?</p>
+<p class="a"><code>undefined</code>: মান দেওয়া হয়নি। <code>null</code>: ইচ্ছা করে "কিছু নেই"। <code>AuthProvider</code>-এ দুটোর আলাদা অর্থ আছে: <code>undefined</code> মানে এখনও জানা নেই, <code>null</code> মানে signed out।</p>
+
+<p class="q">Arrow function আর সাধারণ function-এর পার্থক্য?</p>
+<p class="a">Arrow-র নিজের <code>this</code> ও <code>arguments</code> নেই, বাইরেরটা নেয়; <code>new</code> দিয়ে চলে না। সাধারণ function-এ <code>this</code> নির্ভর করে কীভাবে call হলো তার উপর।</p>
+
+<p class="q">Hoisting কী?</p>
+<p class="a">Declaration আগে memory-তে নেওয়া হয়, তাই function declaration লেখার আগেই call করা যায়। <code>var</code> পায় <code>undefined</code>, <code>let/const</code> TDZ-তে থাকে।</p>
+
+<p class="q">Prototype কী?</p>
+<p class="a">JS-এর inheritance পদ্ধতি। Object-এ property না পেলে prototype chain ধরে খোঁজে। <code>class</code> এর উপরেই syntax। আমার <code>RepairRequestModel</code> একটা class।</p>
+
+<p class="q">Spread, destructuring, optional chaining কী?</p>
+<p class="a"><code>{...a}</code> কপি/merge। <code>const { user } = useAuth()</code> বের করে আনা। <code>error.response?.status</code> null হলে crash না করে <code>undefined</code> দেয়।</p>
+
+<p class="q">Shallow copy আর deep copy?</p>
+<p class="a">Shallow শুধু উপরের স্তর কপি করে, ভেতরের object একই reference। Deep সব স্তর (<code>structuredClone</code>)। React state বদলাতে এটা জরুরি, কারণ React reference তুলনা করে।</p>
+
+<p class="q"><code>map</code>, <code>filter</code>, <code>reduce</code>, <code>forEach</code>?</p>
+<p class="a"><code>map</code> রূপান্তর করে নতুন array, <code>filter</code> বাছাই, <code>reduce</code> এক মানে আনে (যেমন total), <code>forEach</code> শুধু loop, কিছু return করে না।</p>
+
+<p class="q">CommonJS আর ES Module?</p>
+<p class="a"><code>require/module.exports</code> বনাম <code>import/export</code>। আমার server CommonJS, client ES Module (<code>"type": "module"</code>)। ESM static, তাই tree-shaking ভালো হয়।</p>
+
+<p class="q">Debounce কী?</p>
+<p class="a">পরপর আসা call-এর শেষটা কিছুক্ষণ পরে একবার চালানো; যেমন search-এ প্রতি অক্ষরে API call না করা।</p>
+
+<h2>৫. Node.js</h2>
+
+<p class="q"><span class="star">★</span> Node.js কী? এটা কি language বা framework?</p>
+<p class="a">কোনোটাই না। Node হলো JavaScript runtime: V8 engine + libuv, যা browser-এর বাইরে JS চালায় এবং file, network access দেয়।</p>
+
+<p class="q"><span class="star">★</span> Node single-threaded হয়ে অনেক request কীভাবে সামলায়?</p>
+<p class="a">Non-blocking I/O। DB বা network call শুরু করে অপেক্ষা না করে পরের request ধরে; কাজ শেষ হলে event loop callback চালায়। JS এক thread-এ চলে, তবে libuv-এর thread pool আর OS I/O-র কাজ করে।</p>
+
+<p class="q">তাহলে Node কোন কাজে খারাপ?</p>
+<p class="a">CPU-ভারী কাজ (video encoding, বড় হিসাব), কারণ event loop আটকে যায়। সমাধান worker threads বা আলাদা service। আমার project I/O-ভারী, তাই মানানসই।</p>
+
+<p class="q">Blocking আর non-blocking code-এর উদাহরণ?</p>
+<p class="a"><code>fs.readFileSync</code> শেষ না হওয়া পর্যন্ত সব আটকে রাখে; <code>await fs.promises.readFile</code> রাখে না।</p>
+
+<p class="q"><code>package.json</code> আর <code>package-lock.json</code>-এর পার্থক্য?</p>
+<p class="a"><code>package.json</code>-এ চাহিদা ও script; lock file-এ সব dependency-র হুবহু version, যাতে সব জায়গায় একই install হয়। <code>dependencies</code> production-এ লাগে, <code>devDependencies</code> শুধু development-এ।</p>
+
+<p class="q"><code>^5.1.0</code> মানে কী?</p>
+<p class="a">Semantic versioning: major.minor.patch। <code>^</code> মানে একই major-এ নতুন minor/patch চলবে (<code>&lt;6.0.0</code>)।</p>
+
+<p class="q">Environment variable কেন? <code>.env</code> commit করো?</p>
+<p class="a">Secret আর environment অনুযায়ী config code-এর বাইরে রাখতে। <code>.env</code> commit হয় না, <code>.env.example</code>-এ শুধু নামগুলো থাকে। Production-এ Vercel-এর settings-এ।</p>
+
+<p class="q">Buffer আর Stream কী?</p>
+<p class="a">Buffer: raw bytes। Stream: data টুকরো টুকরো পড়া, পুরোটা memory-তে না এনে। Stripe webhook-এ raw Buffer লাগে signature যাচাইয়ের জন্য।</p>
+
+<h2>৬. Express.js</h2>
+
+<p class="q"><span class="star">★</span> Express কী? Node থাকতে Express কেন?</p>
+<p class="a">Node-এর উপর ছোট web framework। শুধু Node-এর <code>http</code> দিয়ে URL parsing, routing, body parsing নিজে করতে হতো; Express-এ routing আর middleware তৈরি।</p>
+
+<p class="q"><span class="star">★</span> Route কী? Parts গুলো বলো।</p>
+<div class="flow">app.post('/repair-requests/:id/quote/decision',
+  verifyFBToken, ensureDatabaseReady, verifyEmailVerified,
+  (req, res) =&gt; quoteController.decideQuote(req, res));</div>
+<p class="a">HTTP method + path + middleware chain + handler। <code>:id</code> হলো route parameter। বাম থেকে ডানে চলে; একটা response দিয়ে দিলে পরেরগুলো চলে না।</p>
+
+<p class="q"><span class="star">★</span> Middleware কী? <code>next()</code> কী করে?</p>
+<p class="a">Request আর response-এর মাঝের function, <code>(req, res, next)</code>। <code>next()</code> পরের ধাপে পাঠায়, না ডাকলে আর response না দিলে request ঝুলে থাকে। আমার উদাহরণ: <code>requestId</code>, <code>verifyFBToken</code>, <code>verifyAdmin</code>, rate limiter।</p>
+
+<p class="q"><code>req.params</code>, <code>req.query</code>, <code>req.body</code>?</p>
+<p class="a">Params: <code>/requests/:id</code> এর মান। Query: <code>?status=open</code>। Body: POST/PATCH-এর JSON, <code>express.json()</code> parse করে দেয়।</p>
+
+<p class="q"><code>app.use</code> আর <code>app.get</code>?</p>
+<p class="a"><code>app.use</code> সব method-এ, path prefix মিলিয়ে চলে। <code>app.get</code> শুধু GET-এ, পুরো path মিলিয়ে।</p>
+
+<p class="q"><span class="star">★</span> Middleware-এর order কেন গুরুত্বপূর্ণ? উদাহরণ দাও।</p>
+<p class="a">Express যে ক্রমে register হয় সে ক্রমে চালায়। Stripe webhook route <code>express.json()</code>-এর আগে, কারণ signature যাচাইয়ে আসল raw bytes লাগে; একবার parse হলে আসল bytes আর পাওয়া যায় না। Auth আগে, DB check পরে, যাতে ভুল token দ্রুত 401 পায়।</p>
+
+<p class="q">Error-handling middleware কেমন হয়?</p>
+<p class="a">চারটা argument: <code>(err, req, res, next)</code>, সব route-এর পরে register করতে হয়। Express 5-এ async handler-এর rejected Promise নিজে থেকে error handler-এ যায়; Express 4-এ হাতে <code>next(err)</code> দিতে হতো। আমার <code>index.js</code>-এ CORS error-এর জন্য একটা আছে।</p>
+
+<p class="q"><code>express.Router()</code> কী? তুমি ব্যবহার করেছ?</p>
+<p class="a">Route গুলো আলাদা ফাইলে ভাগ করার mini app। আমি একটু ভিন্নভাবে করেছি: প্রতিটা <code>routes/*.js</code> একটা function export করে, <code>userRoutes(app, controllers)</code>, যেটা সরাসরি <code>app</code>-এ register করে। উদ্দেশ্য একই।</p>
+
+<p class="q"><code>trust proxy</code> কেন দিয়েছ?</p>
+<p class="a">Vercel-এর পেছনে থাকায় আসল client IP থাকে <code>X-Forwarded-For</code> header-এ। Rate limiter-এর জন্য আসল IP লাগে। <code>1</code> মানে একটা proxy hop বিশ্বাস করি; <code>true</code> দিলে IP জাল করা সহজ হতো।</p>
+
+<p class="q"><code>express.json()</code>-এর limit কত? কেন বদলেছ?</p>
+<p class="a">Default 100 kB। শুধু <code>/ai/request-draft</code>-এ 2.5 MB, কারণ সেখানে base64 ছবি আসে। Limit থাকলে বিশাল body পাঠিয়ে server-কে ক্ষতি করা কঠিন।</p>
+
+<h2>৭. HTTP ও REST</h2>
+
+<p class="q"><span class="star">★</span> REST কী? এর নিয়মগুলো?</p>
+<p class="a">API ডিজাইনের ধরন: URL resource বোঝায়, HTTP method কাজ বোঝায়, stateless, client-server আলাদা। আমার API মূলত RESTful; <code>/accept</code>-এর মতো action path পুরোপুরি REST-সম্মত নয়, তবে পড়তে স্পষ্ট।</p>
+
+<p class="q"><span class="star">★</span> GET, POST, PUT, PATCH, DELETE-এর পার্থক্য? PUT আর PATCH?</p>
+<p class="a">পড়া, তৈরি, পুরোটা বদল, আংশিক বদল, মোছা। GET, PUT, DELETE idempotent; POST নয়।</p>
+
+<p class="q"><span class="star">★</span> Status code: 200, 201, 400, 401, 403, 404, 409, 429, 500, 503?</p>
+<p class="a">OK; created; ভুল input; login নেই; অনুমতি নেই; নেই; state conflict; অতিরিক্ত request; server error; service সাময়িক অনুপলব্ধ। 401 আর 403-এর পার্থক্য নিশ্চিত বলতে পারবে।</p>
+
+<p class="q"><span class="star">★</span> Browser-এ URL লিখে Enter চাপলে কী হয়?</p>
+<p class="a">DNS থেকে IP → TCP connection → TLS handshake → HTTP request → server response → HTML parse, CSS/JS load → render। আমার site-এ Vercel <code>index.html</code> দেয়, তারপর React চালু হয়ে API call করে।</p>
+
+<p class="q"><span class="star">★</span> CORS কী? এটা কি server-কে রক্ষা করে?</p>
+<p class="a">Browser-এর নিয়ম: অন্য origin-এর response পড়তে server-এর অনুমতি লাগে। Client আর API আলাদা domain, তাই <code>config/cors.js</code>-এ allow-list। এটা শুধু browser-এর জন্য; Postman বা curl আটকায় না। আসল সুরক্ষা token।</p>
+
+<p class="q">Preflight request কী?</p>
+<p class="a"><code>Authorization</code> header বা JSON body থাকলে browser আগে <code>OPTIONS</code> পাঠিয়ে জেনে নেয় অনুমতি আছে কি না, তারপর আসল request পাঠায়।</p>
+
+<p class="q">HTTP আর HTTPS?</p>
+<p class="a">HTTPS = HTTP + TLS: encryption, integrity, server-এর পরিচয় প্রমাণ। Bearer token পাঠানোর জন্য অপরিহার্য।</p>
+
+<p class="q">Stateless মানে কী? কেন ভালো?</p>
+<p class="a">Server আগের request মনে রাখে না, সব তথ্য প্রতিটা request-এ। যেকোনো instance যেকোনো request সামলাতে পারে, তাই scale সহজ।</p>
+
+<p class="q">REST আর GraphQL? REST কেন?</p>
+<p class="a">GraphQL-এ client ঠিক করে কোন field লাগবে, একটা endpoint। REST সহজ, HTTP cache চলে, আর আমার দরকার মিটিয়েছে।</p>
+
+<h2>৮. React</h2>
+
+<p class="q"><span class="star">★</span> React কী? Library না framework?</p>
+<p class="a">UI বানানোর library। Component দিয়ে declarative UI। Routing বা data fetching নিজে দেয় না, তাই আলাদা library নিয়েছি।</p>
+
+<p class="q"><span class="star">★</span> Virtual DOM ও reconciliation কী?</p>
+<p class="a">Render-এ UI-এর হালকা JS tree তৈরি হয়, আগের tree-র সাথে diff করে শুধু বদলানো অংশ আসল DOM-এ যায়। আসল DOM update তুলনামূলক খরচের।</p>
+
+<p class="q"><span class="star">★</span> Props আর state-এর পার্থক্য?</p>
+<p class="a">Props বাইরে থেকে আসে, read-only। State component-এর নিজের, বদলালে re-render হয়।</p>
+
+<p class="q"><span class="star">★</span> <code>useState</code> আর <code>useEffect</code> কী? Dependency array-র তিন রূপ?</p>
+<p class="a">State রাখা, আর render-এর পরে side effect চালানো। Array নেই: প্রতি render-এ। <code>[]</code>: mount-এ একবার। <code>[x]</code>: <code>x</code> বদলালে। Cleanup function unmount-এ বা পরের effect-এর আগে চলে, যেমন <code>onAuthStateChanged</code> unsubscribe আর interceptor eject।</p>
+
+<p class="q"><span class="star">★</span> Hook-এর নিয়ম কী? Custom hook কী?</p>
+<p class="a">শুধু top level-এ আর component/custom hook থেকে call; condition বা loop-এ নয়, কারণ React call-এর ক্রম দিয়ে state মেলায়। Custom hook হলো <code>use</code> নামের function যা logic আবার ব্যবহার করে: <code>useAuth</code>, <code>useRole</code>, <code>useAxiosSecure</code>।</p>
+
+<p class="q">List-এ <code>key</code> কেন লাগে? Index দিলে সমস্যা কী?</p>
+<p class="a">Key দিয়ে React চেনে কোন item কোনটা। Index দিলে order বদলালে ভুল item-এ state যুক্ত হতে পারে; তাই stable id ভালো।</p>
+
+<p class="q"><code>useMemo</code>, <code>useCallback</code>, <code>useRef</code>?</p>
+<p class="a"><code>useMemo</code> হিসাবের ফল মনে রাখে, <code>useCallback</code> function-এর reference। <code>useRef</code> এমন মান রাখে যা বদলালে re-render হয় না, বা DOM element ধরে; <code>AuthProvider</code>-এ আগের uid রাখতে ব্যবহার করেছি।</p>
+
+<p class="q"><span class="star">★</span> Context API কী? Redux কেন নাওনি?</p>
+<p class="a">Prop drilling ছাড়া data পৌঁছানো। আমি auth আর theme-এ Context ব্যবহার করেছি। বেশিরভাগ data server থেকে আসে, সেটা TanStack Query সামলায়। তাই Redux-এর আলাদা global store লাগেনি। Context-এর value বদলালে সব consumer re-render হয়, তাই ঘন ঘন বদলানো data-র জন্য ভালো নয়।</p>
+
+<p class="q"><span class="star">★</span> TanStack Query কী করে? <code>useEffect</code>-এ fetch করলে কী সমস্যা?</p>
+<p class="a"><code>useEffect</code>-এ loading, error, cache, race condition সব হাতে লিখতে হয়। Query-তে <code>queryKey</code> দিয়ে cache, আর mutation-এর পরে <code>invalidateQueries</code>।</p>
+
+<p class="q">Controlled আর uncontrolled component?</p>
+<p class="a">Controlled: input-এর মান React state-এ। Uncontrolled: DOM-এই, ref দিয়ে পড়া। react-hook-form মূলত uncontrolled, তাই re-render কম।</p>
+
+<p class="q">SPA কী? CSR, SSR, SSG-র পার্থক্য?</p>
+<p class="a">SPA: এক HTML, route বদলায় browser-এ। CSR browser-এ render, SSR প্রতি request-এ server-এ, SSG build-এর সময়। আমারটা CSR; dashboard-ভিত্তিক app বলে ঠিক আছে, তবে SEO দুর্বল।</p>
+
+<p class="q"><span class="star">★</span> Protected route কীভাবে কাজ করে? Refresh দিলে login পেজে যায় না কেন?</p>
+<p class="a"><code>PrivateRoute</code> user না থাকলে <code>&lt;Navigate to="/login"&gt;</code> দেয়। Firebase session ফেরাতে সময় লাগে, তাই <code>loading</code> true থাকা পর্যন্ত Loading দেখায়। এটা না থাকলে refresh-এ ভুল করে login-এ পাঠাত।</p>
+
+<p class="q">Lazy loading আর code splitting কী?</p>
+<p class="a"><code>lazy(() =&gt; import(...))</code> দিয়ে page-এর JS আলাদা chunk হয়, দরকারে load হয়। <code>Suspense</code> ততক্ষণ fallback দেখায়। প্রথম load দ্রুত হয়।</p>
+
+<p class="q"><code>StrictMode</code>-এ effect দুবার চলে কেন?</p>
+<p class="a">শুধু development-এ, cleanup ভুল আছে কি না ধরার জন্য। Production-এ একবার।</p>
+
+<p class="q">JSX কী? Browser কি সরাসরি বোঝে?</p>
+<p class="a">JS-এর ভেতরে HTML-এর মতো syntax। Browser বোঝে না; build tool JS function call-এ রূপান্তর করে।</p>
+
+<p class="q">Re-render কখন হয়? কমানোর উপায়?</p>
+<p class="a">নিজের state, parent-এর re-render, বা context বদলালে। State নিচে নামানো, <code>React.memo</code>, <code>useMemo</code>। Code-এ <code>memo</code> ব্যবহার করিনি, সমস্যা মেপে দরকার পড়লে করতাম।</p>
+
+<h2>৯. Client-side বাকি tools</h2>
+
+<p class="q">Vite কী? Create React App থেকে ভালো কেন?</p>
+<p class="a">Dev-এ browser-এর native ES module দিয়ে file on demand দেয়, তাই শুরু ও HMR দ্রুত। Production build bundle করে minify করে। CRA এখন deprecated।</p>
+
+<p class="q">Tailwind কী? Inline CSS থেকে পার্থক্য?</p>
+<p class="a">Utility class দিয়ে style। Inline-এ hover, media query, design token হয় না; Tailwind-এ হয়, আর শুধু ব্যবহৃত class build-এ থাকে।</p>
+
+<p class="q">Axios কেন, <code>fetch</code> কেন নয়? Interceptor কী?</p>
+<p class="a">Axios-এ interceptor, 4xx/5xx-এ reject, আর auto JSON। Interceptor প্রতিটা request/response-এর মাঝে চলে: আমি token লাগাই আর 401 সামলাই।</p>
+
+<p class="q"><code>VITE_</code> prefix কেন? সেখানে secret রাখা যায়?</p>
+<p class="a">শুধু <code>VITE_</code> variable browser bundle-এ যায়। তাই secret রাখা যাবে না, build করা JS-এ যে কেউ দেখতে পারে।</p>
+
+<p class="q">Vercel-এ client-এ rewrite কেন লাগল?</p>
+<p class="a"><code>/dashboard</code> সরাসরি খুললে ঐ নামে কোনো file নেই, 404 হতো। <code>vercel.json</code> সব path <code>index.html</code>-এ পাঠায়, তারপর React Router সামলায়।</p>
+
+<h2>১০. Database</h2>
+
+<p class="q"><span class="star">★</span> MongoDB কেন? SQL কেন নয়?</p>
+<p class="a">Request-এ nested data আছে (product, quote, inspection, payment), আর ভিন্ন device-এর field ভিন্ন, তাই document সহজে মেলে। JSON JS-এর সাথে স্বাভাবিক। Free Atlas আছে।</p>
+
+<p class="q"><span class="star">★</span> Payment আর booking আছে, তাহলে SQL বেশি ঠিক ছিল না?</p>
+<p class="a">সৎ উত্তর: PostgreSQL-ও খুব ভালো হতো, relation আর constraint শক্তিশালী। MongoDB-তে এই নিশ্চয়তা আমি multi-document transaction আর unique index দিয়ে নিয়েছি। Trade-off: consistency-র দায় বেশিটা application code-এ।</p>
+
+<p class="q"><span class="star">★</span> SQL আর NoSQL-এর পার্থক্য?</p>
+<p class="a">Table/row, fixed schema, JOIN বনাম document, flexible schema, embedding। SQL সাধারণত vertical scale, NoSQL সহজে horizontal (sharding)।</p>
+
+<p class="q"><span class="star">★</span> Embedding আর referencing: কখন কোনটা?</p>
+<p class="a">একসাথে পড়া হয় ও সংখ্যায় কম হলে embed: quote, inspection → <code>repair_requests</code>-এ। অনেক হলে বা আলাদাভাবে খোঁজা লাগলে reference: offer → <code>job_applications</code>। Document-এর সীমা 16 MB।</p>
+
+<p class="q"><span class="star">★</span> তোমার database design বলো।</p>
+<p class="a">21টা collection। মূল: <code>users</code>, <code>technicians</code>, <code>repair_requests</code>, <code>service_definitions</code>, <code>job_applications</code>, <code>payments</code>, <code>technician_withdrawals</code>, <code>warranty_claims</code>, <code>notifications</code>, <code>tracking_events</code>। Relationship: এক customer-এর অনেক request; এক request-এর অনেক offer; এক request-এ একজন booked technician।</p>
+
+<p class="q"><span class="star">★</span> Index কী? কীভাবে কাজ করে? ক্ষতি কী?</p>
+<p class="a">সাজানো data structure (B-tree), তাই পুরো collection scan লাগে না। ক্ষতি: write ধীর হয়, জায়গা লাগে। আমার <code>config/database.js</code>-এ 44টা <code>createIndex</code>।</p>
+
+<p class="q">Compound index-এ field-এর ক্রম কেন গুরুত্বপূর্ণ?</p>
+<p class="a">Leftmost prefix: <code>{technicianId, status, createdAt}</code> শুধু <code>status</code> দিয়ে খোঁজায় ভালো কাজ করে না। সাধারণ নিয়ম: Equality, Sort, Range।</p>
+
+<p class="q">Unique, partial, TTL index?</p>
+<p class="a">Unique: duplicate আটকায় (<code>trackingId</code>)। Partial: কিছু document-এ (একটাই খোলা withdrawal)। TTL: সময় হলে নিজে মোছে (<code>email_log</code>)। Code-এ bug থাকলেও DB আটকায়।</p>
+
+<p class="q"><span class="star">★</span> ACID আর transaction?</p>
+<p class="a">Atomicity সব বা কিছুই না; Consistency নিয়ম ঠিক থাকে; Isolation একে অন্যকে নষ্ট করে না; Durability commit টিকে থাকে। Booking-এ <code>session.withTransaction</code>। MongoDB-তে replica set লাগে।</p>
+
+<p class="q"><span class="star">★</span> Race condition কী? দুজন একসাথে একই job নিলে?</p>
+<p class="a">একসাথে চলা কাজের ফল সময়ের উপর নির্ভর করলে। আমি condition-সহ update করি: <code>{ _id, deliveryStatus: 'pending-pickup', technicianId: { $exists: false } }</code>, আর transaction-এ। দ্বিতীয়জনের update মেলে না। Unique index শেষ সুরক্ষা।</p>
+
+<p class="q">Mongoose কেন নয়? তাহলে schema কোথায়?</p>
+<p class="a">Native driver ব্যবহার করেছি; transaction, aggregation-এ সরাসরি নিয়ন্ত্রণ। ক্ষতি: Mongoose-এর মতো তৈরি schema validation নেই। Validation নিজে লিখেছি <code>utils/</code>-এ (যেমন <code>repairRequestV2.js</code>), আর <code>models/</code>-এ class।</p>
+
+<p class="q">Normalization কী? MongoDB-তে denormalize করো?</p>
+<p class="a">Duplicate কমাতে data ভাগ করা (1NF, 2NF, 3NF)। হ্যাঁ, করি: price snapshot request-এ কপি করা, যাতে পরে দাম বদলালেও পুরনো request ঠিক থাকে।</p>
+
+<p class="q">Aggregation pipeline কী? <code>$lookup</code>?</p>
+<p class="a">ধাপে ধাপে data process: <code>$match</code>, <code>$group</code>, <code>$sort</code>। Admin report-এ ব্যবহার করেছি। <code>$lookup</code> মানে SQL-এর left join-এর মতো।</p>
+
+<p class="q"><code>ObjectId</code> কী?</p>
+<p class="a">12-byte id: timestamp (4), random (5), counter (3)। Client বা server-এই তৈরি হয়, তাই distributed-এ সংঘর্ষ প্রায় হয় না।</p>
+
+<p class="q">Replica set আর sharding?</p>
+<p class="a">Replica set: একই data-র কপি, primary-তে write, primary গেলে election; availability দেয়। Sharding: data ভাগ করে রাখা; capacity বাড়ায়। আমি sharding ব্যবহার করিনি, দরকার নেই।</p>
+
+<p class="q">Pagination কীভাবে করে? Offset আর cursor?</p>
+<p class="a">Offset: <code>skip/limit</code>, সহজ কিন্তু গভীরে ধীর। Cursor: শেষ <code>_id</code>-এর পর থেকে, দ্রুত। আমি offset ব্যবহার করেছি (যেমন <code>models/Notification.js</code>, <code>models/RepairRequest.js</code>), কারণ data কম আর page নম্বর দেখানো সহজ। Data অনেক বড় হলে cursor দেব।</p>
+
+<h2>১১. System design</h2>
+
+<p class="q"><span class="star">★</span> পুরো system-এর architecture বলো।</p>
+<div class="flow">Browser (React, Vercel CDN)
+  → HTTPS → Express API (Vercel serverless, Mumbai bom1)
+      → MongoDB Atlas (data)   → Firebase (auth যাচাই)
+      → Stripe (payment, webhook ফিরে আসে)
+      → Supabase (ছবি)   → Gemini (AI)   → Gmail (email)</div>
+
+<p class="q"><span class="star">★</span> Monolith আর microservices? তুমি কোনটা, কেন?</p>
+<p class="a">Monolith: এক deployment। Microservices: ছোট আলাদা service, আলাদা scale, কিন্তু network, deployment, debugging জটিল। আমি একা, data কম, তাই monolith, কিন্তু folder-এ module করে ভাগ করা।</p>
+
+<p class="q"><span class="star">★</span> Serverless কী? সুবিধা-অসুবিধা?</p>
+<p class="a">Server-এর চিন্তা platform-এর, request এলে function চলে। সুবিধা: free tier, auto scale। অসুবিধা: cold start, memory ভাগ হয় না, দীর্ঘ connection চলে না, সময়সীমা।</p>
+
+<p class="q"><span class="star">★</span> Serverless-এ MongoDB connection কীভাবে সামলাও?</p>
+<p class="a">প্রতি request-এ নতুন connection দিলে connection limit শেষ হবে। <code>connectionPromise</code> module-এ cache করি; warm instance-এ একটাই connection। Fail হলে cache মুছে পরের request-এ retry।</p>
+
+<p class="q"><span class="star">★</span> Horizontal আর vertical scaling?</p>
+<p class="a">Vertical: বড় machine। Horizontal: বেশি machine + load balancer। Stateless API হওয়ায় আমার API horizontal scale করতে পারে; Vercel নিজেই instance বাড়ায়।</p>
+
+<p class="q">১০,০০০ user হলে কী বদলাবে?</p>
+<p class="a">আগে পরিমাপ করে bottleneck খুঁজব। সম্ভাব্য: cursor pagination, slow query-তে index, Redis cache, বড় Atlas tier, email/AI কাজ queue-তে, আর paid email service।</p>
+
+<p class="q">Caching কোথায় আছে?</p>
+<p class="a">Client: TanStack Query। CDN: hashed asset-এ <code>Cache-Control: immutable</code>। Server-side Redis নেই, দরকার পড়েনি। কঠিন অংশ হলো invalidation।</p>
+
+<p class="q">Rate limiting কী? তোমার implementation?</p>
+<p class="a">নির্দিষ্ট সময়ে request সীমিত করা। Public tracking: 20/মিনিট, in-memory। AI support: MongoDB-তে shared counter, কারণ serverless instance-এ memory ভাগ হয় না। সেই কারণে tracking-এর limit প্রতি instance-এ আলাদা, এটা একটা দুর্বলতা।</p>
+
+<p class="q">Real-time-এর জন্য WebSocket কেন নয়?</p>
+<p class="a">Serverless-এ দীর্ঘ connection সহজ নয়। Job board আর admin attention প্রতি ৬০ সেকেন্ডে poll করে। সত্যিকারের real-time লাগলে আলাদা service লাগবে। Polling, long polling, WebSocket, SSE-র পার্থক্য জেনে রাখো।</p>
+
+<p class="q">Idempotency কেন distributed system-এ জরুরি?</p>
+<p class="a">Network ব্যর্থ হলে retry হয়, Stripe webhook একই event একাধিকবার পাঠাতে পারে। <code>payments.sessionId</code> unique আর <code>idempotencyKey</code> দিয়ে একবারই কাজ হয়।</p>
+
+<p class="q">CAP theorem কী?</p>
+<p class="a">Network partition হলে consistency আর availability-র মধ্যে একটা বেছে নিতে হয়। MongoDB-কে সাধারণত CP ধরা হয়।</p>
+
+<p class="q">Single point of failure কোথায়?</p>
+<p class="a">Firebase, Atlas বা Stripe বন্ধ হলে সেই অংশ থামে। DB বন্ধ হলে <code>ensureDatabaseReady</code> 503 দেয়; email ব্যর্থ হলে মূল কাজ থামে না।</p>
+
+<p class="q">Cron কী? <code>0 12 * * *</code> মানে?</p>
+<p class="a">Minute hour day month weekday। প্রতিদিন 12:00 UTC, মানে বাংলাদেশে সন্ধ্যা ৬টা। Vercel Cron <code>/cron/pickup-reminders</code> call করে।</p>
+
+<h2>১২. Security</h2>
+
+<p class="q"><span class="star">★</span> XSS কী? React কীভাবে রক্ষা করে?</p>
+<p class="a">Page-এ ক্ষতিকর script ঢোকানো। React <code>{value}</code> escape করে। আমার client code-এ <code>dangerouslySetInnerHTML</code> নেই।</p>
+
+<p class="q"><span class="star">★</span> CSRF কী? তোমার project-এ ঝুঁকি আছে?</p>
+<p class="a">Browser নিজে cookie পাঠায় বলে অন্য site থেকে request করানো। আমি cookie নয়, <code>Authorization</code> header ব্যবহার করি, তাই এই আক্রমণ সাধারণত কাজ করে না।</p>
+
+<p class="q"><span class="star">★</span> NoSQL injection কী?</p>
+<p class="a"><code>{"email": {"$ne": null}}</code> এর মতো object পাঠিয়ে query বদলানো। উপায়: type চেক, input validate। ঝুঁকি থাকে JSON body-তে, তাই server validation জরুরি।</p>
+
+<p class="q"><span class="star">★</span> IDOR কী? কীভাবে আটকিয়েছ?</p>
+<p class="a">অন্যের id দিয়ে তার data দেখা। Login-ই যথেষ্ট নয়, প্রতিটা controller-এ দেখি user owner, assigned technician, না admin। Email নেওয়া হয় verified token থেকে, body থেকে নয়।</p>
+
+<p class="q">Password কীভাবে store হওয়া উচিত? Hash আর encryption?</p>
+<p class="a">Salt-সহ ধীর hash (bcrypt, scrypt, Argon2)। Hash একমুখী, encryption ফেরানো যায়। Password Firebase-এ থাকে, আমার DB-তে নয়।</p>
+
+<p class="q">Client থেকে আসা দাম বিশ্বাস করো?</p>
+<p class="a">না। পরিমাণ server DB থেকে নেয়। Client-এর validation শুধু UX।</p>
+
+<p class="q">Stripe webhook অন্য কেউ call করলে?</p>
+<p class="a"><code>constructEvent</code> raw body আর <code>STRIPE_WEBHOOK_SECRET</code> দিয়ে signature যাচাই করে; না মিললে reject।</p>
+
+<p class="q">Private ছবি কীভাবে সুরক্ষিত?</p>
+<p class="a">Bucket private, স্বল্পমেয়াদি signed URL। Link ফাঁস হলেও অল্প সময়ের জন্য।</p>
+
+<p class="q">Tracking page-এ login নেই। নিরাপদ?</p>
+<p class="a">Code অনুমান করা কঠিন: 128-bit random (<code>crypto</code>), আর rate limit। ক্ষতি: code যার কাছে সে দেখতে পারে, তাই সংবেদনশীল তথ্য সেখানে দেখানো হয় না।</p>
+
+<h2>১৩. Testing ও deployment</h2>
+
+<p class="q"><span class="star">★</span> Unit, integration, e2e-র পার্থক্য? তোমার কোনগুলো?</p>
+<p class="a">Unit: একটা function। Integration: কয়েকটা অংশ একসাথে। E2E: user-এর মতো browser থেকে। আমার server test আসল HTTP আর MongoDB-তে (integration), Playwright e2e। Client-এ unit test নেই।</p>
+
+<p class="q">CI/CD কী? তোমার আছে?</p>
+<p class="a">CI: প্রতি push-এ test (GitHub Actions, আলাদা MongoDB container-এ)। Deploy স্বয়ংক্রিয় CI-তে নেই, হাতে করা হয়। তাই পুরো CD নয়।</p>
+
+<p class="q">Git: merge আর rebase? <code>fetch</code> আর <code>pull</code>?</p>
+<p class="a">Merge history রাখে, rebase সরলরেখা করে। <code>fetch</code> শুধু আনে, <code>pull</code> = fetch + merge।</p>
+
+<p class="q">Development আর production data কীভাবে আলাদা?</p>
+<p class="a">আলাদা database name (<code>MONGO_DB_NAME</code>) আর আলাদা env। CI-কে Atlas-এর credential দেওয়া হয় না।</p>
+
+<h2>১৪. Project-এর দুর্বল দিক (এগুলো নিজেই বলতে পারলে ভালো)</h2>
+
+<div class="tip">"তোমার project-এর দুর্বলতা কী?" প্রশ্ন আসে প্রায়ই। নিজে জানলে বোঝা যায় তুমি বুঝে করেছ। নিচেরগুলো code থেকে পাওয়া, মিথ্যা নয়।</div>
+
+<table>
+<tr><th>দুর্বলতা</th><th>কেন এমন</th><th>কীভাবে ঠিক করতাম</th></tr>
+<tr><td>Logout-এর পরেও token মেয়াদ পর্যন্ত চলে</td><td>Revocation চেক করি না</td><td>সংবেদনশীল route-এ <code>checkRevoked</code></td></tr>
+<tr><td>Client-এ unit test নেই</td><td>শুধু Playwright</td><td>Vitest + Testing Library</td></tr>
+<tr><td><code>helmet</code> নেই</td><td>Security header আলাদা set করা হয়নি</td><td><code>helmet</code> যোগ</td></tr>
+<tr><td>Public tracking rate limit in-memory</td><td>Instance-ভেদে আলাদা গণনা</td><td>Support-এর মতো shared store</td></tr>
+<tr><td>Real-time নেই</td><td>Serverless, polling করি</td><td>আলাদা WebSocket service</td></tr>
+<tr><td>SPA-র SEO দুর্বল</td><td>Client-side rendering</td><td>Public page SSR/pre-render</td></tr>
+<tr><td>Cold start</td><td>Serverless</td><td>Free uptime ping বা always-on server</td></tr>
+</table>
+
+<h2>১৫. Rapid-fire (এক লাইনে)</h2>
+
+<table>
+<tr><th>প্রশ্ন</th><th>উত্তর</th></tr>
+<tr><td>V8 কী?</td><td>Google-এর JS engine, JS-কে machine code করে</td></tr>
+<tr><td>npm কী?</td><td>Node-এর package manager</td></tr>
+<tr><td><code>typeof null</code>?</td><td><code>"object"</code>, পুরনো bug</td></tr>
+<tr><td>API কী?</td><td>দুই software-এর কথা বলার নিয়ম</td></tr>
+<tr><td>JSON কী?</td><td>Text-ভিত্তিক data format</td></tr>
+<tr><td>CRUD?</td><td>Create, Read, Update, Delete</td></tr>
+<tr><td>CDN?</td><td>User-এর কাছাকাছি server থেকে static file দেওয়া</td></tr>
+<tr><td>DNS?</td><td>Domain থেকে IP</td></tr>
+<tr><td>Port 443, 80?</td><td>HTTPS, HTTP</td></tr>
+<tr><td>Hook কী?</td><td><code>use</code> দিয়ে শুরু, function component-এ state/lifecycle দেয়</td></tr>
+<tr><td>Prop drilling?</td><td>মাঝের component দিয়ে props নামানো</td></tr>
+<tr><td>HMR?</td><td>Reload ছাড়া বদলানো module update</td></tr>
+<tr><td>Tree shaking?</td><td>অব্যবহৃত code bundle থেকে বাদ</td></tr>
+<tr><td>Bearer token?</td><td>যার কাছে আছে সেই ব্যবহার করতে পারে</td></tr>
+<tr><td>OAuth?</td><td>অন্য service দিয়ে login/অনুমতি (Google sign-in)</td></tr>
+<tr><td>Webhook?</td><td>Event হলে অন্য service আমাকে call করে</td></tr>
+<tr><td>Replica set কেন লাগল?</td><td>Multi-document transaction-এর জন্য</td></tr>
+<tr><td>Foreign key আছে MongoDB-তে?</td><td>না, reference রাখি, DB enforce করে না</td></tr>
+<tr><td>Node version LTS কী?</td><td>দীর্ঘমেয়াদি support পাওয়া version</td></tr>
+<tr><td>Vercel region কেন Mumbai?</td><td>Atlas আর বাংলাদেশের কাছাকাছি, latency কম</td></tr>
+</table>
+
+</body>
+</html>
